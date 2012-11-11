@@ -27,10 +27,7 @@ namespace Tests
         [TestMethod]
         public void Class()
         {
-            var type = typeof(Foo);
-            var desc = Describer<Foo>.Get(IncludedMembers.Properties, IncludedVisibility.Public);
-
-            var map = PublicBroadcasting.Impl.POCOBuilder.GetMapper(type, desc);
+            var map = PublicBroadcasting.Impl.POCOBuilder<Foo>.GetMapper(IncludedMembers.Properties, IncludedVisibility.Public);
 
             dynamic poco = map(new Foo { Bar = "Hello", Buzz = 8675309 });
 

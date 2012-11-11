@@ -50,7 +50,7 @@ namespace PublicBroadcasting
                 Serializer.Serialize(stream, obj);
             }
 
-            var mapper = POCOBuilder.GetMapper(typeof(T), desc);
+            var mapper = POCOBuilder<T>.GetMapper(members, visibility);
 
             var payload = mapper(obj);
         }

@@ -8,13 +8,17 @@ using System.Threading.Tasks;
 
 namespace PublicBroadcasting.Impl
 {
-    internal class POCOBuilder
+    internal class POCOBuilder<From>
     {
         private static readonly Type[] EmptyTypes = new Type[0];
         private static readonly object[] EmptyObjects = new object[0];
 
-        public static Func<object, object> GetMapper(Type t, TypeDescription desc)
+        public static Func<object, object> GetMapper(IncludedMembers members, IncludedVisibility visibility)
         {
+            const string SelfName = "GetMapper";
+
+            var t = typeof(From);
+            var desc = Describer<From>.Get(members, visibility);
             var pocoType = desc.GetPocoType();
 
             if (desc is DictionaryTypeDescription || desc is ListTypeDescription) throw new NotImplementedException();
@@ -54,7 +58,9 @@ namespace PublicBroadcasting.Impl
 
                         var type = member is FieldInfo ? (member as FieldInfo).FieldType : (member as PropertyInfo).PropertyType;
 
-                        return GetMapper(type, kv.Value);
+                        var self = typeof(POCOBuilder<>).MakeGenericType(type).GetMethod(SelfName);
+
+                        return (Func<object,object>)self.Invoke(null, new object[] { members, visibility });
                     }
                 );
 
