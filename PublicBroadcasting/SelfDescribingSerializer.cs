@@ -49,8 +49,6 @@ namespace PublicBroadcasting
             {
                 Serializer.Serialize(stream, obj);
             }
-
-
         }
     }
 }

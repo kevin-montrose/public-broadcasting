@@ -52,5 +52,29 @@ namespace Tests
             Assert.AreEqual(typeof(ListTypeDescription), chars.GetType());
             Assert.AreEqual(SimpleTypeDescription.Char, (chars as ListTypeDescription).Contains);
         }
+
+        class DummyClass
+        {
+            public string Str { get; set; }
+            public int Int { get; set; }
+            public double Double { get; set; }
+        }
+
+        [TestMethod]
+        public void Class()
+        {
+            var c = Describer<DummyClass>.Get(IncludedMembers.Properties, IncludedVisibility.Public);
+            Assert.AreEqual(typeof(ClassTypeDescription), c.GetType());
+            var asClass = c as ClassTypeDescription;
+
+            Assert.AreEqual(3, asClass.Members.Count);
+            Assert.IsTrue(asClass.Members.ContainsKey("Str"));
+            Assert.IsTrue(asClass.Members.ContainsKey("Int"));
+            Assert.IsTrue(asClass.Members.ContainsKey("Double"));
+
+            Assert.AreEqual(SimpleTypeDescription.String, asClass.Members["Str"]);
+            Assert.AreEqual(SimpleTypeDescription.Int, asClass.Members["Int"]);
+            Assert.AreEqual(SimpleTypeDescription.Double, asClass.Members["Double"]);
+        }
     }
 }
