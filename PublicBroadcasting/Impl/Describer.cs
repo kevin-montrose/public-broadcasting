@@ -248,9 +248,11 @@ namespace PublicBroadcasting.Impl
             FieldsProtected = BuildDescription(IncludedMembers.Fields, IncludedVisibility.Protected);
         }
 
-        public static TypeDescription BuildDescription(IncludedMembers members, IncludedVisibility visibility)
+        public static TypeDescription BuildDescription(IncludedMembers members, IncludedVisibility visibility, Dictionary<Type, Action<ClassTypeDescription>> inProgress = null)
         {
             const string SelfName = "BuildDescription";
+
+            inProgress = inProgress ?? new Dictionary<Type, Action<ClassTypeDescription>>();
 
             var t = typeof(T);
 
@@ -283,8 +285,8 @@ namespace PublicBroadcasting.Impl
 
                 return
                     new DictionaryTypeDescription(
-                        (TypeDescription)keyDesc.Invoke(null, new object[] { members, visibility }),
-                        (TypeDescription)valDesc.Invoke(null, new object[] { members, visibility })
+                        (TypeDescription)keyDesc.Invoke(null, new object[] { members, visibility, inProgress }),
+                        (TypeDescription)valDesc.Invoke(null, new object[] { members, visibility, inProgress })
                     );
             }
 
@@ -299,9 +301,11 @@ namespace PublicBroadcasting.Impl
 
                 return
                     new ListTypeDescription(
-                        (TypeDescription)valDesc.Invoke(null, new object[] { members, visibility })
+                        (TypeDescription)valDesc.Invoke(null, new object[] { members, visibility, inProgress })
                     );
             }
+
+            inProgress[t] = null;
 
             var get = (typeof(TypeReflectionCache<>).MakeGenericType(t)).GetMethod("Get");
 
@@ -311,19 +315,64 @@ namespace PublicBroadcasting.Impl
 
             foreach (var prop in cutdown.Properties)
             {
-                var propDesc = typeof(Describer<>).MakeGenericType(prop.PropertyType).GetMethod(SelfName);
+                var propName = prop.Name;
 
-                classMembers[prop.Name] = (TypeDescription)propDesc.Invoke(null, new object[] { members, visibility });
+                var propType = prop.PropertyType;
+
+                if (inProgress.ContainsKey(propType))
+                {
+                    var tail = inProgress[propType];
+                    Action<ClassTypeDescription> callback =
+                        x =>
+                        {
+                            classMembers[propName] = x;
+
+                            if (tail != null) tail(x);
+                        };
+
+                    inProgress[propType] = callback;
+                }
+                else
+                {
+                    var propDesc = typeof(Describer<>).MakeGenericType(propType).GetMethod(SelfName);
+
+                    classMembers[propName] = (TypeDescription)propDesc.Invoke(null, new object[] { members, visibility, inProgress });
+                }
             }
 
             foreach (var field in cutdown.Fields)
             {
-                var fieldDesc = typeof(Describer<>).MakeGenericType(field.FieldType).GetMethod(SelfName);
+                var fieldName = field.Name;
+                var fieldType = field.FieldType;
 
-                classMembers[field.Name] = (TypeDescription)fieldDesc.Invoke(null, new object[] { members, visibility });
+                if (inProgress.ContainsKey(fieldType))
+                {
+                    var tail = inProgress[fieldType];
+                    Action<ClassTypeDescription> callback =
+                        x =>
+                        {
+                            classMembers[fieldName] = x;
+
+                            if (tail != null) tail(x);
+                        };
+
+                    inProgress[fieldType] = callback;
+                }
+                else
+                {
+                    var fieldDesc = typeof(Describer<>).MakeGenericType(fieldType).GetMethod(SelfName);
+
+                    classMembers[fieldName] = (TypeDescription)fieldDesc.Invoke(null, new object[] { members, visibility, inProgress });
+                }
             }
 
-            return new ClassTypeDescription(classMembers);
+            var ret = new ClassTypeDescription(classMembers);
+            
+            var promise = inProgress[t];
+            if (promise != null) promise(ret);
+            inProgress.Remove(t);
+
+            return ret;
         }
 
         internal static TypeDescription Get(IncludedMembers members, IncludedVisibility visibility)

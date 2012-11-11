@@ -53,7 +53,7 @@ namespace Tests
             Assert.AreEqual(SimpleTypeDescription.Char, (chars as ListTypeDescription).Contains);
         }
 
-        class DummyClass
+        class Dummy
         {
             public string Str { get; set; }
             public int Int { get; set; }
@@ -63,7 +63,7 @@ namespace Tests
         [TestMethod]
         public void Class()
         {
-            var c = Describer<DummyClass>.Get(IncludedMembers.Properties, IncludedVisibility.Public);
+            var c = Describer<Dummy>.Get(IncludedMembers.Properties, IncludedVisibility.Public);
             Assert.AreEqual(typeof(ClassTypeDescription), c.GetType());
             var asClass = c as ClassTypeDescription;
 
@@ -75,6 +75,27 @@ namespace Tests
             Assert.AreEqual(SimpleTypeDescription.String, asClass.Members["Str"]);
             Assert.AreEqual(SimpleTypeDescription.Int, asClass.Members["Int"]);
             Assert.AreEqual(SimpleTypeDescription.Double, asClass.Members["Double"]);
+        }
+
+        class Circular
+        {
+            public string Str { get; set; }
+            public Circular Next { get; set; }
+        }
+
+        [TestMethod]
+        public void CircularClass()
+        {
+            var c = Describer<Circular>.Get(IncludedMembers.Properties, IncludedVisibility.Public);
+            Assert.AreEqual(typeof(ClassTypeDescription), c.GetType());
+            var asClass = c as ClassTypeDescription;
+
+            Assert.AreEqual(2, asClass.Members.Count);
+            Assert.IsTrue(asClass.Members.ContainsKey("Str"));
+            Assert.IsTrue(asClass.Members.ContainsKey("Next"));
+
+            Assert.AreEqual(SimpleTypeDescription.String, asClass.Members["Str"]);
+            Assert.AreEqual(c, asClass.Members["Next"]);
         }
     }
 }
