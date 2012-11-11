@@ -13,7 +13,14 @@ namespace PublicBroadcasting.Impl
     [ProtoInclude(4, typeof(ClassTypeDescription))]
     [ProtoInclude(5, typeof(ArrayTypeDescription))]
     [ProtoInclude(6, typeof(DictionaryTypeDescription))]
-    internal abstract class TypeDescription{}
+    internal abstract class TypeDescription
+    {
+        /// <summary>
+        /// Returns true if there could be more than 1 serialization for the type described,
+        /// and thus we must include a type map when serializing.
+        /// </summary>
+        public virtual bool NeedsEnvelope { get { return true; } }
+    }
 
     [ProtoContract]
     internal class SimpleTypeDescription : TypeDescription
@@ -34,6 +41,16 @@ namespace PublicBroadcasting.Impl
 
         [ProtoMember(1)]
         internal int Tag { get; private set; }
+
+        public override bool NeedsEnvelope
+        {
+            get
+            {
+                // There's only one way to serialize any of these types, so the type itself is sufficient
+                //   No envelope needed
+                return false;
+            }
+        }
 
         private SimpleTypeDescription(int tag)
         {
@@ -61,6 +78,14 @@ namespace PublicBroadcasting.Impl
         [ProtoMember(2)]
         internal TypeDescription ValueType { get; set; }
 
+        public override bool NeedsEnvelope
+        {
+            get
+            {
+                return KeyType.NeedsEnvelope || ValueType.NeedsEnvelope;
+            }
+        }
+
         internal DictionaryTypeDescription(TypeDescription keyType, TypeDescription valueType)
         {
             KeyType = keyType;
@@ -73,6 +98,14 @@ namespace PublicBroadcasting.Impl
     {
         [ProtoMember(1)]
         internal TypeDescription Contains { get; set; }
+
+        public override bool NeedsEnvelope
+        {
+            get
+            {
+                return Contains.NeedsEnvelope;
+            }
+        }
 
         internal ArrayTypeDescription(TypeDescription contains)
         {
@@ -231,6 +264,7 @@ namespace PublicBroadcasting.Impl
             if (t == typeof(sbyte)) return SimpleTypeDescription.SByte;
 
             if (t == typeof(char)) return SimpleTypeDescription.Char;
+            if (t == typeof(string)) return SimpleTypeDescription.String;
 
             if (t == typeof(decimal)) return SimpleTypeDescription.Decimal;
             if (t == typeof(double)) return SimpleTypeDescription.Double;

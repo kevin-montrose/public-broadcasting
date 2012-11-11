@@ -15,34 +15,42 @@ namespace PublicBroadcasting
         {
             using (var mem = new MemoryStream())
             {
-                Serialize(obj, mem);
+                Serialize(mem, obj);
 
                 return mem.ToArray();
             }
         }
 
-        public static void Serialize<T>(T obj, Stream stream)
+        public static void Serialize<T>(Stream stream, T obj)
         {
-            Serialize(obj, IncludedMembers.Properties, IncludedVisibility.Public, stream);
+            Serialize(stream, obj, IncludedMembers.Properties, IncludedVisibility.Public);
         }
 
-        public static void Serialize<T>(T obj, IncludedMembers members, Stream stream)
+        public static void Serialize<T>(Stream stream, T obj, IncludedMembers members)
         {
-            Serialize(obj, members, IncludedVisibility.Public, stream);
+            Serialize(stream, obj, members, IncludedVisibility.Public);
         }
 
-        public static void Serialize<T>(T obj, IncludedVisibility visibility, Stream stream)
+        public static void Serialize<T>(Stream stream, T obj, IncludedVisibility visibility)
         {
-            Serialize(obj, IncludedMembers.Properties, visibility, stream);
+            Serialize(stream, obj, IncludedMembers.Properties, visibility);
         }
 
-        public static void Serialize<T>(T obj, IncludedMembers members, IncludedVisibility visibility, Stream stream)
+        public static void Serialize<T>(Stream stream, T obj, IncludedMembers members, IncludedVisibility visibility)
         {
             if (stream == null) throw new ArgumentNullException("stream");
             if (members == 0) throw new ArgumentException("members");
             if (visibility == 0) throw new ArgumentException("visibility");
 
             var desc = Describer<T>.Get(members, visibility);
+
+            // Don't include an envelope unless it's needed, no point in wasting bytes
+            if (!desc.NeedsEnvelope)
+            {
+                Serializer.Serialize(stream, obj);
+            }
+
+
         }
     }
 }
