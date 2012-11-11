@@ -3,7 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace PublicBroadcasting.Impl
@@ -19,7 +21,9 @@ namespace PublicBroadcasting.Impl
         /// Returns true if there could be more than 1 serialization for the type described,
         /// and thus we must include a type map when serializing.
         /// </summary>
-        public virtual bool NeedsEnvelope { get { return true; } }
+        internal virtual bool NeedsEnvelope { get { return true; } }
+
+        internal abstract Type GetPocoType();
     }
 
     [ProtoContract]
@@ -42,7 +46,7 @@ namespace PublicBroadcasting.Impl
         [ProtoMember(1)]
         internal int Tag { get; private set; }
 
-        public override bool NeedsEnvelope
+        internal override bool NeedsEnvelope
         {
             get
             {
@@ -56,17 +60,103 @@ namespace PublicBroadcasting.Impl
         {
             Tag = tag;
         }
+
+        internal override Type GetPocoType()
+        {
+            switch (Tag)
+            {
+                case 0: return typeof(int);
+                case 1: return typeof(long);
+                case 2: return typeof(string);
+                case 3: return typeof(byte);
+                case 4: return typeof(char);
+                case 5: return typeof(short);
+                case 6: return typeof(uint);
+                case 7: return typeof(ulong);
+                case 8: return typeof(sbyte);
+                case 9: return typeof(ushort);
+                case 10: return typeof(double);
+                case 11: return typeof(float);
+                case 12: return typeof(decimal);
+                default: throw new Exception("Unexpected Tag [" + Tag + "]");
+            }
+        }
     }
 
     [ProtoContract]
     internal class ClassTypeDescription : TypeDescription
     {
+        static readonly ModuleBuilder ModuleBuilder;
+
+        static ClassTypeDescription()
+        {
+            AppDomain domain = Thread.GetDomain();
+            AssemblyName asmName = new AssemblyName("PublicBroadcastingDynamicAssembly");
+            AssemblyBuilder asmBuilder = domain.DefineDynamicAssembly(asmName, AssemblyBuilderAccess.Run);
+
+            ModuleBuilder = asmBuilder.DefineDynamicModule(asmName.Name);
+        }
+
         [ProtoMember(1)]
         internal Dictionary<string, TypeDescription> Members { get; set; }
 
         internal ClassTypeDescription(Dictionary<string, TypeDescription> members)
         {
             Members = members;
+        }
+
+        private TypeBuilder TypeBuilder;
+        private Type PocoType;
+
+        internal void Seal()
+        {
+            var protoMemberAttr = typeof(ProtoMemberAttribute).GetConstructor(new []{typeof(int)});
+            var protoContractAttr = typeof(ProtoContractAttribute).GetConstructor(new Type[0]);
+
+            TypeBuilder = ModuleBuilder.DefineType("POCO" + Guid.NewGuid().ToString().Replace("-", ""), TypeAttributes.Public);
+            var ix = 1;
+            foreach (var kv in Members)
+            {
+                var memberAttrBuilder = new CustomAttributeBuilder(protoMemberAttr, new object[] { ix });
+
+                var propType = kv.Value.GetPocoType();
+
+                var fieldBldr = TypeBuilder.DefineField("_" + kv.Key + "_" + Guid.NewGuid().ToString().Replace("-", ""), propType, FieldAttributes.Private);
+
+                var prop = TypeBuilder.DefineProperty(kv.Key, PropertyAttributes.None, propType, null);
+                prop.SetCustomAttribute(memberAttrBuilder);
+
+                var getSetAttr =MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig;
+                var getPropMthdBldr = TypeBuilder.DefineMethod("get_" + kv.Key, getSetAttr, propType, Type.EmptyTypes);
+                var custNameGetIL = getPropMthdBldr.GetILGenerator();
+
+                custNameGetIL.Emit(OpCodes.Ldarg_0);
+                custNameGetIL.Emit(OpCodes.Ldfld, fieldBldr);
+                custNameGetIL.Emit(OpCodes.Ret);
+
+                var setPropMthdBldr = TypeBuilder.DefineMethod("set_" + kv.Key, getSetAttr, null, new Type[] { propType });
+                var custNameSetIL = setPropMthdBldr.GetILGenerator();
+
+                custNameSetIL.Emit(OpCodes.Ldarg_0);
+                custNameSetIL.Emit(OpCodes.Ldarg_1);
+                custNameSetIL.Emit(OpCodes.Stfld, fieldBldr);
+                custNameSetIL.Emit(OpCodes.Ret);
+
+                prop.SetGetMethod(getPropMthdBldr);
+                prop.SetSetMethod(setPropMthdBldr);
+
+                ix++;
+            }
+
+            var contractAttrBuilder = new CustomAttributeBuilder(protoContractAttr, new object[0]);
+            TypeBuilder.SetCustomAttribute(contractAttrBuilder);
+
+            PocoType = TypeBuilder.CreateType();
+        }
+
+        internal override Type GetPocoType()
+        {
+            return PocoType ?? TypeBuilder;
         }
     }
 
@@ -78,7 +168,7 @@ namespace PublicBroadcasting.Impl
         [ProtoMember(2)]
         internal TypeDescription ValueType { get; set; }
 
-        public override bool NeedsEnvelope
+        internal override bool NeedsEnvelope
         {
             get
             {
@@ -91,6 +181,11 @@ namespace PublicBroadcasting.Impl
             KeyType = keyType;
             ValueType = valueType;
         }
+
+        internal override Type GetPocoType()
+        {
+            return typeof(Dictionary<,>).MakeGenericType(KeyType.GetPocoType(), ValueType.GetPocoType());
+        }
     }
 
     [ProtoContract]
@@ -99,7 +194,7 @@ namespace PublicBroadcasting.Impl
         [ProtoMember(1)]
         internal TypeDescription Contains { get; set; }
 
-        public override bool NeedsEnvelope
+        internal override bool NeedsEnvelope
         {
             get
             {
@@ -110,6 +205,11 @@ namespace PublicBroadcasting.Impl
         internal ListTypeDescription(TypeDescription contains)
         {
             Contains = contains;
+        }
+
+        internal override Type GetPocoType()
+        {
+            return typeof(List<>).MakeGenericType(Contains.GetPocoType());
         }
     }
 
@@ -371,6 +471,8 @@ namespace PublicBroadcasting.Impl
             var promise = inProgress[t];
             if (promise != null) promise(ret);
             inProgress.Remove(t);
+
+            ret.Seal();
 
             return ret;
         }

@@ -49,6 +49,10 @@ namespace PublicBroadcasting
             {
                 Serializer.Serialize(stream, obj);
             }
+
+            var mapper = POCOBuilder.GetMapper(typeof(T), desc);
+
+            var payload = mapper(obj);
         }
     }
 }
