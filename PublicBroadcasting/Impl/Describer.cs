@@ -11,7 +11,7 @@ namespace PublicBroadcasting.Impl
     [ProtoContract]
     [ProtoInclude(3, typeof(SimpleTypeDescription))]
     [ProtoInclude(4, typeof(ClassTypeDescription))]
-    [ProtoInclude(5, typeof(ArrayTypeDescription))]
+    [ProtoInclude(5, typeof(ListTypeDescription))]
     [ProtoInclude(6, typeof(DictionaryTypeDescription))]
     internal abstract class TypeDescription
     {
@@ -94,7 +94,7 @@ namespace PublicBroadcasting.Impl
     }
 
     [ProtoContract]
-    internal class ArrayTypeDescription : TypeDescription
+    internal class ListTypeDescription : TypeDescription
     {
         [ProtoMember(1)]
         internal TypeDescription Contains { get; set; }
@@ -107,7 +107,7 @@ namespace PublicBroadcasting.Impl
             }
         }
 
-        internal ArrayTypeDescription(TypeDescription contains)
+        internal ListTypeDescription(TypeDescription contains)
         {
             Contains = contains;
         }
@@ -248,7 +248,7 @@ namespace PublicBroadcasting.Impl
             FieldsProtected = BuildDescription(IncludedMembers.Fields, IncludedVisibility.Protected);
         }
 
-        private static TypeDescription BuildDescription(IncludedMembers members, IncludedVisibility visibility)
+        public static TypeDescription BuildDescription(IncludedMembers members, IncludedVisibility visibility)
         {
             const string SelfName = "BuildDescription";
 
@@ -270,10 +270,13 @@ namespace PublicBroadcasting.Impl
             if (t == typeof(double)) return SimpleTypeDescription.Double;
             if (t == typeof(float)) return SimpleTypeDescription.Float;
 
-            if (t.IsInstanceOfType(typeof(IDictionary<,>)))
+            if ((t.IsGenericType && t.GetGenericTypeDefinition() == typeof (IDictionary<,>)) ||
+               t.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof (IDictionary<,>)))
             {
-                var keyType = t.GetGenericArguments()[0];
-                var valueType = t.GetGenericArguments()[1];
+                var dictI = t.GetInterfaces().First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>));
+
+                var keyType = dictI.GetGenericArguments()[0];
+                var valueType = dictI.GetGenericArguments()[1];
 
                 var keyDesc = typeof(Describer<>).MakeGenericType(keyType).GetMethod(SelfName);
                 var valDesc = typeof(Describer<>).MakeGenericType(valueType).GetMethod(SelfName);
@@ -285,19 +288,20 @@ namespace PublicBroadcasting.Impl
                     );
             }
 
-            if (t.IsInstanceOfType(typeof(IEnumerable<>)))
+            if ((t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IList<>)) ||
+               t.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>)))
             {
-                var valueType = t.GetGenericArguments()[0];
+                var listI = t.GetInterfaces().First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>));
+
+                var valueType = listI.GetGenericArguments()[0];
 
                 var valDesc = typeof(Describer<>).MakeGenericType(valueType).GetMethod(SelfName);
 
-                return 
-                    new ArrayTypeDescription(
+                return
+                    new ListTypeDescription(
                         (TypeDescription)valDesc.Invoke(null, new object[] { members, visibility })
                     );
             }
-
-            var key = Tuple.Create(t, members, visibility);
 
             var get = (typeof(TypeReflectionCache<>).MakeGenericType(t)).GetMethod("Get");
 
