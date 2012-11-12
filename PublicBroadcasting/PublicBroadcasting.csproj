@@ -45,12 +45,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Deserializer.cs" />
     <Compile Include="Impl\Describer.cs" />
     <Compile Include="Impl\Envelope.cs" />
     <Compile Include="Impl\POCOBuilder.cs" />
+    <Compile Include="Impl\POCOMapper.cs" />
     <Compile Include="Impl\TypeReflectionCache.cs" />
     <Compile Include="Options.cs" />
-    <Compile Include="SelfDescribingSerializer.cs" />
+    <Compile Include="Serializer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

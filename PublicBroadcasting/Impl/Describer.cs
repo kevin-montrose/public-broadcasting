@@ -11,10 +11,11 @@ using System.Threading.Tasks;
 namespace PublicBroadcasting.Impl
 {
     [ProtoContract]
-    [ProtoInclude(3, typeof(SimpleTypeDescription))]
-    [ProtoInclude(4, typeof(ClassTypeDescription))]
-    [ProtoInclude(5, typeof(ListTypeDescription))]
-    [ProtoInclude(6, typeof(DictionaryTypeDescription))]
+    [ProtoInclude(10, typeof(SimpleTypeDescription))]
+    [ProtoInclude(11, typeof(ClassTypeDescription))]
+    [ProtoInclude(12, typeof(ListTypeDescription))]
+    [ProtoInclude(13, typeof(DictionaryTypeDescription))]
+    [ProtoInclude(14, typeof(NoTypeDescription))]
     internal abstract class TypeDescription
     {
         /// <summary>
@@ -24,6 +25,27 @@ namespace PublicBroadcasting.Impl
         internal virtual bool NeedsEnvelope { get { return true; } }
 
         internal abstract Type GetPocoType();
+
+        internal virtual void Seal() { }
+    }
+
+    [ProtoContract]
+    internal class NoTypeDescription : TypeDescription
+    {
+        internal override bool NeedsEnvelope
+        {
+            get
+            {
+                return false;
+            }
+        }
+
+        internal NoTypeDescription() { }
+
+        internal override Type GetPocoType()
+        {
+            throw new NotImplementedException();
+        }
     }
 
     [ProtoContract]
@@ -44,7 +66,7 @@ namespace PublicBroadcasting.Impl
         internal static readonly SimpleTypeDescription Decimal = new SimpleTypeDescription(12);
 
         [ProtoMember(1)]
-        internal int Tag { get; private set; }
+        internal int Type { get; private set; }
 
         internal override bool NeedsEnvelope
         {
@@ -56,14 +78,16 @@ namespace PublicBroadcasting.Impl
             }
         }
 
+        private SimpleTypeDescription() { }
+
         private SimpleTypeDescription(int tag)
         {
-            Tag = tag;
+            Type = tag;
         }
 
         internal override Type GetPocoType()
         {
-            switch (Tag)
+            switch (Type)
             {
                 case 0: return typeof(int);
                 case 1: return typeof(long);
@@ -78,7 +102,7 @@ namespace PublicBroadcasting.Impl
                 case 10: return typeof(double);
                 case 11: return typeof(float);
                 case 12: return typeof(decimal);
-                default: throw new Exception("Unexpected Tag [" + Tag + "]");
+                default: throw new Exception("Unexpected Tag [" + Type + "]");
             }
         }
     }
@@ -100,6 +124,8 @@ namespace PublicBroadcasting.Impl
         [ProtoMember(1)]
         internal Dictionary<string, TypeDescription> Members { get; set; }
 
+        private ClassTypeDescription() { }
+
         internal ClassTypeDescription(Dictionary<string, TypeDescription> members)
         {
             Members = members;
@@ -108,12 +134,14 @@ namespace PublicBroadcasting.Impl
         private TypeBuilder TypeBuilder;
         private Type PocoType;
 
-        internal void Seal()
+        internal override void Seal()
         {
+            var name = "POCO" + Guid.NewGuid().ToString().Replace("-", "");
+
             var protoMemberAttr = typeof(ProtoMemberAttribute).GetConstructor(new []{typeof(int)});
             var protoContractAttr = typeof(ProtoContractAttribute).GetConstructor(new Type[0]);
 
-            TypeBuilder = ModuleBuilder.DefineType("POCO" + Guid.NewGuid().ToString().Replace("-", ""), TypeAttributes.Public);
+            TypeBuilder = ModuleBuilder.DefineType(name, TypeAttributes.Public);
             var ix = 1;
             foreach (var kv in Members)
             {
@@ -176,6 +204,8 @@ namespace PublicBroadcasting.Impl
             }
         }
 
+        private DictionaryTypeDescription() { }
+
         internal DictionaryTypeDescription(TypeDescription keyType, TypeDescription valueType)
         {
             KeyType = keyType;
@@ -185,6 +215,12 @@ namespace PublicBroadcasting.Impl
         internal override Type GetPocoType()
         {
             return typeof(Dictionary<,>).MakeGenericType(KeyType.GetPocoType(), ValueType.GetPocoType());
+        }
+
+        internal override void Seal()
+        {
+            KeyType.Seal();
+            ValueType.Seal();
         }
     }
 
@@ -202,6 +238,8 @@ namespace PublicBroadcasting.Impl
             }
         }
 
+        private ListTypeDescription() { }
+
         internal ListTypeDescription(TypeDescription contains)
         {
             Contains = contains;
@@ -210,6 +248,11 @@ namespace PublicBroadcasting.Impl
         internal override Type GetPocoType()
         {
             return typeof(List<>).MakeGenericType(Contains.GetPocoType());
+        }
+
+        internal override void Seal()
+        {
+            Contains.Seal();
         }
     }
 
