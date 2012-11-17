@@ -95,7 +95,10 @@ namespace Tests
             Assert.IsTrue(asClass.Members.ContainsKey("Next"));
 
             Assert.AreEqual(SimpleTypeDescription.String, asClass.Members["Str"]);
-            Assert.AreEqual(c, asClass.Members["Next"]);
+
+            var backRef = asClass.Members["Next"] as BackReferenceTypeDescription;
+            Assert.IsNotNull(backRef);
+            Assert.AreEqual(asClass.Id, backRef.ClassId);
         }
     }
 }

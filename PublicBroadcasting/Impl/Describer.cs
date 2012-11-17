@@ -11,11 +11,12 @@ using System.Threading.Tasks;
 namespace PublicBroadcasting.Impl
 {
     [ProtoContract]
-    [ProtoInclude(10, typeof(SimpleTypeDescription))]
-    [ProtoInclude(11, typeof(ClassTypeDescription))]
-    [ProtoInclude(12, typeof(ListTypeDescription))]
-    [ProtoInclude(13, typeof(DictionaryTypeDescription))]
-    [ProtoInclude(14, typeof(NoTypeDescription))]
+    [ProtoInclude(3, typeof(SimpleTypeDescription))]
+    [ProtoInclude(4, typeof(ClassTypeDescription))]
+    [ProtoInclude(5, typeof(ListTypeDescription))]
+    [ProtoInclude(6, typeof(DictionaryTypeDescription))]
+    [ProtoInclude(7, typeof(BackReferenceTypeDescription))]
+    [ProtoInclude(8, typeof(NoTypeDescription))]
     internal abstract class TypeDescription
     {
         /// <summary>
@@ -27,6 +28,8 @@ namespace PublicBroadcasting.Impl
         internal abstract Type GetPocoType();
 
         internal virtual void Seal() { }
+
+        internal abstract void Flatten();
     }
 
     [ProtoContract]
@@ -46,6 +49,8 @@ namespace PublicBroadcasting.Impl
         {
             throw new NotImplementedException();
         }
+
+        internal override void Flatten() { }
     }
 
     [ProtoContract]
@@ -105,6 +110,8 @@ namespace PublicBroadcasting.Impl
                 default: throw new Exception("Unexpected Tag [" + Type + "]");
             }
         }
+
+        internal override void Flatten() { }
     }
 
     [ProtoContract]
@@ -124,11 +131,18 @@ namespace PublicBroadcasting.Impl
         [ProtoMember(1)]
         internal Dictionary<string, TypeDescription> Members { get; set; }
 
+        [ProtoMember(2)]
+        internal int Id { get; set; }
+
+        private Func<int> NextId { get; set; }
+
         private ClassTypeDescription() { }
 
-        internal ClassTypeDescription(Dictionary<string, TypeDescription> members)
+        internal ClassTypeDescription(Dictionary<string, TypeDescription> members, Func<int> nextId)
         {
             Members = members;
+
+            NextId = nextId;
         }
 
         private TypeBuilder TypeBuilder;
@@ -186,6 +200,76 @@ namespace PublicBroadcasting.Impl
         {
             return PocoType ?? TypeBuilder;
         }
+
+        private List<Tuple<TypeDescription, Action<TypeDescription>>> GetDescendentMemberModifiers()
+        {
+            var ret = new List<Tuple<TypeDescription, Action<TypeDescription>>>();
+
+            foreach (var member in Members)
+            {
+                var copy = member.Key;
+
+                ret.Add(
+                    Tuple.Create(
+                        member.Value,
+                        (Action<TypeDescription>)(x => Members[copy] = x)
+                    )
+                );
+            }
+
+            var recurOn = Members.Select(m => m.Value).OfType<ClassTypeDescription>();
+            recurOn = recurOn.Where(o => !ret.Any(r => r.Item1 == o));
+
+            foreach (var clazz in recurOn.ToList())
+            {
+                ret.AddRange(clazz.GetDescendentMemberModifiers());
+            }
+
+            return ret;
+        }
+
+        internal override void Flatten()
+        {
+            var descendentMembers = GetDescendentMemberModifiers();
+
+            var needsReplace = descendentMembers.Where(w => w.Item1 == this).ToList();
+
+            if (needsReplace.Count != 0)
+            {
+                Id = NextId();
+
+                var reference = new BackReferenceTypeDescription(Id);
+
+                foreach (var replace in needsReplace)
+                {
+                    replace.Item2(reference);
+                }
+            }
+
+            foreach (var member in Members)
+            {
+                member.Value.Flatten();
+            }
+        }
+    }
+
+    [ProtoContract]
+    internal class BackReferenceTypeDescription : TypeDescription
+    {
+        [ProtoMember(1)]
+        public int ClassId { get; set; }
+
+        internal BackReferenceTypeDescription(int id)
+        {
+            ClassId = id;
+        }
+
+        internal override Type GetPocoType()
+        {
+            throw new NotImplementedException();
+        }
+
+        internal override void Flatten() { }
     }
 
     [ProtoContract]
@@ -222,6 +306,13 @@ namespace PublicBroadcasting.Impl
             KeyType.Seal();
             ValueType.Seal();
         }
+
+        internal override void Flatten()
+        {
+
+            KeyType.Flatten();
+            ValueType.Flatten();
+        }
     }
 
     [ProtoContract]
@@ -254,10 +345,17 @@ namespace PublicBroadcasting.Impl
         {
             Contains.Seal();
         }
+
+        internal override void Flatten()
+        {
+            Contains.Flatten();
+        }
     }
 
     internal class Describer<T>
     {
+        private static int NextId;
+
         private static readonly TypeDescription All;
         
         private static readonly TypeDescription AllPublic;
@@ -389,6 +487,61 @@ namespace PublicBroadcasting.Impl
             FieldsInternalProtected = BuildDescription(IncludedMembers.Fields, IncludedVisibility.Internal | IncludedVisibility.Protected);
 
             FieldsProtected = BuildDescription(IncludedMembers.Fields, IncludedVisibility.Protected);
+
+            //----//
+
+            All.Flatten();
+            AllPublic.Flatten();
+            AllPublicPrivate.Flatten();
+            AllPublicInternal.Flatten();
+            AllPublicProtected.Flatten();
+            AllPublicPrivateInternal.Flatten();
+            AllPublicPrivateProtected.Flatten();
+            AllPublicInternalProtected.Flatten();
+            AllPrivate.Flatten();
+            AllPrivateInternal.Flatten();
+            AllPrivateProtected.Flatten();
+            AllPrivateInternalProtected.Flatten();
+            AllInternal.Flatten();
+            AllInternalProtected.Flatten();
+            AllProtected.Flatten();
+
+            Properties.Flatten();
+            PropertiesPublic.Flatten();
+            PropertiesPublicPrivate.Flatten();
+            PropertiesPublicInternal.Flatten();
+            PropertiesPublicProtected.Flatten();
+            PropertiesPublicPrivateInternal.Flatten();
+            PropertiesPublicPrivateProtected.Flatten();
+            PropertiesPublicInternalProtected.Flatten();
+            PropertiesPrivate.Flatten();
+            PropertiesPrivateInternal.Flatten();
+            PropertiesPrivateProtected.Flatten();
+            PropertiesPrivateInternalProtected.Flatten();
+            PropertiesInternal.Flatten();
+            PropertiesInternalProtected.Flatten();
+            PropertiesProtected.Flatten();
+
+            Fields.Flatten();
+            FieldsPublic.Flatten();
+            FieldsPublicPrivate.Flatten();
+            FieldsPublicInternal.Flatten();
+            FieldsPublicProtected.Flatten();
+            FieldsPublicPrivateInternal.Flatten();
+            FieldsPublicPrivateProtected.Flatten();
+            FieldsPublicInternalProtected.Flatten();
+            FieldsPrivate.Flatten();
+            FieldsPrivateInternal.Flatten();
+            FieldsPrivateProtected.Flatten();
+            FieldsPrivateInternalProtected.Flatten();
+            FieldsInternal.Flatten();
+            FieldsInternalProtected.Flatten();
+            FieldsProtected.Flatten();
+        }
+
+        private static int GetNextId()
+        {
+            return Interlocked.Increment(ref NextId);
         }
 
         public static TypeDescription BuildDescription(IncludedMembers members, IncludedVisibility visibility, Dictionary<Type, Action<ClassTypeDescription>> inProgress = null)
@@ -509,7 +662,7 @@ namespace PublicBroadcasting.Impl
                 }
             }
 
-            var ret = new ClassTypeDescription(classMembers);
+            var ret = new ClassTypeDescription(classMembers, GetNextId);
             
             var promise = inProgress[t];
             if (promise != null) promise(ret);
