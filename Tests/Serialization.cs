@@ -59,5 +59,49 @@ namespace Tests
             Assert.AreEqual("Hello", b2.Foo);
             Assert.AreEqual("World", b2.Bar);
         }
+
+        [TestMethod]
+        public void Lists()
+        {
+            var bytes1 = Serializer.Serialize(new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
+            var list1 = Deserializer.Deserialize<List<int>>(bytes1);
+            Assert.AreEqual(10, list1.Count);
+
+            for (var i = 0; i < 10; i++)
+            {
+                Assert.AreEqual(i + 1, list1[i]);
+            }
+
+            var bytes2 = Serializer.Serialize(new List<A> { new A { Foo = "1" }, new A { Foo = "2" }, new A { Foo = "3" } });
+            var list2 = Deserializer.Deserialize<List<A>>(bytes2);
+            Assert.AreEqual(3, list2.Count);
+
+            for (var i = 0; i < 3; i++)
+            {
+                Assert.AreEqual((i + 1).ToString(), list2[i].Foo);
+            }
+        }
+
+        class AList
+        {
+            public string Foo {get;set;}
+            public List<int> Bar {get;set;}
+        }
+
+        [TestMethod]
+        public void ClassesWithLists()
+        {
+            var bytes = Serializer.Serialize(new AList { Foo = "Hello", Bar = new List<int> { 1, 2, 3 } });
+            var alist = Deserializer.Deserialize<AList>(bytes);
+            Assert.IsNotNull(alist);
+            Assert.AreEqual("Hello", alist.Foo);
+            Assert.IsNotNull(alist.Bar);
+            Assert.AreEqual(3, alist.Bar.Count);
+
+            for (var i = 0; i < 3; i++)
+            {
+                Assert.AreEqual(i + 1, alist.Bar[i]);
+            }
+        }
     }
 }

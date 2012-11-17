@@ -1,5 +1,6 @@
 ﻿using FastMember;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -13,6 +14,37 @@ namespace PublicBroadcasting.Impl
         private static readonly Type[] EmptyTypes = new Type[0];
         private static readonly object[] EmptyObjects = new object[0];
 
+        private static Func<object, object> GetListMapper(ListTypeDescription desc, IncludedMembers members, IncludedVisibility visibility)
+        {
+            var fromListType = typeof(From).GetGenericArguments()[0];
+
+            var itemMapper = (Func<object, object>)(typeof(POCOBuilder<>).MakeGenericType(fromListType).GetMethod("GetMapper").Invoke(null, new object[] { members, visibility }));
+
+            return
+                x =>
+                {
+                    var asList = x as IList;
+
+                    // it's all the same, don't waste our time
+                    if (asList == null || asList.Count == 0) return null;
+
+                    var first = itemMapper(asList[0]);
+
+                    var listType = typeof(List<>).MakeGenericType(first.GetType());
+
+                    var ret = (IList)listType.GetConstructor(EmptyTypes).Invoke(EmptyObjects);
+
+                    ret.Add(first);
+                    for (var i = 1; i < asList.Count; i++)
+                    {
+                        var mapped = itemMapper(asList[i]);
+                        ret.Add(mapped);
+                    }
+
+                    return ret;
+                };
+        }
+
         public static Func<object, object> GetMapper(IncludedMembers members, IncludedVisibility visibility)
         {
             const string SelfName = "GetMapper";
@@ -20,6 +52,11 @@ namespace PublicBroadcasting.Impl
             var t = typeof(From);
             var desc = Describer<From>.Get(members, visibility);
             var pocoType = desc.GetPocoType();
+
+            if (desc is ListTypeDescription)
+            {
+                return GetListMapper((ListTypeDescription)desc, members, visibility);
+            }
 
             if (desc is DictionaryTypeDescription || desc is ListTypeDescription) throw new NotImplementedException();
 
