@@ -31,6 +31,36 @@ namespace PublicBroadcasting.Impl
         internal virtual void Seal(TypeDescription existing = null) { }
 
         internal abstract void Flatten();
+
+        private static List<TypeDescription> _Cache = new List<TypeDescription>();
+
+        protected static void Cache(TypeDescription c)
+        {
+            lock (_Cache)
+            {
+                if (_Cache.Any(a => a.Equals(c))) return;
+
+                _Cache.Add(c);
+            }
+        }
+
+        protected static TypeDescription EquivalentFromCache(TypeDescription t)
+        {
+            lock (_Cache)
+            {
+                foreach (var c in _Cache)
+                {
+                    if (c.Equals(t)) return c;
+                }
+            }
+
+            return null;
+        }
+
+        public abstract TypeDescription FromCache();
+
+        public abstract override bool Equals(object obj);
+        public abstract override int GetHashCode();
     }
 
     [ProtoContract]
@@ -52,6 +82,21 @@ namespace PublicBroadcasting.Impl
         }
 
         internal override void Flatten() { }
+
+        public override bool Equals(object obj)
+        {
+            return obj is NoTypeDescription;
+        }
+
+        public override int GetHashCode()
+        {
+            return -1;
+        }
+
+        public override TypeDescription FromCache()
+        {
+            return this;
+        }
     }
 
     [ProtoContract]
@@ -113,6 +158,40 @@ namespace PublicBroadcasting.Impl
         }
 
         internal override void Flatten() { }
+
+        public override bool Equals(object obj)
+        {
+            var asSimple = obj as SimpleTypeDescription;
+            if (asSimple == null) return false;
+
+            return Type == asSimple.Type;
+        }
+
+        public override int GetHashCode()
+        {
+            return Type;
+        }
+
+        public override TypeDescription FromCache()
+        {
+            switch (Type)
+            {
+                case 0: return Int;
+                case 1: return Long;
+                case 2: return String;
+                case 3: return Byte;
+                case 4: return Char;
+                case 5: return Short;
+                case 6: return UInt;
+                case 7: return ULong;
+                case 8: return SByte;
+                case 9: return UShort;
+                case 10: return Double;
+                case 11: return Float;
+                case 12: return Decimal;
+                default: throw new Exception("Unexpected Tag [" + Type + "]");
+            }
+        }
     }
 
     [ProtoContract]
@@ -139,11 +218,23 @@ namespace PublicBroadcasting.Impl
 
         private ClassTypeDescription() { }
 
-        internal ClassTypeDescription(Dictionary<string, TypeDescription> members, Func<int> nextId)
+        private ClassTypeDescription(Dictionary<string, TypeDescription> members, Func<int> nextId)
         {
             Members = members;
 
             NextId = nextId;
+
+            TypeDescription.Cache(this);
+        }
+
+        internal static ClassTypeDescription Create(Dictionary<string, TypeDescription> members, Func<int> nextId)
+        {
+            foreach (var key in members.Keys.ToList())
+            {
+                members[key] = members[key].FromCache();
+            }
+
+            return (ClassTypeDescription)(new ClassTypeDescription(members, nextId).FromCache());
         }
 
         private TypeBuilder TypeBuilder;
@@ -254,6 +345,42 @@ namespace PublicBroadcasting.Impl
                 member.Value.Flatten();
             }
         }
+
+        public override bool Equals(object obj)
+        {
+            var asClass = obj as ClassTypeDescription;
+            if (asClass == null) return false;
+
+            if (Members.Count != asClass.Members.Count) return false;
+
+            foreach (var mem in Members)
+            {
+                TypeDescription otherVal;
+                if (!asClass.Members.TryGetValue(mem.Key, out otherVal)) return false;
+
+                if (!mem.Value.Equals(otherVal)) return false;
+            }
+
+            return true;
+        }
+
+        public override int GetHashCode()
+        {
+            return Members.Select(kv => kv.Key.GetHashCode() ^ (kv.Value.GetHashCode() * -1)).Aggregate((a, b) => a ^ b);
+        }
+
+        public override TypeDescription FromCache()
+        {
+            var allCached = TypeDescription.EquivalentFromCache(this);
+            if (allCached != null) return allCached;
+
+            foreach (var key in Members.Keys.ToList())
+            {
+                Members[key] = Members[key].FromCache();
+            }
+
+            return this;
+        }
     }
 
     [ProtoContract]
@@ -322,6 +449,21 @@ namespace PublicBroadcasting.Impl
         }
 
         internal override void Flatten() { }
+
+        public override bool Equals(object obj)
+        {
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            return ClassId;
+        }
+
+        public override TypeDescription FromCache()
+        {
+            return this;
+        }
     }
 
     [ProtoContract]
@@ -342,10 +484,20 @@ namespace PublicBroadcasting.Impl
 
         private DictionaryTypeDescription() { }
 
-        internal DictionaryTypeDescription(TypeDescription keyType, TypeDescription valueType)
+        private DictionaryTypeDescription(TypeDescription keyType, TypeDescription valueType)
         {
             KeyType = keyType;
             ValueType = valueType;
+
+            TypeDescription.Cache(this);
+        }
+
+        static internal TypeDescription Create(TypeDescription keyType, TypeDescription valueType)
+        {
+            keyType = keyType.FromCache();
+            valueType = valueType.FromCache();
+
+            return new DictionaryTypeDescription(keyType, valueType).FromCache();
         }
 
         internal override Type GetPocoType(TypeDescription existing = null)
@@ -361,9 +513,32 @@ namespace PublicBroadcasting.Impl
 
         internal override void Flatten()
         {
-
             KeyType.Flatten();
             ValueType.Flatten();
+        }
+
+        public override bool Equals(object obj)
+        {
+            var asDict = obj as DictionaryTypeDescription;
+            if (asDict == null) return false;
+
+            return KeyType.Equals(asDict.KeyType) && ValueType.Equals(asDict.ValueType);
+        }
+
+        public override int GetHashCode()
+        {
+            return KeyType.GetHashCode() ^ ValueType.GetHashCode();
+        }
+
+        public override TypeDescription FromCache()
+        {
+            var allCached = TypeDescription.EquivalentFromCache(this);
+            if (allCached != null) return allCached;
+
+            KeyType = KeyType.FromCache();
+            ValueType = ValueType.FromCache();
+
+            return this;
         }
     }
 
@@ -383,9 +558,18 @@ namespace PublicBroadcasting.Impl
 
         private ListTypeDescription() { }
 
-        internal ListTypeDescription(TypeDescription contains)
+        private ListTypeDescription(TypeDescription contains)
         {
             Contains = contains;
+
+            TypeDescription.Cache(this);
+        }
+
+        static internal ListTypeDescription Create(TypeDescription contains)
+        {
+            contains = contains.FromCache();
+
+            return (ListTypeDescription)(new ListTypeDescription(contains).FromCache());
         }
 
         internal override Type GetPocoType(TypeDescription existing = null)
@@ -401,6 +585,29 @@ namespace PublicBroadcasting.Impl
         internal override void Flatten()
         {
             Contains.Flatten();
+        }
+
+        public override bool Equals(object obj)
+        {
+            var asList = obj as ListTypeDescription;
+            if (asList == null) return false;
+
+            return Contains.Equals(asList.Contains);
+        }
+
+        public override int GetHashCode()
+        {
+            return Contains.GetHashCode() * -1;
+        }
+
+        public override TypeDescription FromCache()
+        {
+            var allCached = TypeDescription.EquivalentFromCache(this);
+            if (allCached != null) return allCached;
+
+            Contains = Contains.FromCache();
+
+            return this;
         }
     }
 
@@ -633,11 +840,10 @@ namespace PublicBroadcasting.Impl
                 var keyDesc = typeof(Describer<>).MakeGenericType(keyType).GetMethod(SelfName);
                 var valDesc = typeof(Describer<>).MakeGenericType(valueType).GetMethod(SelfName);
 
-                return
-                    new DictionaryTypeDescription(
-                        (TypeDescription)keyDesc.Invoke(null, new object[] { members, visibility, inProgress }),
-                        (TypeDescription)valDesc.Invoke(null, new object[] { members, visibility, inProgress })
-                    );
+                return DictionaryTypeDescription.Create(
+                    (TypeDescription)keyDesc.Invoke(null, new object[] { members, visibility, inProgress }),
+                    (TypeDescription)valDesc.Invoke(null, new object[] { members, visibility, inProgress })
+                );
             }
 
             if ((t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IList<>)) ||
@@ -650,7 +856,7 @@ namespace PublicBroadcasting.Impl
                 var valDesc = typeof(Describer<>).MakeGenericType(valueType).GetMethod(SelfName);
 
                 return
-                    new ListTypeDescription(
+                    ListTypeDescription.Create(
                         (TypeDescription)valDesc.Invoke(null, new object[] { members, visibility, inProgress })
                     );
             }
@@ -716,7 +922,8 @@ namespace PublicBroadcasting.Impl
                 }
             }
 
-            var ret = new ClassTypeDescription(classMembers, GetNextId);
+            //var ret = new ClassTypeDescription(classMembers, GetNextId);
+            var ret = ClassTypeDescription.Create(classMembers, GetNextId);
             
             var promise = inProgress[t];
             if (promise != null) promise(ret);

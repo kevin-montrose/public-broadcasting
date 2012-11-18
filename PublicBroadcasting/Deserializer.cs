@@ -30,9 +30,11 @@ namespace PublicBroadcasting
                 }
             }
 
-            untyped.Description.Seal(untyped.Description);
+            var effectDesc = untyped.Description.FromCache();
 
-            var type = untyped.Description.GetPocoType(untyped.Description);
+            effectDesc.Seal(untyped.Description);
+
+            var type = effectDesc.GetPocoType(untyped.Description);
 
             var arg = POCOMapper<T>.GetMapper(type);
 
