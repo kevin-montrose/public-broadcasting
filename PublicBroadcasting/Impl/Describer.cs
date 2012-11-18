@@ -30,7 +30,7 @@ namespace PublicBroadcasting.Impl
 
         internal virtual void Seal(TypeDescription existing = null) { }
 
-        internal abstract void Flatten();
+        internal virtual TypeDescription Flatten(Func<int> nextId) { return this; }
 
         private static List<TypeDescription> _Cache = new List<TypeDescription>();
 
@@ -80,8 +80,6 @@ namespace PublicBroadcasting.Impl
         {
             throw new NotImplementedException();
         }
-
-        internal override void Flatten() { }
 
         public override bool Equals(object obj)
         {
@@ -157,8 +155,6 @@ namespace PublicBroadcasting.Impl
             }
         }
 
-        internal override void Flatten() { }
-
         public override bool Equals(object obj)
         {
             var asSimple = obj as SimpleTypeDescription;
@@ -214,27 +210,23 @@ namespace PublicBroadcasting.Impl
         [ProtoMember(2)]
         internal int Id { get; set; }
 
-        private Func<int> NextId { get; set; }
-
         private ClassTypeDescription() { }
 
-        private ClassTypeDescription(Dictionary<string, TypeDescription> members, Func<int> nextId)
+        private ClassTypeDescription(Dictionary<string, TypeDescription> members)
         {
             Members = members;
-
-            NextId = nextId;
 
             TypeDescription.Cache(this);
         }
 
-        internal static ClassTypeDescription Create(Dictionary<string, TypeDescription> members, Func<int> nextId)
+        internal static ClassTypeDescription Create(Dictionary<string, TypeDescription> members)
         {
             foreach (var key in members.Keys.ToList())
             {
                 members[key] = members[key].FromCache();
             }
 
-            return (ClassTypeDescription)(new ClassTypeDescription(members, nextId).FromCache());
+            return (ClassTypeDescription)(new ClassTypeDescription(members).FromCache());
         }
 
         private TypeBuilder TypeBuilder;
@@ -322,32 +314,42 @@ namespace PublicBroadcasting.Impl
             return ret;
         }
 
-        internal override void Flatten()
+        internal override TypeDescription Flatten(Func<int> nextId)
         {
-            var descendentMembers = GetDescendentMemberModifiers();
+            var copy = new ClassTypeDescription();
+            copy.PocoType = PocoType;
+            copy.Members = new Dictionary<string, TypeDescription>(Members);
 
-            var needsReplace = descendentMembers.Where(w => w.Item1 == this).ToList();
+            var descendentMembers = copy.GetDescendentMemberModifiers();
 
-            if (needsReplace.Count != 0)
+            var needsReplace = descendentMembers.Where(w => w.Item1.Equals(copy)).ToList();
+
+            if (needsReplace.Count == 0)
             {
-                Id = NextId();
-
-                var reference = new BackReferenceTypeDescription(Id);
-
-                foreach (var replace in needsReplace)
-                {
-                    replace.Item2(reference);
-                }
+                return copy;
             }
 
-            foreach (var member in Members)
+            copy.Id = nextId();
+
+            var reference = new BackReferenceTypeDescription(copy.Id);
+
+            foreach (var replace in needsReplace)
             {
-                member.Value.Flatten();
+                replace.Item2(reference);
             }
+
+            foreach (var member in copy.Members)
+            {
+                member.Value.Flatten(nextId);
+            }
+
+            return copy;
         }
 
         public override bool Equals(object obj)
         {
+            if (object.ReferenceEquals(this, obj)) return true;
+
             var asClass = obj as ClassTypeDescription;
             if (asClass == null) return false;
 
@@ -448,8 +450,6 @@ namespace PublicBroadcasting.Impl
             throw new Exception("Couldn't find reference to ClassId = " + ClassId);
         }
 
-        internal override void Flatten() { }
-
         public override bool Equals(object obj)
         {
             return false;
@@ -511,10 +511,13 @@ namespace PublicBroadcasting.Impl
             ValueType.Seal(existing);
         }
 
-        internal override void Flatten()
+        internal override TypeDescription Flatten(Func<int> nextId)
         {
-            KeyType.Flatten();
-            ValueType.Flatten();
+            var clone = new DictionaryTypeDescription();
+            clone.KeyType = KeyType.Flatten(nextId);
+            clone.ValueType = ValueType.Flatten(nextId);
+            
+            return clone;
         }
 
         public override bool Equals(object obj)
@@ -582,9 +585,12 @@ namespace PublicBroadcasting.Impl
             Contains.Seal(existing);
         }
 
-        internal override void Flatten()
+        internal override TypeDescription Flatten(Func<int> nextId)
         {
-            Contains.Flatten();
+            var clone = new ListTypeDescription();
+            clone.Contains = Contains.Flatten(nextId);
+
+            return clone;
         }
 
         public override bool Equals(object obj)
@@ -613,8 +619,6 @@ namespace PublicBroadcasting.Impl
 
     internal class Describer<T>
     {
-        private static int NextId;
-
         private static readonly TypeDescription All;
         
         private static readonly TypeDescription AllPublic;
@@ -751,58 +755,64 @@ namespace PublicBroadcasting.Impl
 
             //----//
 
-            All.Flatten();
-            AllPublic.Flatten();
-            AllPublicPrivate.Flatten();
-            AllPublicInternal.Flatten();
-            AllPublicProtected.Flatten();
-            AllPublicPrivateInternal.Flatten();
-            AllPublicPrivateProtected.Flatten();
-            AllPublicInternalProtected.Flatten();
-            AllPrivate.Flatten();
-            AllPrivateInternal.Flatten();
-            AllPrivateProtected.Flatten();
-            AllPrivateInternalProtected.Flatten();
-            AllInternal.Flatten();
-            AllInternalProtected.Flatten();
-            AllProtected.Flatten();
+            All = All.Flatten(GetIdProvider());
+            AllPublic = AllPublic.Flatten(GetIdProvider());
+            AllPublicPrivate = AllPublicPrivate.Flatten(GetIdProvider());
+            AllPublicInternal = AllPublicInternal.Flatten(GetIdProvider());
+            AllPublicProtected = AllPublicProtected.Flatten(GetIdProvider());
+            AllPublicPrivateInternal = AllPublicPrivateInternal.Flatten(GetIdProvider());
+            AllPublicPrivateProtected = AllPublicPrivateProtected.Flatten(GetIdProvider());
+            AllPublicInternalProtected = AllPublicInternalProtected.Flatten(GetIdProvider());
+            AllPrivate = AllPrivate.Flatten(GetIdProvider());
+            AllPrivateInternal = AllPrivateInternal.Flatten(GetIdProvider());
+            AllPrivateProtected = AllPrivateProtected.Flatten(GetIdProvider());
+            AllPrivateInternalProtected = AllPrivateInternalProtected.Flatten(GetIdProvider());
+            AllInternal = AllInternal.Flatten(GetIdProvider());
+            AllInternalProtected = AllInternalProtected.Flatten(GetIdProvider());
+            AllProtected = AllProtected.Flatten(GetIdProvider());
 
-            Properties.Flatten();
-            PropertiesPublic.Flatten();
-            PropertiesPublicPrivate.Flatten();
-            PropertiesPublicInternal.Flatten();
-            PropertiesPublicProtected.Flatten();
-            PropertiesPublicPrivateInternal.Flatten();
-            PropertiesPublicPrivateProtected.Flatten();
-            PropertiesPublicInternalProtected.Flatten();
-            PropertiesPrivate.Flatten();
-            PropertiesPrivateInternal.Flatten();
-            PropertiesPrivateProtected.Flatten();
-            PropertiesPrivateInternalProtected.Flatten();
-            PropertiesInternal.Flatten();
-            PropertiesInternalProtected.Flatten();
-            PropertiesProtected.Flatten();
+            Properties = Properties.Flatten(GetIdProvider());
+            PropertiesPublic = PropertiesPublic.Flatten(GetIdProvider());
+            PropertiesPublicPrivate = PropertiesPublicPrivate.Flatten(GetIdProvider());
+            PropertiesPublicInternal = PropertiesPublicInternal.Flatten(GetIdProvider());
+            PropertiesPublicProtected = PropertiesPublicProtected.Flatten(GetIdProvider());
+            PropertiesPublicPrivateInternal = PropertiesPublicPrivateInternal.Flatten(GetIdProvider());
+            PropertiesPublicPrivateProtected = PropertiesPublicPrivateProtected.Flatten(GetIdProvider());
+            PropertiesPublicInternalProtected = PropertiesPublicInternalProtected.Flatten(GetIdProvider());
+            PropertiesPrivate = PropertiesPrivate.Flatten(GetIdProvider());
+            PropertiesPrivateInternal = PropertiesPrivateInternal.Flatten(GetIdProvider());
+            PropertiesPrivateProtected = PropertiesPrivateProtected.Flatten(GetIdProvider());
+            PropertiesPrivateInternalProtected = PropertiesPrivateInternalProtected.Flatten(GetIdProvider());
+            PropertiesInternal = PropertiesInternal.Flatten(GetIdProvider());
+            PropertiesInternalProtected = PropertiesInternalProtected.Flatten(GetIdProvider());
+            PropertiesProtected = PropertiesProtected.Flatten(GetIdProvider());
 
-            Fields.Flatten();
-            FieldsPublic.Flatten();
-            FieldsPublicPrivate.Flatten();
-            FieldsPublicInternal.Flatten();
-            FieldsPublicProtected.Flatten();
-            FieldsPublicPrivateInternal.Flatten();
-            FieldsPublicPrivateProtected.Flatten();
-            FieldsPublicInternalProtected.Flatten();
-            FieldsPrivate.Flatten();
-            FieldsPrivateInternal.Flatten();
-            FieldsPrivateProtected.Flatten();
-            FieldsPrivateInternalProtected.Flatten();
-            FieldsInternal.Flatten();
-            FieldsInternalProtected.Flatten();
-            FieldsProtected.Flatten();
+            Fields = Fields.Flatten(GetIdProvider());
+            FieldsPublic = FieldsPublic.Flatten(GetIdProvider());
+            FieldsPublicPrivate = FieldsPublicPrivate.Flatten(GetIdProvider());
+            FieldsPublicInternal = FieldsPublicInternal.Flatten(GetIdProvider());
+            FieldsPublicProtected = FieldsPublicProtected.Flatten(GetIdProvider());
+            FieldsPublicPrivateInternal = FieldsPublicPrivateInternal.Flatten(GetIdProvider());
+            FieldsPublicPrivateProtected = FieldsPublicPrivateProtected.Flatten(GetIdProvider());
+            FieldsPublicInternalProtected = FieldsPublicInternalProtected.Flatten(GetIdProvider());
+            FieldsPrivate = FieldsPrivate.Flatten(GetIdProvider());
+            FieldsPrivateInternal = FieldsPrivateInternal.Flatten(GetIdProvider());
+            FieldsPrivateProtected = FieldsPrivateProtected.Flatten(GetIdProvider());
+            FieldsPrivateInternalProtected = FieldsPrivateInternalProtected.Flatten(GetIdProvider());
+            FieldsInternal = FieldsInternal.Flatten(GetIdProvider());
+            FieldsInternalProtected = FieldsInternalProtected.Flatten(GetIdProvider());
+            FieldsProtected = FieldsProtected.Flatten(GetIdProvider());
         }
 
-        private static int GetNextId()
+        private static Func<int> GetIdProvider()
         {
-            return Interlocked.Increment(ref NextId);
+            int startId = 0;
+
+            return
+                () =>
+                {
+                    return Interlocked.Increment(ref startId);
+                };
         }
 
         public static TypeDescription BuildDescription(IncludedMembers members, IncludedVisibility visibility, Dictionary<Type, Action<ClassTypeDescription>> inProgress = null)
@@ -922,8 +932,7 @@ namespace PublicBroadcasting.Impl
                 }
             }
 
-            //var ret = new ClassTypeDescription(classMembers, GetNextId);
-            var ret = ClassTypeDescription.Create(classMembers, GetNextId);
+            var ret = ClassTypeDescription.Create(classMembers);
             
             var promise = inProgress[t];
             if (promise != null) promise(ret);
