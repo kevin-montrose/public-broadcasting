@@ -151,6 +151,8 @@ namespace PublicBroadcasting.Impl
 
         internal override void Seal(TypeDescription existing = null)
         {
+            if (PocoType != null) return;
+
             var name = "POCO" + Guid.NewGuid().ToString().Replace("-", "");
 
             var protoMemberAttr = typeof(ProtoMemberAttribute).GetConstructor(new []{typeof(int)});

@@ -166,5 +166,18 @@ namespace Tests
             Assert.AreEqual("3", circle.Next.Next.Text);
             Assert.IsNull(circle.Next.Next.Next);
         }
+
+        class BDict
+        {
+            public string Bar { get; set; }
+            public Dictionary<string, A> Buzz { get; set; }
+        }
+
+        [TestMethod]
+        public void MoreDictionaries()
+        {
+            var bytes = Serializer.Serialize(new BDict { Bar = "Hello", Buzz = new Dictionary<string, A> { { "1", new A { Foo = "Bar" } } } });
+            var bdict = Deserializer.Deserialize<BDict>(bytes);
+        }
     }
 }
