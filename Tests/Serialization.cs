@@ -103,5 +103,48 @@ namespace Tests
                 Assert.AreEqual(i + 1, alist.Bar[i]);
             }
         }
+
+        [TestMethod]
+        public void Dictionaries()
+        {
+            var bytes1 = Serializer.Serialize(new Dictionary<string, int> { {"1", 1}, {"2", 2}, {"3", 3 } });
+            var dicts1 = Deserializer.Deserialize<Dictionary<string, int>>(bytes1);
+            Assert.AreEqual(3, dicts1.Count);
+
+            for (var i = 1; i <= 3; i++)
+            {
+                Assert.AreEqual(i, dicts1[i.ToString()]);
+            }
+
+            var bytes2 = Serializer.Serialize(new Dictionary<string, A> { { "1", new A { Foo = "2" } }, { "2", new A { Foo = "3" } }, { "3", new A { Foo = "4" } } });
+            var dicts2 = Deserializer.Deserialize<Dictionary<string, A>>(bytes2);
+            Assert.AreEqual(3, dicts2.Count);
+
+            for (var i = 1; i <= 3; i++)
+            {
+                Assert.AreEqual((i+1).ToString(), dicts2[i.ToString()].Foo);
+            }
+        }
+
+        class ADict
+        {
+            public string Foo {get;set;}
+            public Dictionary<string, int> Bar {get;set;}
+        }
+
+        [TestMethod]
+        public void ClassesWithDictionaries()
+        {
+            var bytes = Serializer.Serialize(new ADict { Foo = "Hello", Bar = new Dictionary<string, int> { { "1", 11 }, { "2", 22 } } });
+            var adict = Deserializer.Deserialize<ADict>(bytes);
+            Assert.IsNotNull(adict);
+            Assert.AreEqual("Hello", adict.Foo);
+            Assert.IsNotNull(adict.Bar);
+            Assert.AreEqual(2, adict.Bar.Count);
+            Assert.IsTrue(adict.Bar.Keys.Contains("1"));
+            Assert.IsTrue(adict.Bar.Keys.Contains("2"));
+            Assert.AreEqual(11, adict.Bar["1"]);
+            Assert.AreEqual(22, adict.Bar["2"]);
+        }
     }
 }

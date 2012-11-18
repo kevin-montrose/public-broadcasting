@@ -13,7 +13,43 @@ namespace PublicBroadcasting.Impl
     {
         public static Func<object, object> GetDictionaryMapper(Type tFrom)
         {
-            throw new NotImplementedException();
+            var toKeyType = typeof(To).GetGenericArguments()[0];
+            var toValType = typeof(To).GetGenericArguments()[1];
+
+            var fromKeyType = tFrom.GetGenericArguments()[0];
+            var fromValType = tFrom.GetGenericArguments()[1];
+
+            var keyMapper = typeof(POCOMapper<>).MakeGenericType(toKeyType).GetMethod("GetMapper");
+            var keyMap = (Func<object, object>)keyMapper.Invoke(null, new object[] { fromKeyType });
+
+            var valMapper = typeof(POCOMapper<>).MakeGenericType(toValType).GetMethod("GetMapper");
+            var valMap = (Func<object, object>)valMapper.Invoke(null, new object[] { fromValType });
+
+            var newDictType = typeof(Dictionary<,>).MakeGenericType(toKeyType, toValType);
+            var newDictCons = newDictType.GetConstructor(new Type[0]);
+
+            return
+                dictX =>
+                {
+                    var ret = (IDictionary)newDictCons.Invoke(new object[0]);
+
+                    var asDict = (IDictionary)dictX;
+
+                    var e = asDict.Keys.GetEnumerator();
+
+                    while (e.MoveNext())
+                    {
+                        var key = e.Current;
+                        var mKey = keyMap(key);
+
+                        var val = asDict[key];
+                        var mVal = valMap(val);
+
+                        ret.Add(mKey, mVal);
+                    }
+
+                    return ret;
+                };
         }
 
         public static Func<object, object> GetListMapper(Type tFrom)
@@ -24,11 +60,8 @@ namespace PublicBroadcasting.Impl
             var mapper = typeof(POCOMapper<>).MakeGenericType(toListType).GetMethod("GetMapper");
             var map = (Func<object, object>)mapper.Invoke(null, new object[] { fromListType });
 
-
             var newListType = typeof(List<>).MakeGenericType(toListType);
             var newListCons = newListType.GetConstructor(new Type[0]);
-
-            var newListAdd = newListType.GetMethod("Add");
 
             return
                 listX =>

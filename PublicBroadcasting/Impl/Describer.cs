@@ -1,6 +1,7 @@
 ﻿using ProtoBuf;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -424,6 +425,8 @@ namespace PublicBroadcasting.Impl
 
         static Describer()
         {
+            Debug.WriteLine("Describer: " + typeof(T).FullName);
+
             All = BuildDescription(IncludedMembers.Properties | IncludedMembers.Fields, IncludedVisibility.Public | IncludedVisibility.Internal | IncludedVisibility.Protected | IncludedVisibility.Private);
 
             AllPublic = BuildDescription(IncludedMembers.Properties | IncludedMembers.Fields, IncludedVisibility.Public);

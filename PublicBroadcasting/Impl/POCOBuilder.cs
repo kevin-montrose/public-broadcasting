@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -14,7 +15,12 @@ namespace PublicBroadcasting.Impl
         private static readonly Type[] EmptyTypes = new Type[0];
         private static readonly object[] EmptyObjects = new object[0];
 
-        private static Func<object, object> GetListMapper(ListTypeDescription desc, IncludedMembers members, IncludedVisibility visibility)
+        static POCOBuilder()
+        {
+            Debug.WriteLine("POCOBuilder: " + typeof(From).FullName);
+        }
+
+        private static Func<object, object> GetListMapper(IncludedMembers members, IncludedVisibility visibility)
         {
             var fromListType = typeof(From).GetGenericArguments()[0];
 
@@ -45,6 +51,49 @@ namespace PublicBroadcasting.Impl
                 };
         }
 
+        public static Func<object, object> GetDictionaryMapper(IncludedMembers members, IncludedVisibility visibility)
+        {
+            var genArgs = typeof(From).GetGenericArguments();
+
+            var keyType = genArgs[0];
+            var valType = genArgs[1];
+
+            var keyMapper = (Func<object, object>)(typeof(POCOBuilder<>).MakeGenericType(keyType).GetMethod("GetMapper").Invoke(null, new object[] { members, visibility }));
+            var valMapper = (Func<object, object>)(typeof(POCOBuilder<>).MakeGenericType(valType).GetMethod("GetMapper").Invoke(null, new object[] { members, visibility }));
+
+            return
+                x =>
+                {
+                    var asDict = x as IDictionary;
+
+                    // Don't waste my time
+                    if (asDict == null || asDict.Count == 0) return null;
+
+                    var e = asDict.Keys.GetEnumerator();
+                    e.MoveNext();
+
+                    var firstKey = e.Current;
+                    var firstVal = asDict[firstKey];
+
+                    var fkMapped = keyMapper(firstKey);
+                    var fvMapped = valMapper(firstVal);
+
+                    var ret = (IDictionary)(typeof(Dictionary<,>).MakeGenericType(fkMapped.GetType(), fvMapped.GetType()).GetConstructor(EmptyTypes).Invoke(EmptyObjects));
+
+                    ret.Add(fkMapped, fvMapped);
+
+                    while (e.MoveNext())
+                    {
+                        var mappedKey = keyMapper(e.Current);
+                        var mappedValue = valMapper(asDict[e.Current]);
+
+                        ret.Add(mappedKey, mappedValue);
+                    }
+
+                    return ret;
+                };
+        }
+
         public static Func<object, object> GetMapper(IncludedMembers members, IncludedVisibility visibility)
         {
             const string SelfName = "GetMapper";
@@ -55,10 +104,13 @@ namespace PublicBroadcasting.Impl
 
             if (desc is ListTypeDescription)
             {
-                return GetListMapper((ListTypeDescription)desc, members, visibility);
+                return GetListMapper(members, visibility);
             }
 
-            if (desc is DictionaryTypeDescription || desc is ListTypeDescription) throw new NotImplementedException();
+            if (desc is DictionaryTypeDescription)
+            {
+                return GetDictionaryMapper(members, visibility);
+            }
 
             if (desc is SimpleTypeDescription)
             {
@@ -108,7 +160,10 @@ namespace PublicBroadcasting.Impl
 
                     foreach (var member in asClass.Members)
                     {
-                        to[ret, member.Key] = propMaps[member.Key](from[x, member.Key]);
+                        var fromVal = from[x, member.Key];
+                        var toVal = propMaps[member.Key](fromVal);
+
+                        to[ret, member.Key] = toVal;
                     }
 
                     return ret;
