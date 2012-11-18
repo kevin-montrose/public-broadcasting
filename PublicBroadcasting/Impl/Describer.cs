@@ -26,9 +26,9 @@ namespace PublicBroadcasting.Impl
         /// </summary>
         internal virtual bool NeedsEnvelope { get { return true; } }
 
-        internal abstract Type GetPocoType();
+        internal abstract Type GetPocoType(TypeDescription existingDescription = null);
 
-        internal virtual void Seal() { }
+        internal virtual void Seal(TypeDescription existing = null) { }
 
         internal abstract void Flatten();
     }
@@ -46,7 +46,7 @@ namespace PublicBroadcasting.Impl
 
         internal NoTypeDescription() { }
 
-        internal override Type GetPocoType()
+        internal override Type GetPocoType(TypeDescription existing = null)
         {
             throw new NotImplementedException();
         }
@@ -91,7 +91,7 @@ namespace PublicBroadcasting.Impl
             Type = tag;
         }
 
-        internal override Type GetPocoType()
+        internal override Type GetPocoType(TypeDescription existing = null)
         {
             switch (Type)
             {
@@ -149,7 +149,7 @@ namespace PublicBroadcasting.Impl
         private TypeBuilder TypeBuilder;
         private Type PocoType;
 
-        internal override void Seal()
+        internal override void Seal(TypeDescription existing = null)
         {
             var name = "POCO" + Guid.NewGuid().ToString().Replace("-", "");
 
@@ -162,7 +162,7 @@ namespace PublicBroadcasting.Impl
             {
                 var memberAttrBuilder = new CustomAttributeBuilder(protoMemberAttr, new object[] { ix });
 
-                var propType = kv.Value.GetPocoType();
+                var propType = kv.Value.GetPocoType(existing);
 
                 var fieldBldr = TypeBuilder.DefineField("_" + kv.Key + "_" + Guid.NewGuid().ToString().Replace("-", ""), propType, FieldAttributes.Private);
 
@@ -197,7 +197,7 @@ namespace PublicBroadcasting.Impl
             PocoType = TypeBuilder.CreateType();
         }
 
-        internal override Type GetPocoType()
+        internal override Type GetPocoType(TypeDescription existing = null)
         {
             return PocoType ?? TypeBuilder;
         }
@@ -260,14 +260,63 @@ namespace PublicBroadcasting.Impl
         [ProtoMember(1)]
         public int ClassId { get; set; }
 
+        private BackReferenceTypeDescription() { }
+
         internal BackReferenceTypeDescription(int id)
         {
             ClassId = id;
         }
 
-        internal override Type GetPocoType()
+        internal override Type GetPocoType(TypeDescription existingDescription = null)
         {
-            throw new NotImplementedException();
+            if (existingDescription == null) throw new ArgumentNullException("existingDescription");
+
+            var stack = new Stack<TypeDescription>();
+            stack.Push(existingDescription);
+
+            while (stack.Count > 0)
+            {
+                var top = stack.Pop();
+
+                if (top is SimpleTypeDescription) continue;
+                
+                if (top is ListTypeDescription)
+                {
+                    stack.Push(((ListTypeDescription)top).Contains);
+                    continue;
+                }
+
+                if (top is DictionaryTypeDescription)
+                {
+                    var asDict = (DictionaryTypeDescription)top;
+
+                    stack.Push(asDict.KeyType);
+                    stack.Push(asDict.ValueType);
+
+                    continue;
+                }
+
+                if (top is ClassTypeDescription)
+                {
+                    var asClass = (ClassTypeDescription)top;
+
+                    if (asClass.Id == ClassId) return asClass.GetPocoType(existingDescription);
+
+                    foreach (var member in asClass.Members)
+                    {
+                        stack.Push(member.Value);
+                    }
+
+                    continue;
+                }
+
+                if (top is NoTypeDescription)
+                {
+                    throw new Exception("How did this even happen?");
+                }
+            }
+
+            throw new Exception("Couldn't find reference to ClassId = " + ClassId);
         }
 
         internal override void Flatten() { }
@@ -297,15 +346,15 @@ namespace PublicBroadcasting.Impl
             ValueType = valueType;
         }
 
-        internal override Type GetPocoType()
+        internal override Type GetPocoType(TypeDescription existing = null)
         {
-            return typeof(Dictionary<,>).MakeGenericType(KeyType.GetPocoType(), ValueType.GetPocoType());
+            return typeof(Dictionary<,>).MakeGenericType(KeyType.GetPocoType(existing), ValueType.GetPocoType(existing));
         }
 
-        internal override void Seal()
+        internal override void Seal(TypeDescription existing = null)
         {
-            KeyType.Seal();
-            ValueType.Seal();
+            KeyType.Seal(existing);
+            ValueType.Seal(existing);
         }
 
         internal override void Flatten()
@@ -337,14 +386,14 @@ namespace PublicBroadcasting.Impl
             Contains = contains;
         }
 
-        internal override Type GetPocoType()
+        internal override Type GetPocoType(TypeDescription existing = null)
         {
-            return typeof(List<>).MakeGenericType(Contains.GetPocoType());
+            return typeof(List<>).MakeGenericType(Contains.GetPocoType(existing));
         }
 
-        internal override void Seal()
+        internal override void Seal(TypeDescription existing = null)
         {
-            Contains.Seal();
+            Contains.Seal(existing);
         }
 
         internal override void Flatten()

@@ -11,7 +11,7 @@ namespace PublicBroadcasting.Impl
 {
     internal class POCOMapper<To>
     {
-        public static Func<object, object> GetDictionaryMapper(Type tFrom)
+        public static Func<object, object> GetDictionaryMapper(Type tFrom, Dictionary<Type, Action<Func<object, object>>> inProgress)
         {
             var toKeyType = typeof(To).GetGenericArguments()[0];
             var toValType = typeof(To).GetGenericArguments()[1];
@@ -20,10 +20,10 @@ namespace PublicBroadcasting.Impl
             var fromValType = tFrom.GetGenericArguments()[1];
 
             var keyMapper = typeof(POCOMapper<>).MakeGenericType(toKeyType).GetMethod("GetMapper");
-            var keyMap = (Func<object, object>)keyMapper.Invoke(null, new object[] { fromKeyType });
+            var keyMap = (Func<object, object>)keyMapper.Invoke(null, new object[] { fromKeyType, inProgress });
 
             var valMapper = typeof(POCOMapper<>).MakeGenericType(toValType).GetMethod("GetMapper");
-            var valMap = (Func<object, object>)valMapper.Invoke(null, new object[] { fromValType });
+            var valMap = (Func<object, object>)valMapper.Invoke(null, new object[] { fromValType, inProgress });
 
             var newDictType = typeof(Dictionary<,>).MakeGenericType(toKeyType, toValType);
             var newDictCons = newDictType.GetConstructor(new Type[0]);
@@ -52,13 +52,13 @@ namespace PublicBroadcasting.Impl
                 };
         }
 
-        public static Func<object, object> GetListMapper(Type tFrom)
+        public static Func<object, object> GetListMapper(Type tFrom, Dictionary<Type, Action<Func<object, object>>> inProgress)
         {
             var toListType = typeof(To).GetGenericArguments()[0];
             var fromListType = tFrom.GetGenericArguments()[0];
 
             var mapper = typeof(POCOMapper<>).MakeGenericType(toListType).GetMethod("GetMapper");
-            var map = (Func<object, object>)mapper.Invoke(null, new object[] { fromListType });
+            var map = (Func<object, object>)mapper.Invoke(null, new object[] { fromListType, inProgress });
 
             var newListType = typeof(List<>).MakeGenericType(toListType);
             var newListCons = newListType.GetConstructor(new Type[0]);
@@ -95,8 +95,10 @@ namespace PublicBroadcasting.Impl
             return false;
         }
 
-        public static Func<object, object> GetMapper(Type tFrom)
+        public static Func<object, object> GetMapper(Type tFrom, Dictionary<Type, Action<Func<object, object>>> inProgress = null)
         {
+            inProgress = inProgress ?? new Dictionary<Type, Action<Func<object, object>>>();
+
             var tTo = typeof(To);
 
             Func<object, object> simpleRet;
@@ -123,7 +125,7 @@ namespace PublicBroadcasting.Impl
                     throw new Exception(tTo.FullName + " is not a valid deserialization, expected a dictionary");
                 }
 
-                return GetDictionaryMapper(tFrom);
+                return GetDictionaryMapper(tFrom, inProgress);
             }
 
             if ((tFrom.IsGenericType && tFrom.GetGenericTypeDefinition() == typeof(IList<>)) ||
@@ -135,10 +137,14 @@ namespace PublicBroadcasting.Impl
                     throw new Exception(tTo.FullName + " is not a valid deserialization, expected a list");
                 }
 
-                return GetListMapper(tFrom);
+                return GetListMapper(tFrom, inProgress);
             }
 
-            var members =
+            inProgress[tTo] = nx => { };
+
+            Dictionary<string, Func<object, object>> members = null;
+
+            members =
                 tFrom
                 .GetProperties()
                 .ToDictionary(
@@ -153,9 +159,24 @@ namespace PublicBroadcasting.Impl
 
                         var toPropType = to is FieldInfo ? (to as FieldInfo).FieldType : (to as PropertyInfo).PropertyType;
 
+                        if (inProgress.ContainsKey(toPropType))
+                        {
+                            var cur = inProgress[toPropType];
+
+                            inProgress[toPropType] =
+                                mapFunc =>
+                                {
+                                    members[s.Name] = mapFunc;
+
+                                    if (cur != null) cur(mapFunc);
+                                };
+
+                            return null;
+                        }
+
                         var mapper = typeof(POCOMapper<>).MakeGenericType(toPropType);
 
-                        return (Func<object, object>)mapper.GetMethod("GetMapper").Invoke(null, new object[] { propType });
+                        return (Func<object, object>)mapper.GetMethod("GetMapper").Invoke(null, new object[] { propType, inProgress });
                     }
                 ).Where(kv => kv.Value != null).ToDictionary(kv => kv.Key, kv => kv.Value);
 
@@ -166,21 +187,29 @@ namespace PublicBroadcasting.Impl
             var fromType = TypeAccessor.Create(tFrom);
             var toType = TypeAccessor.Create(tTo);
 
-            return
+            Func<object, object> retFunc =
                 x =>
                 {
+                    if (x == null) return null;
+
                     var ret = (To)cons.Invoke(new object[0]);
 
                     foreach (var mem in members)
                     {
-                        var memName = mem.Key;
-                        var memMap = mem.Value;
+                        var memKey = mem.Key;
+                        var memVal = mem.Value;
 
-                        toType[ret, memName] = memMap(fromType[x, memName]);
+                        if (memVal == null) continue;
+
+                        toType[ret, memKey] = memVal(fromType[x, memKey]);
                     }
 
                     return ret;
                 };
+
+            inProgress[tTo](retFunc);
+
+            return retFunc;
         }
     }
 }

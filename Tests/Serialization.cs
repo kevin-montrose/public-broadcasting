@@ -146,5 +146,25 @@ namespace Tests
             Assert.AreEqual(11, adict.Bar["1"]);
             Assert.AreEqual(22, adict.Bar["2"]);
         }
+
+        class Circle
+        {
+            public string Text {get;set;}
+            public Circle Next {get;set;}
+        }
+
+        [TestMethod]
+        public void CircularClass()
+        {
+            var bytes = Serializer.Serialize(new Circle { Text = "1", Next = new Circle { Text = "2", Next = new Circle { Text = "3" } } });
+            var circle = Deserializer.Deserialize<Circle>(bytes);
+            Assert.IsNotNull(circle);
+            Assert.AreEqual("1", circle.Text);
+            Assert.IsNotNull(circle.Next);
+            Assert.AreEqual("2", circle.Next.Text);
+            Assert.IsNotNull(circle.Next.Next);
+            Assert.AreEqual("3", circle.Next.Next.Text);
+            Assert.IsNull(circle.Next.Next.Next);
+        }
     }
 }

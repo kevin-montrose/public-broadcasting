@@ -20,11 +20,11 @@ namespace PublicBroadcasting.Impl
             Debug.WriteLine("POCOBuilder: " + typeof(From).FullName);
         }
 
-        private static Func<object, object> GetListMapper(IncludedMembers members, IncludedVisibility visibility)
+        private static Func<object, object> GetListMapper(IncludedMembers members, IncludedVisibility visibility, Dictionary<Type, Action<Func<object, object>>> inProgress = null)
         {
             var fromListType = typeof(From).GetGenericArguments()[0];
 
-            var itemMapper = (Func<object, object>)(typeof(POCOBuilder<>).MakeGenericType(fromListType).GetMethod("GetMapper").Invoke(null, new object[] { members, visibility }));
+            var itemMapper = (Func<object, object>)(typeof(POCOBuilder<>).MakeGenericType(fromListType).GetMethod("GetMapper").Invoke(null, new object[] { members, visibility, inProgress }));
 
             return
                 x =>
@@ -51,15 +51,15 @@ namespace PublicBroadcasting.Impl
                 };
         }
 
-        public static Func<object, object> GetDictionaryMapper(IncludedMembers members, IncludedVisibility visibility)
+        public static Func<object, object> GetDictionaryMapper(IncludedMembers members, IncludedVisibility visibility, Dictionary<Type, Action<Func<object, object>>> inProgress = null)
         {
             var genArgs = typeof(From).GetGenericArguments();
 
             var keyType = genArgs[0];
             var valType = genArgs[1];
 
-            var keyMapper = (Func<object, object>)(typeof(POCOBuilder<>).MakeGenericType(keyType).GetMethod("GetMapper").Invoke(null, new object[] { members, visibility }));
-            var valMapper = (Func<object, object>)(typeof(POCOBuilder<>).MakeGenericType(valType).GetMethod("GetMapper").Invoke(null, new object[] { members, visibility }));
+            var keyMapper = (Func<object, object>)(typeof(POCOBuilder<>).MakeGenericType(keyType).GetMethod("GetMapper").Invoke(null, new object[] { members, visibility, inProgress }));
+            var valMapper = (Func<object, object>)(typeof(POCOBuilder<>).MakeGenericType(valType).GetMethod("GetMapper").Invoke(null, new object[] { members, visibility, inProgress }));
 
             return
                 x =>
@@ -94,8 +94,10 @@ namespace PublicBroadcasting.Impl
                 };
         }
 
-        public static Func<object, object> GetMapper(IncludedMembers members, IncludedVisibility visibility)
+        public static Func<object, object> GetMapper(IncludedMembers members, IncludedVisibility visibility, Dictionary<Type, Action<Func<object, object>>> inProgress = null)
         {
+            inProgress = inProgress ?? new Dictionary<Type, Action<Func<object, object>>>();
+
             const string SelfName = "GetMapper";
 
             var t = typeof(From);
@@ -104,12 +106,12 @@ namespace PublicBroadcasting.Impl
 
             if (desc is ListTypeDescription)
             {
-                return GetListMapper(members, visibility);
+                return GetListMapper(members, visibility, inProgress);
             }
 
             if (desc is DictionaryTypeDescription)
             {
-                return GetDictionaryMapper(members, visibility);
+                return GetDictionaryMapper(members, visibility, inProgress);
             }
 
             if (desc is SimpleTypeDescription)
@@ -136,9 +138,13 @@ namespace PublicBroadcasting.Impl
             var from = TypeAccessor.Create(t);
             var to = TypeAccessor.Create(pocoType);
 
+            inProgress[t] = x => { };
+
             var newPoco = pocoType.GetConstructor(EmptyTypes);
 
-            var propMaps = 
+            Dictionary<string, Func<object, object>> propMaps = null;
+
+            propMaps = 
                 asClass.Members.ToDictionary(
                     kv => kv.Key, 
                     kv => 
@@ -147,20 +153,40 @@ namespace PublicBroadcasting.Impl
 
                         var type = member is FieldInfo ? (member as FieldInfo).FieldType : (member as PropertyInfo).PropertyType;
 
+                        if (inProgress.ContainsKey(type))
+                        {
+                            var cur = inProgress[type];
+
+                            inProgress[type] =
+                                newMap =>
+                                {
+                                    propMaps[kv.Key] = newMap;
+
+                                    if (cur != null) cur(newMap);
+                                };
+
+                            return null;
+                        }
+
                         var self = typeof(POCOBuilder<>).MakeGenericType(type).GetMethod(SelfName);
 
-                        return (Func<object,object>)self.Invoke(null, new object[] { members, visibility });
+                        return (Func<object,object>)self.Invoke(null, new object[] { members, visibility, inProgress });
                     }
                 );
 
-            return
+            Func<object, object> mapFuncRet =
                 x =>
                 {
+                    if (x == null) return null;
+
                     var ret = newPoco.Invoke(EmptyObjects);
 
                     foreach (var member in asClass.Members)
                     {
                         var fromVal = from[x, member.Key];
+
+                        if (fromVal == null) continue;
+
                         var toVal = propMaps[member.Key](fromVal);
 
                         to[ret, member.Key] = toVal;
@@ -168,6 +194,11 @@ namespace PublicBroadcasting.Impl
 
                     return ret;
                 };
+
+            inProgress[t](mapFuncRet);
+            inProgress[t] = null;
+
+            return mapFuncRet;
         }
     }
 }
