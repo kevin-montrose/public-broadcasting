@@ -850,10 +850,10 @@ namespace PublicBroadcasting.Impl
                 var keyDesc = typeof(Describer<>).MakeGenericType(keyType).GetMethod(SelfName);
                 var valDesc = typeof(Describer<>).MakeGenericType(valueType).GetMethod(SelfName);
 
-                return DictionaryTypeDescription.Create(
-                    (TypeDescription)keyDesc.Invoke(null, new object[] { members, visibility, inProgress }),
-                    (TypeDescription)valDesc.Invoke(null, new object[] { members, visibility, inProgress })
-                );
+                var key = (TypeDescription)keyDesc.Invoke(null, new object[] { members, visibility, inProgress });
+                var val = (TypeDescription)valDesc.Invoke(null, new object[] { members, visibility, inProgress });
+
+                return DictionaryTypeDescription.Create(key, val);
             }
 
             if ((t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IList<>)) ||
@@ -865,10 +865,9 @@ namespace PublicBroadcasting.Impl
 
                 var valDesc = typeof(Describer<>).MakeGenericType(valueType).GetMethod(SelfName);
 
-                return
-                    ListTypeDescription.Create(
-                        (TypeDescription)valDesc.Invoke(null, new object[] { members, visibility, inProgress })
-                    );
+                var val = (TypeDescription)valDesc.Invoke(null, new object[] { members, visibility, inProgress });
+
+                return ListTypeDescription.Create(val);
             }
 
             inProgress[t] = null;
