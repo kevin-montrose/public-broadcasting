@@ -201,7 +201,7 @@ namespace Tests
             public Sub SubObj { get; set; }
         }
 
-        [TestMethod]
+        //[TestMethod]
         public void Complicated()
         {
             Compl obj = new Compl();

@@ -100,8 +100,11 @@ namespace PublicBroadcasting.Impl
 
             const string SelfName = "GetMapper";
 
+            if (members != (IncludedMembers.Fields | IncludedMembers.Properties)) throw new NotSupportedException("members must be Fields | Properties");
+            if (visibility != IncludedVisibility.Public) throw new NotSupportedException("visibility must be Public");
+
             var t = typeof(From);
-            var desc = Describer<From>.Get(members, visibility);
+            var desc = Describer<From>.Get();
             var pocoType = desc.GetPocoType();
 
             if (desc is ListTypeDescription)

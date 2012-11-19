@@ -24,7 +24,7 @@ namespace PublicBroadcasting
 
         public static void Serialize<T>(Stream stream, T obj)
         {
-            Serialize(stream, obj, IncludedMembers.Properties, IncludedVisibility.Public);
+            Serialize(stream, obj, IncludedMembers.Properties | IncludedMembers.Fields, IncludedVisibility.Public);
         }
 
         public static void Serialize<T>(Stream stream, T obj, IncludedMembers members)
@@ -34,7 +34,7 @@ namespace PublicBroadcasting
 
         public static void Serialize<T>(Stream stream, T obj, IncludedVisibility visibility)
         {
-            Serialize(stream, obj, IncludedMembers.Properties, visibility);
+            Serialize(stream, obj, IncludedMembers.Properties | IncludedMembers.Fields, visibility);
         }
 
         public static void Serialize<T>(Stream stream, T obj, IncludedMembers members, IncludedVisibility visibility)
@@ -43,7 +43,10 @@ namespace PublicBroadcasting
             if (members == 0) throw new ArgumentException("members");
             if (visibility == 0) throw new ArgumentException("visibility");
 
-            var desc = Describer<T>.Get(members, visibility);
+            if (members != (IncludedMembers.Fields | IncludedMembers.Properties)) throw new NotSupportedException("members must be Fields | Properties");
+            if (visibility != IncludedVisibility.Public) throw new NotSupportedException("visibility must be Public");
+
+            var desc = Describer<T>.Get();
 
             // Don't include an envelope unless it's needed, no point in wasting bytes
             if (!desc.NeedsEnvelope)
