@@ -234,5 +234,37 @@ namespace Tests
             Assert.AreEqual("!!!", de.Other.SubObj.Hello);
             Assert.AreEqual("Thing", de.SubObj.Hello);
         }
+
+        class NullObj
+        {
+            public int Foo { get; set; }
+            public int? Bar { get; set; }
+            public byte? Fizz { get; set; }
+            public string Buzz { get; set; }
+
+            public NullObj Back { get; set; }
+        }
+
+        [TestMethod]
+        public void Nullable()
+        {
+            var bytes = Serializer.Serialize(new NullObj { Bar = 123, Back = new NullObj { Foo = 456, Buzz = "World", Back = new NullObj { Fizz = 222 } } });
+            var n = Deserializer.Deserialize<NullObj>(bytes);
+
+            Assert.IsNotNull(n);
+            Assert.AreEqual(0, n.Foo);
+            Assert.AreEqual(123, n.Bar);
+            Assert.IsFalse(n.Fizz.HasValue);
+            Assert.IsNull(n.Buzz);
+            Assert.IsNotNull(n.Back);
+
+            Assert.AreEqual(456, n.Back.Foo);
+            Assert.IsFalse(n.Back.Bar.HasValue);
+            Assert.IsFalse(n.Back.Fizz.HasValue);
+            Assert.AreEqual("World", n.Back.Buzz);
+            Assert.IsNotNull(n.Back.Back);
+
+            Assert.AreEqual(222, n.Back.Back.Fizz.Value);
+        }
     }
 }

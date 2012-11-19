@@ -22,6 +22,23 @@ namespace PublicBroadcasting.Impl
                 if (top is SimpleTypeDescription) continue;
                 if (top is BackReferenceTypeDescription) continue;
 
+                var asNullable = top as NullableTypeDescription;
+                if (asNullable != null)
+                {
+                    if (seen.Contains(asNullable.InnerType))
+                    {
+                        var id = ((ClassTypeDescription)asNullable.InnerType).Id != 0 ? ((ClassTypeDescription)asNullable.InnerType).Id : nextId();
+                        ((ClassTypeDescription)asNullable.InnerType).Id = id;
+                        asNullable.InnerType = new BackReferenceTypeDescription(id);
+                    }
+                    else
+                    {
+                        toCheck.Push(asNullable.InnerType);
+                    }
+
+                    continue;
+                }
+
                 var asDict = top as DictionaryTypeDescription;
                 if (asDict != null)
                 {

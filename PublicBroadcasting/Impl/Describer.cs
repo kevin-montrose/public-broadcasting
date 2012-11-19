@@ -16,8 +16,9 @@ namespace PublicBroadcasting.Impl
     [ProtoInclude(4, typeof(ClassTypeDescription))]
     [ProtoInclude(5, typeof(ListTypeDescription))]
     [ProtoInclude(6, typeof(DictionaryTypeDescription))]
-    [ProtoInclude(7, typeof(BackReferenceTypeDescription))]
-    [ProtoInclude(8, typeof(NoTypeDescription))]
+    [ProtoInclude(7, typeof(NullableTypeDescription))]
+    [ProtoInclude(8, typeof(BackReferenceTypeDescription))]
+    [ProtoInclude(9, typeof(NoTypeDescription))]
     internal abstract class TypeDescription
     {
         /// <summary>
@@ -156,6 +157,49 @@ namespace PublicBroadcasting.Impl
         internal override TypeDescription Clone(Dictionary<TypeDescription, TypeDescription> ignored)
         {
             return this;
+        }
+    }
+
+    [ProtoContract]
+    internal class NullableTypeDescription : TypeDescription
+    {
+        [ProtoMember(1)]
+        internal TypeDescription InnerType { get; set; }
+
+        private NullableTypeDescription() { }
+
+        internal NullableTypeDescription(TypeDescription inner)
+        {
+            InnerType = inner;
+        }
+
+        internal override Type GetPocoType(TypeDescription existingDescription = null)
+        {
+            var inner = InnerType.GetPocoType(existingDescription);
+
+            return typeof(Nullable<>).MakeGenericType(inner);
+        }
+
+        internal override TypeDescription DePromise(out Action afterPromise)
+        {
+            InnerType = InnerType.DePromise(out afterPromise);
+
+            return this;
+        }
+
+        internal override TypeDescription Clone(Dictionary<TypeDescription, TypeDescription> backRefLookup)
+        {
+            if (backRefLookup.ContainsKey(this))
+            {
+                return backRefLookup[this];
+            }
+
+            var ret = new NullableTypeDescription();
+            backRefLookup[this] = ret;
+
+            ret.InnerType = InnerType.Clone(backRefLookup);
+
+            return ret;
         }
     }
 
@@ -679,6 +723,26 @@ namespace PublicBroadcasting.Impl
             if (t == typeof(decimal)) return SimpleTypeDescription.Decimal;
             if (t == typeof(double)) return SimpleTypeDescription.Double;
             if (t == typeof(float)) return SimpleTypeDescription.Float;
+
+            if (Nullable.GetUnderlyingType(t) != null)
+            {
+                var nullT = t;
+
+                var nullPromiseType = typeof(PromisedTypeDescription<>).MakeGenericType(nullT);
+                var nullPromiseSingle = nullPromiseType.GetField("Singleton");
+                var nullPromise = (PromisedTypeDescription)nullPromiseSingle.GetValue(null);
+
+                var valType = nullT.GetGenericArguments()[0];
+
+                var valDesc = typeof(Describer<>).MakeGenericType(valType).GetMethod("Get");
+                var val = (TypeDescription)valDesc.Invoke(null, new object[0]);
+
+                var nullRet = new NullableTypeDescription(val);
+
+                nullPromise.Fulfil(nullRet);
+
+                return nullRet;
+            }
 
             if ((t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IDictionary<,>)) ||
                t.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>)))

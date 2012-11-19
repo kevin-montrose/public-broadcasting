@@ -75,6 +75,11 @@ namespace PublicBroadcasting.Impl
                 return GetDictionaryMapper();
             }
 
+            if (desc is NullableTypeDescription)
+            {
+                return new POCOBuilder(x => x);
+            }
+
             if (desc is SimpleTypeDescription)
             {
                 if (desc == SimpleTypeDescription.Byte) return new POCOBuilder(x => Convert.ToByte(x));
@@ -90,6 +95,7 @@ namespace PublicBroadcasting.Impl
                 if (desc == SimpleTypeDescription.Decimal) return new POCOBuilder(x => Convert.ToDecimal(x));
                 if (desc == SimpleTypeDescription.Char) return new POCOBuilder(x => Convert.ToChar(x));
                 if (desc == SimpleTypeDescription.String) return new POCOBuilder(x => Convert.ToString(x));
+                if (desc == SimpleTypeDescription.Bool) return new POCOBuilder(x => Convert.ToBoolean(x));
 
                 throw new Exception("Shouldn't be possible, found " + desc);
             }
