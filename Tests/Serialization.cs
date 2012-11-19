@@ -22,6 +22,10 @@ namespace Tests
             bytes = Serializer.Serialize(12345);
             var ints = Deserializer.Deserialize<int>(bytes);
             Assert.AreEqual(12345, ints);
+
+            bytes = Serializer.Serialize(true);
+            var @bool = Deserializer.Deserialize<bool>(bytes);
+            Assert.IsTrue(@bool);
         }
 
         class A
