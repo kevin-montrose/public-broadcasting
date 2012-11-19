@@ -30,7 +30,7 @@ namespace PublicBroadcasting
                 }
             }
 
-            var effectDesc = untyped.Description.FromCache();
+            var effectDesc = untyped.Description;
 
             effectDesc.Seal(untyped.Description);
 

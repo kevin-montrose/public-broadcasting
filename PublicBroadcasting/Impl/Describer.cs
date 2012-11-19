@@ -32,35 +32,7 @@ namespace PublicBroadcasting.Impl
 
         internal virtual TypeDescription Flatten(Func<int> nextId) { return this; }
 
-        private static List<TypeDescription> _Cache = new List<TypeDescription>();
-
-        protected static void Cache(TypeDescription c)
-        {
-            lock (_Cache)
-            {
-                if (_Cache.Any(a => a.Equals(c))) return;
-
-                _Cache.Add(c);
-            }
-        }
-
-        protected static TypeDescription EquivalentFromCache(TypeDescription t)
-        {
-            lock (_Cache)
-            {
-                foreach (var c in _Cache)
-                {
-                    if (c.Equals(t)) return c;
-                }
-            }
-
-            return null;
-        }
-
-        public abstract TypeDescription FromCache();
-
-        public abstract override bool Equals(object obj);
-        public abstract override int GetHashCode();
+        internal abstract TypeDescription DePromise(out Action afterPromise);
     }
 
     [ProtoContract]
@@ -81,19 +53,9 @@ namespace PublicBroadcasting.Impl
             throw new NotImplementedException();
         }
 
-        public override bool Equals(object obj)
+        internal override TypeDescription DePromise(out Action afterPromise)
         {
-            return obj is NoTypeDescription;
-        }
-
-        public override int GetHashCode()
-        {
-            return -1;
-        }
-
-        public override TypeDescription FromCache()
-        {
-            return this;
+            throw new NotImplementedException();
         }
     }
 
@@ -155,38 +117,11 @@ namespace PublicBroadcasting.Impl
             }
         }
 
-        public override bool Equals(object obj)
+        internal override TypeDescription DePromise(out Action afterPromise)
         {
-            var asSimple = obj as SimpleTypeDescription;
-            if (asSimple == null) return false;
+            afterPromise = () => { };
 
-            return Type == asSimple.Type;
-        }
-
-        public override int GetHashCode()
-        {
-            return Type;
-        }
-
-        public override TypeDescription FromCache()
-        {
-            switch (Type)
-            {
-                case 0: return Int;
-                case 1: return Long;
-                case 2: return String;
-                case 3: return Byte;
-                case 4: return Char;
-                case 5: return Short;
-                case 6: return UInt;
-                case 7: return ULong;
-                case 8: return SByte;
-                case 9: return UShort;
-                case 10: return Double;
-                case 11: return Float;
-                case 12: return Decimal;
-                default: throw new Exception("Unexpected Tag [" + Type + "]");
-            }
+            return this;
         }
     }
 
@@ -210,23 +145,14 @@ namespace PublicBroadcasting.Impl
         [ProtoMember(2)]
         internal int Id { get; set; }
 
+        private Type ForType { get; set; }
+
         private ClassTypeDescription() { }
 
-        private ClassTypeDescription(Dictionary<string, TypeDescription> members)
+        internal ClassTypeDescription(Dictionary<string, TypeDescription> members, Type forType)
         {
             Members = members;
-
-            TypeDescription.Cache(this);
-        }
-
-        internal static ClassTypeDescription Create(Dictionary<string, TypeDescription> members)
-        {
-            foreach (var key in members.Keys.ToList())
-            {
-                members[key] = members[key].FromCache();
-            }
-
-            return (ClassTypeDescription)(new ClassTypeDescription(members).FromCache());
+            ForType = forType;
         }
 
         private TypeBuilder TypeBuilder;
@@ -235,6 +161,8 @@ namespace PublicBroadcasting.Impl
         internal override void Seal(TypeDescription existing = null)
         {
             if (PocoType != null) return;
+
+            Debug.WriteLine("ClassTypeDescription.Seal: [" + ForType + "]");
 
             var name = "POCO" + Guid.NewGuid().ToString().Replace("-", "");
 
@@ -247,6 +175,7 @@ namespace PublicBroadcasting.Impl
             {
                 var memberAttrBuilder = new CustomAttributeBuilder(protoMemberAttr, new object[] { ix });
 
+                kv.Value.Seal(existing);
                 var propType = kv.Value.GetPocoType(existing);
 
                 var fieldBldr = TypeBuilder.DefineField("_" + kv.Key + "_" + Guid.NewGuid().ToString().Replace("-", ""), propType, FieldAttributes.Private);
@@ -317,12 +246,13 @@ namespace PublicBroadcasting.Impl
         internal override TypeDescription Flatten(Func<int> nextId)
         {
             var copy = new ClassTypeDescription();
+            copy.ForType = ForType;
             copy.PocoType = PocoType;
             copy.Members = new Dictionary<string, TypeDescription>(Members);
 
             var descendentMembers = copy.GetDescendentMemberModifiers();
 
-            var needsReplace = descendentMembers.Where(w => w.Item1.Equals(copy)).ToList();
+            var needsReplace = descendentMembers.Where(w => w.Item1.Equals(this)).ToList();
 
             if (needsReplace.Count == 0)
             {
@@ -346,42 +276,64 @@ namespace PublicBroadcasting.Impl
             return copy;
         }
 
-        public override bool Equals(object obj)
+        private bool DePromised { get; set; }
+        internal override TypeDescription DePromise(out Action afterPromise)
         {
-            if (object.ReferenceEquals(this, obj)) return true;
-
-            var asClass = obj as ClassTypeDescription;
-            if (asClass == null) return false;
-
-            if (Members.Count != asClass.Members.Count) return false;
-
-            foreach (var mem in Members)
+            if (!DePromised)
             {
-                TypeDescription otherVal;
-                if (!asClass.Members.TryGetValue(mem.Key, out otherVal)) return false;
+                var postMembers = new List<Action>();
 
-                if (!mem.Value.Equals(otherVal)) return false;
+                foreach (var key in Members.Keys.ToList())
+                {
+                    Action act;
+                    Members[key] = Members[key].DePromise(out act);
+                    postMembers.Add(act);
+                }
+
+                afterPromise = () => { postMembers.ForEach(a => a()); };
+            }
+            else
+            {
+                afterPromise = () => { };
             }
 
-            return true;
-        }
-
-        public override int GetHashCode()
-        {
-            return Members.Select(kv => kv.Key.GetHashCode() ^ (kv.Value.GetHashCode() * -1)).Aggregate((a, b) => a ^ b);
-        }
-
-        public override TypeDescription FromCache()
-        {
-            var allCached = TypeDescription.EquivalentFromCache(this);
-            if (allCached != null) return allCached;
-
-            foreach (var key in Members.Keys.ToList())
-            {
-                Members[key] = Members[key].FromCache();
-            }
+            DePromised = true;
 
             return this;
+        }
+    }
+
+    internal class ClassTypeDescription<ForType>
+    {
+        public static readonly ClassTypeDescription Singleton;
+
+        static ClassTypeDescription()
+        {
+            var cutdown = TypeReflectionCache<ForType>.Get(IncludedMembers.Properties | IncludedMembers.Fields, IncludedVisibility.Public);
+            var members = new Dictionary<string, TypeDescription>();
+            foreach (var field in cutdown.Fields)
+            {
+                var descType = typeof(Describer<>).MakeGenericType(field.FieldType);
+                var descGet = descType.GetMethod("Get");
+                var desc = (TypeDescription)descGet.Invoke(null, new object[0]);
+
+                if (desc == null) throw new Exception("No description for [" + field.FieldType + "]");
+
+                members.Add(field.Name, desc);
+            }
+
+            foreach (var prop in cutdown.Properties)
+            {
+                var descType = typeof(Describer<>).MakeGenericType(prop.PropertyType);
+                var descGet = descType.GetMethod("Get");
+                var desc = (TypeDescription)descGet.Invoke(null, new object[0]);
+
+                if (desc == null) throw new Exception("No description for [" + prop.PropertyType + "]");
+
+                members.Add(prop.Name, desc);
+            }
+
+            Singleton = new ClassTypeDescription(members, typeof(ForType));
         }
     }
 
@@ -450,18 +402,10 @@ namespace PublicBroadcasting.Impl
             throw new Exception("Couldn't find reference to ClassId = " + ClassId);
         }
 
-        public override bool Equals(object obj)
+        internal override TypeDescription DePromise(out Action afterPromise)
         {
-            return false;
-        }
+            afterPromise = () => { };
 
-        public override int GetHashCode()
-        {
-            return ClassId;
-        }
-
-        public override TypeDescription FromCache()
-        {
             return this;
         }
     }
@@ -488,16 +432,11 @@ namespace PublicBroadcasting.Impl
         {
             KeyType = keyType;
             ValueType = valueType;
-
-            TypeDescription.Cache(this);
         }
 
         static internal TypeDescription Create(TypeDescription keyType, TypeDescription valueType)
         {
-            keyType = keyType.FromCache();
-            valueType = valueType.FromCache();
-
-            return new DictionaryTypeDescription(keyType, valueType).FromCache();
+            return new DictionaryTypeDescription(keyType, valueType);
         }
 
         internal override Type GetPocoType(TypeDescription existing = null)
@@ -520,31 +459,65 @@ namespace PublicBroadcasting.Impl
             return clone;
         }
 
-        public override bool Equals(object obj)
+        internal override TypeDescription DePromise(out Action afterPromise)
         {
-            var asDict = obj as DictionaryTypeDescription;
-            if (asDict == null) return false;
+            Action act1, act2;
 
-            return KeyType.Equals(asDict.KeyType) && ValueType.Equals(asDict.ValueType);
-        }
+            KeyType = KeyType.DePromise(out act1);
+            ValueType = ValueType.DePromise(out act2);
 
-        public override int GetHashCode()
-        {
-            return KeyType.GetHashCode() ^ ValueType.GetHashCode();
-        }
-
-        public override TypeDescription FromCache()
-        {
-            var allCached = TypeDescription.EquivalentFromCache(this);
-            if (allCached != null) return allCached;
-
-            KeyType = KeyType.FromCache();
-            ValueType = ValueType.FromCache();
+            afterPromise = () => { act1(); act2(); };
 
             return this;
         }
     }
 
+    class PromisedTypeDescription : TypeDescription
+    {
+        private TypeDescription Fulfilment { get; set; }
+
+        private Type ForType { get; set; }
+
+        internal PromisedTypeDescription(Type forType) 
+        {
+            ForType = forType;
+        }
+
+        public void Fulfil(TypeDescription desc)
+        {
+            Fulfilment = desc;
+        }
+
+        internal override Type GetPocoType(TypeDescription existingDescription = null)
+        {
+            return Fulfilment.GetPocoType(existingDescription);
+        }
+
+        internal override TypeDescription DePromise(out Action afterPromise)
+        {
+            afterPromise =
+                delegate
+                {
+                    Action act;
+                    Fulfilment.DePromise(out act);
+
+                    act();
+                };
+
+            return Fulfilment;
+        }
+    }
+
+    class PromisedTypeDescription<ForType>
+    {
+        public static readonly PromisedTypeDescription Singleton;
+
+        static PromisedTypeDescription()
+        {
+            Singleton = new PromisedTypeDescription(typeof(ForType));
+        }
+    }
+    
     [ProtoContract]
     internal class ListTypeDescription : TypeDescription
     {
@@ -564,15 +537,11 @@ namespace PublicBroadcasting.Impl
         private ListTypeDescription(TypeDescription contains)
         {
             Contains = contains;
-
-            TypeDescription.Cache(this);
         }
 
         static internal ListTypeDescription Create(TypeDescription contains)
         {
-            contains = contains.FromCache();
-
-            return (ListTypeDescription)(new ListTypeDescription(contains).FromCache());
+            return new ListTypeDescription(contains);
         }
 
         internal override Type GetPocoType(TypeDescription existing = null)
@@ -593,25 +562,9 @@ namespace PublicBroadcasting.Impl
             return clone;
         }
 
-        public override bool Equals(object obj)
+        internal override TypeDescription DePromise(out Action afterPromise)
         {
-            var asList = obj as ListTypeDescription;
-            if (asList == null) return false;
-
-            return Contains.Equals(asList.Contains);
-        }
-
-        public override int GetHashCode()
-        {
-            return Contains.GetHashCode() * -1;
-        }
-
-        public override TypeDescription FromCache()
-        {
-            var allCached = TypeDescription.EquivalentFromCache(this);
-            if (allCached != null) return allCached;
-
-            Contains = Contains.FromCache();
+            Contains = Contains.DePromise(out afterPromise);
 
             return this;
         }
@@ -619,13 +572,22 @@ namespace PublicBroadcasting.Impl
 
     internal class Describer<T>
     {
+        private static readonly PromisedTypeDescription AllPublicPromise;
         private static readonly TypeDescription AllPublic;
 
         static Describer()
         {
             Debug.WriteLine("Describer: " + typeof(T).FullName);
 
+            AllPublicPromise = PromisedTypeDescription<T>.Singleton;
+
             AllPublic = BuildDescription();
+
+            AllPublicPromise.Fulfil(AllPublic);
+
+            Action postPromise;
+            AllPublic = AllPublic.DePromise(out postPromise);
+            postPromise();
 
             AllPublic = AllPublic.Flatten(GetIdProvider());
         }
@@ -641,11 +603,11 @@ namespace PublicBroadcasting.Impl
                 };
         }
 
-        public static TypeDescription BuildDescription(Dictionary<Type, Action<ClassTypeDescription>> inProgress = null)
+        public static TypeDescription BuildDescription(Dictionary<Type, PromisedTypeDescription> inProgress = null)
         {
             const string SelfName = "BuildDescription";
 
-            inProgress = inProgress ?? new Dictionary<Type, Action<ClassTypeDescription>>();
+            inProgress = inProgress ?? new Dictionary<Type, PromisedTypeDescription>();
 
             var t = typeof(T);
 
@@ -676,8 +638,25 @@ namespace PublicBroadcasting.Impl
                 var keyDesc = typeof(Describer<>).MakeGenericType(keyType).GetMethod(SelfName);
                 var valDesc = typeof(Describer<>).MakeGenericType(valueType).GetMethod(SelfName);
 
-                var key = (TypeDescription)keyDesc.Invoke(null, new object[] { inProgress });
-                var val = (TypeDescription)valDesc.Invoke(null, new object[] { inProgress });
+                TypeDescription key, val;
+
+                if (inProgress.ContainsKey(keyType))
+                {
+                    key = inProgress[keyType];
+                }
+                else
+                {
+                    key = (TypeDescription)keyDesc.Invoke(null, new object[] { inProgress });
+                }
+
+                if (inProgress.ContainsKey(valueType))
+                {
+                    val = inProgress[valueType];
+                }
+                else
+                {
+                    val = (TypeDescription)valDesc.Invoke(null, new object[] { inProgress });
+                }
 
                 return DictionaryTypeDescription.Create(key, val);
             }
@@ -691,12 +670,24 @@ namespace PublicBroadcasting.Impl
 
                 var valDesc = typeof(Describer<>).MakeGenericType(valueType).GetMethod(SelfName);
 
-                var val = (TypeDescription)valDesc.Invoke(null, new object[] { inProgress });
+                TypeDescription val;
+                if (inProgress.ContainsKey(valueType))
+                {
+                    val = inProgress[valueType];
+                }
+                else
+                {
+                    val = (TypeDescription)valDesc.Invoke(null, new object[] { inProgress });
+                }
 
                 return ListTypeDescription.Create(val);
             }
 
-            inProgress[t] = null;
+            var promiseType = typeof(PromisedTypeDescription<>).MakeGenericType(t);
+            var promiseSingle = promiseType.GetField("Singleton");
+            var promise = (PromisedTypeDescription)promiseSingle.GetValue(null);
+
+            inProgress[t] = promise;
 
             var get = (typeof(TypeReflectionCache<>).MakeGenericType(t)).GetMethod("Get");
 
@@ -712,16 +703,7 @@ namespace PublicBroadcasting.Impl
 
                 if (inProgress.ContainsKey(propType))
                 {
-                    var tail = inProgress[propType];
-                    Action<ClassTypeDescription> callback =
-                        x =>
-                        {
-                            classMembers[propName] = x;
-
-                            if (tail != null) tail(x);
-                        };
-
-                    inProgress[propType] = callback;
+                    classMembers[propName] = inProgress[propType];
                 }
                 else
                 {
@@ -738,16 +720,7 @@ namespace PublicBroadcasting.Impl
 
                 if (inProgress.ContainsKey(fieldType))
                 {
-                    var tail = inProgress[fieldType];
-                    Action<ClassTypeDescription> callback =
-                        x =>
-                        {
-                            classMembers[fieldName] = x;
-
-                            if (tail != null) tail(x);
-                        };
-
-                    inProgress[fieldType] = callback;
+                    classMembers[fieldName] = inProgress[fieldType];
                 }
                 else
                 {
@@ -757,20 +730,26 @@ namespace PublicBroadcasting.Impl
                 }
             }
 
-            var ret = ClassTypeDescription.Create(classMembers);
+            //var ret = ClassTypeDescription.Create(classMembers, t);
 
-            var promise = inProgress[t];
-            if (promise != null) promise(ret);
-            inProgress.Remove(t);
+            var retType = typeof(ClassTypeDescription<>).MakeGenericType(t);
+            var retSingle = retType.GetField("Singleton");
+
+            var ret = (TypeDescription)retSingle.GetValue(null);
+
+            promise.Fulfil(ret);
 
             ret.Seal();
 
             return ret;
         }
 
-        internal static TypeDescription Get()
+        public static TypeDescription Get()
         {
-            return AllPublic;
+            // How does this happen you're thinking?
+            //   What happens if you call Get() from the static initializer?
+            //   That's how.
+            return AllPublic ?? AllPublicPromise;
         }
     }
 }
