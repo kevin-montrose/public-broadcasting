@@ -48,13 +48,6 @@ namespace PublicBroadcasting
 
             var desc = Describer<T>.GetForUse(true);
 
-            // Don't include an envelope unless it's needed, no point in wasting bytes
-            if (!desc.NeedsEnvelope)
-            {
-                ProtoBuf.Serializer.Serialize(stream, Envelope.Get(new NoTypeDescription(), obj));
-                return;
-            }
-
             var mapper = POCOBuilder<T>.GetMapper(members, visibility);
 
             var payload = mapper.GetMapper()(obj);

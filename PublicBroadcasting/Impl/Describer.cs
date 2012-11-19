@@ -21,12 +21,6 @@ namespace PublicBroadcasting.Impl
     [ProtoInclude(9, typeof(NoTypeDescription))]
     internal abstract class TypeDescription
     {
-        /// <summary>
-        /// Returns true if there could be more than 1 serialization for the type described,
-        /// and thus we must include a type map when serializing.
-        /// </summary>
-        internal virtual bool NeedsEnvelope { get { return true; } }
-
         internal abstract Type GetPocoType(TypeDescription existingDescription = null);
 
         internal virtual void Seal(TypeDescription existing = null) { }
@@ -39,14 +33,6 @@ namespace PublicBroadcasting.Impl
     [ProtoContract]
     internal class NoTypeDescription : TypeDescription
     {
-        internal override bool NeedsEnvelope
-        {
-            get
-            {
-                return false;
-            }
-        }
-
         internal NoTypeDescription() { }
 
         internal override Type GetPocoType(TypeDescription existing = null)
@@ -103,16 +89,6 @@ namespace PublicBroadcasting.Impl
 
         [ProtoMember(1)]
         internal int Type { get; private set; }
-
-        internal override bool NeedsEnvelope
-        {
-            get
-            {
-                // There's only one way to serialize any of these types, so the type itself is sufficient
-                //   No envelope needed
-                return false;
-            }
-        }
 
         private SimpleTypeDescription() { }
 
@@ -502,14 +478,6 @@ namespace PublicBroadcasting.Impl
         [ProtoMember(2)]
         internal TypeDescription ValueType { get; set; }
 
-        internal override bool NeedsEnvelope
-        {
-            get
-            {
-                return KeyType.NeedsEnvelope || ValueType.NeedsEnvelope;
-            }
-        }
-
         private DictionaryTypeDescription() { }
 
         private DictionaryTypeDescription(TypeDescription keyType, TypeDescription valueType)
@@ -619,14 +587,6 @@ namespace PublicBroadcasting.Impl
     {
         [ProtoMember(1)]
         internal TypeDescription Contains { get; set; }
-
-        internal override bool NeedsEnvelope
-        {
-            get
-            {
-                return Contains.NeedsEnvelope;
-            }
-        }
 
         private ListTypeDescription() { }
 
