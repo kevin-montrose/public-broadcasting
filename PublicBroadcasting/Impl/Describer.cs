@@ -776,6 +776,10 @@ namespace PublicBroadcasting.Impl
             {
                 var listI = t.GetInterfaces().First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>));
 
+                var listPromiseType = typeof(PromisedTypeDescription<>).MakeGenericType(listI);
+                var listPromiseSingle = listPromiseType.GetField("Singleton");
+                var listPromise = (PromisedTypeDescription)listPromiseSingle.GetValue(null);
+
                 var valueType = listI.GetGenericArguments()[0];
 
                 var valDesc = typeof(Describer<>).MakeGenericType(valueType).GetMethod("Get");
@@ -784,8 +788,11 @@ namespace PublicBroadcasting.Impl
 
                 val = (TypeDescription)valDesc.Invoke(null, new object[0]);
 
+                var listRet = ListTypeDescription.Create(val);
 
-                return ListTypeDescription.Create(val);
+                listPromise.Fulfil(listRet);
+
+                return listRet;
             }
 
             var get = (typeof(TypeReflectionCache<>).MakeGenericType(t)).GetMethod("Get");

@@ -182,6 +182,30 @@ namespace Tests
         {
             var bytes = Serializer.Serialize(new BDict { Bar = "Hello", Buzz = new Dictionary<string, A> { { "1", new A { Foo = "Bar" } } } });
             var bdict = Deserializer.Deserialize<BDict>(bytes);
+
+            Assert.AreEqual("Hello", bdict.Bar);
+            Assert.AreEqual(1, bdict.Buzz.Count);
+            Assert.AreEqual("Bar", bdict.Buzz["1"].Foo);
+        }
+
+        class BList
+        {
+            public string Bar {get; set;}
+            public List<BList> Others { get; set; }
+        }
+
+        [TestMethod]
+        public void MoreLists()
+        {
+            var bytes = Serializer.Serialize(new BList { Bar = "Hello", Others = new List<BList> { new BList { Bar = "Foo" }, new BList { Bar = "Bizz", Others = new List<BList> { new BList { Bar = "Bazz" } } } } });
+            var blist = Deserializer.Deserialize<BList>(bytes);
+
+            Assert.AreEqual(blist.Bar, "Hello");
+            Assert.AreEqual(2, blist.Others.Count);
+            Assert.AreEqual("Foo", blist.Others[0].Bar);
+            Assert.AreEqual("Bizz", blist.Others[1].Bar);
+            Assert.AreEqual(1, blist.Others[1].Others.Count);
+            Assert.AreEqual("Bazz", blist.Others[1].Others[0].Bar);
         }
 
         class Compl
