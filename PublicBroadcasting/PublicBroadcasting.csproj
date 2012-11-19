@@ -48,6 +48,7 @@
     <Compile Include="Deserializer.cs" />
     <Compile Include="Impl\Describer.cs" />
     <Compile Include="Impl\Envelope.cs" />
+    <Compile Include="Impl\Flattener.cs" />
     <Compile Include="Impl\POCOBuilder.cs" />
     <Compile Include="Impl\POCOMapper.cs" />
     <Compile Include="Impl\TypeReflectionCache.cs" />

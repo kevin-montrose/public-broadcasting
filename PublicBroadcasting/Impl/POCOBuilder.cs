@@ -62,7 +62,7 @@ namespace PublicBroadcasting.Impl
             const string SelfName = "GetMapper";
 
             var t = typeof(From);
-            var desc = Describer<From>.GetForUse();
+            var desc = Describer<From>.GetForUse(false);
             var pocoType = desc.GetPocoType();
 
             if (desc is ListTypeDescription)

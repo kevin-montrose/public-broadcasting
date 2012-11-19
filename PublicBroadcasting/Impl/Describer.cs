@@ -30,9 +30,9 @@ namespace PublicBroadcasting.Impl
 
         internal virtual void Seal(TypeDescription existing = null) { }
 
-        internal virtual TypeDescription Flatten(Func<int> nextId) { return this; }
-
         internal abstract TypeDescription DePromise(out Action afterPromise);
+
+        internal abstract TypeDescription Clone(Dictionary<TypeDescription, TypeDescription> backRefLookup);
     }
 
     [ProtoContract]
@@ -54,6 +54,11 @@ namespace PublicBroadcasting.Impl
         }
 
         internal override TypeDescription DePromise(out Action afterPromise)
+        {
+            throw new NotImplementedException();
+        }
+
+        internal override TypeDescription Clone(Dictionary<TypeDescription, TypeDescription> ignored)
         {
             throw new NotImplementedException();
         }
@@ -121,6 +126,11 @@ namespace PublicBroadcasting.Impl
         {
             afterPromise = () => { };
 
+            return this;
+        }
+
+        internal override TypeDescription Clone(Dictionary<TypeDescription, TypeDescription> ignored)
+        {
             return this;
         }
     }
@@ -243,39 +253,6 @@ namespace PublicBroadcasting.Impl
             return ret;
         }
 
-        internal override TypeDescription Flatten(Func<int> nextId)
-        {
-            var copy = new ClassTypeDescription();
-            copy.ForType = ForType;
-            copy.PocoType = PocoType;
-            copy.Members = new Dictionary<string, TypeDescription>(Members);
-
-            var descendentMembers = copy.GetDescendentMemberModifiers();
-
-            var needsReplace = descendentMembers.Where(w => w.Item1.Equals(this)).ToList();
-
-            if (needsReplace.Count == 0)
-            {
-                return copy;
-            }
-
-            copy.Id = nextId();
-
-            var reference = new BackReferenceTypeDescription(copy.Id);
-
-            foreach (var replace in needsReplace)
-            {
-                replace.Item2(reference);
-            }
-
-            foreach (var member in copy.Members)
-            {
-                member.Value.Flatten(nextId);
-            }
-
-            return copy;
-        }
-
         private bool DePromised { get; set; }
         internal override TypeDescription DePromise(out Action afterPromise)
         {
@@ -300,6 +277,31 @@ namespace PublicBroadcasting.Impl
             DePromised = true;
 
             return this;
+        }
+
+        internal override TypeDescription Clone(Dictionary<TypeDescription, TypeDescription> backRefLookup)
+        {
+            if (backRefLookup.ContainsKey(this))
+            {
+                return backRefLookup[this];
+            }
+
+            var clone = new ClassTypeDescription();
+
+            backRefLookup[this] = clone;
+
+            var members = new Dictionary<string, TypeDescription>();
+
+            foreach (var kv in Members)
+            {
+                members[kv.Key] = kv.Value.Clone(backRefLookup);
+            }
+
+            clone.Members = members;
+            clone.ForType = ForType;
+            clone.PocoType = PocoType;
+
+            return clone;
         }
     }
 
@@ -408,6 +410,20 @@ namespace PublicBroadcasting.Impl
 
             return this;
         }
+
+        internal override TypeDescription Clone(Dictionary<TypeDescription, TypeDescription> backRefLookup)
+        {
+            if (backRefLookup.ContainsKey(this))
+            {
+                return backRefLookup[this];
+            }
+
+            var ret = new BackReferenceTypeDescription(ClassId);
+
+            backRefLookup[this] = ret;
+
+            return ret;
+        }
     }
 
     [ProtoContract]
@@ -450,15 +466,6 @@ namespace PublicBroadcasting.Impl
             ValueType.Seal(existing);
         }
 
-        internal override TypeDescription Flatten(Func<int> nextId)
-        {
-            var clone = new DictionaryTypeDescription();
-            clone.KeyType = KeyType.Flatten(nextId);
-            clone.ValueType = ValueType.Flatten(nextId);
-
-            return clone;
-        }
-
         internal override TypeDescription DePromise(out Action afterPromise)
         {
             Action act1, act2;
@@ -469,6 +476,22 @@ namespace PublicBroadcasting.Impl
             afterPromise = () => { act1(); act2(); };
 
             return this;
+        }
+
+        internal override TypeDescription Clone(Dictionary<TypeDescription, TypeDescription> backRefLookup)
+        {
+            if (backRefLookup.ContainsKey(this))
+            {
+                return backRefLookup[this];
+            }
+
+            var ret = new DictionaryTypeDescription();
+            backRefLookup[this] = ret;
+
+            ret.KeyType = KeyType.Clone(backRefLookup);
+            ret.ValueType = ValueType.Clone(backRefLookup);
+
+            return ret;
         }
     }
 
@@ -505,6 +528,11 @@ namespace PublicBroadcasting.Impl
                 };
 
             return Fulfilment;
+        }
+
+        internal override TypeDescription Clone(Dictionary<TypeDescription, TypeDescription> ignored)
+        {
+            throw new NotImplementedException();
         }
     }
 
@@ -554,19 +582,26 @@ namespace PublicBroadcasting.Impl
             Contains.Seal(existing);
         }
 
-        internal override TypeDescription Flatten(Func<int> nextId)
-        {
-            var clone = new ListTypeDescription();
-            clone.Contains = Contains.Flatten(nextId);
-
-            return clone;
-        }
-
         internal override TypeDescription DePromise(out Action afterPromise)
         {
             Contains = Contains.DePromise(out afterPromise);
 
             return this;
+        }
+
+        internal override TypeDescription Clone(Dictionary<TypeDescription, TypeDescription> backRefLookup)
+        {
+            if (backRefLookup.ContainsKey(this))
+            {
+                return backRefLookup[this];
+            }
+
+            var ret = new ListTypeDescription();
+            backRefLookup[this] = ret;
+
+            ret.Contains = Contains.Clone(backRefLookup);
+
+            return ret;
         }
     }
 
@@ -706,7 +741,7 @@ namespace PublicBroadcasting.Impl
             return AllPublic ?? AllPublicPromise;
         }
 
-        public static TypeDescription GetForUse()
+        public static TypeDescription GetForUse(bool flatten)
         {
             var ret = Get();
 
@@ -716,7 +751,12 @@ namespace PublicBroadcasting.Impl
 
             ret.Seal();
 
-            ret = ret.Flatten(GetIdProvider());
+            if (flatten)
+            {
+                ret = ret.Clone(new Dictionary<TypeDescription, TypeDescription>());
+
+                Flattener.Flatten(ret, GetIdProvider());
+            }
 
             return ret;
         }
