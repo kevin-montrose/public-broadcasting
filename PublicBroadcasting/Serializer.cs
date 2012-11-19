@@ -46,7 +46,7 @@ namespace PublicBroadcasting
             if (members != (IncludedMembers.Fields | IncludedMembers.Properties)) throw new NotSupportedException("members must be Fields | Properties");
             if (visibility != IncludedVisibility.Public) throw new NotSupportedException("visibility must be Public");
 
-            var desc = Describer<T>.Get();
+            var desc = Describer<T>.GetForUse();
 
             // Don't include an envelope unless it's needed, no point in wasting bytes
             if (!desc.NeedsEnvelope)

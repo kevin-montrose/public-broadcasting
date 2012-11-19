@@ -104,7 +104,7 @@ namespace PublicBroadcasting.Impl
             if (visibility != IncludedVisibility.Public) throw new NotSupportedException("visibility must be Public");
 
             var t = typeof(From);
-            var desc = Describer<From>.Get();
+            var desc = Describer<From>.GetForUse();
             var pocoType = desc.GetPocoType();
 
             if (desc is ListTypeDescription)

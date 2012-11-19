@@ -86,7 +86,7 @@ namespace Tests
         [TestMethod]
         public void CircularClass()
         {
-            var c = Describer<Circular>.Get();
+            var c = Describer<Circular>.GetForUse();
             Assert.AreEqual(typeof(ClassTypeDescription), c.GetType());
             var asClass = c as ClassTypeDescription;
 

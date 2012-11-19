@@ -160,7 +160,7 @@ namespace PublicBroadcasting.Impl
 
         internal override void Seal(TypeDescription existing = null)
         {
-            if (PocoType != null) return;
+            if (PocoType != null || TypeBuilder != null) return;
 
             Debug.WriteLine("ClassTypeDescription.Seal: [" + ForType + "]");
 
@@ -580,16 +580,12 @@ namespace PublicBroadcasting.Impl
             Debug.WriteLine("Describer: " + typeof(T).FullName);
 
             AllPublicPromise = PromisedTypeDescription<T>.Singleton;
+            
+            var allPublic = BuildDescription();
 
-            AllPublic = BuildDescription();
+            AllPublicPromise.Fulfil(allPublic);
 
-            AllPublicPromise.Fulfil(AllPublic);
-
-            Action postPromise;
-            AllPublic = AllPublic.DePromise(out postPromise);
-            postPromise();
-
-            AllPublic = AllPublic.Flatten(GetIdProvider());
+            AllPublic = allPublic;
         }
 
         private static Func<int> GetIdProvider()
@@ -603,12 +599,8 @@ namespace PublicBroadcasting.Impl
                 };
         }
 
-        public static TypeDescription BuildDescription(Dictionary<Type, PromisedTypeDescription> inProgress = null)
+        public static TypeDescription BuildDescription()
         {
-            const string SelfName = "BuildDescription";
-
-            inProgress = inProgress ?? new Dictionary<Type, PromisedTypeDescription>();
-
             var t = typeof(T);
 
             if (t == typeof(long)) return SimpleTypeDescription.Long;
@@ -632,33 +624,26 @@ namespace PublicBroadcasting.Impl
             {
                 var dictI = t.GetInterfaces().First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>));
 
+                var dictPromiseType = typeof(PromisedTypeDescription<>).MakeGenericType(dictI);
+                var dictPromiseSingle = dictPromiseType.GetField("Singleton");
+                var dictPromise = (PromisedTypeDescription)dictPromiseSingle.GetValue(null);
+
                 var keyType = dictI.GetGenericArguments()[0];
                 var valueType = dictI.GetGenericArguments()[1];
 
-                var keyDesc = typeof(Describer<>).MakeGenericType(keyType).GetMethod(SelfName);
-                var valDesc = typeof(Describer<>).MakeGenericType(valueType).GetMethod(SelfName);
+                var keyDesc = typeof(Describer<>).MakeGenericType(keyType).GetMethod("Get");
+                var valDesc = typeof(Describer<>).MakeGenericType(valueType).GetMethod("Get");
 
                 TypeDescription key, val;
 
-                if (inProgress.ContainsKey(keyType))
-                {
-                    key = inProgress[keyType];
-                }
-                else
-                {
-                    key = (TypeDescription)keyDesc.Invoke(null, new object[] { inProgress });
-                }
+                key = (TypeDescription)keyDesc.Invoke(null, new object[0]);
+                val = (TypeDescription)valDesc.Invoke(null, new object[0]);
 
-                if (inProgress.ContainsKey(valueType))
-                {
-                    val = inProgress[valueType];
-                }
-                else
-                {
-                    val = (TypeDescription)valDesc.Invoke(null, new object[] { inProgress });
-                }
+                var dictRet = DictionaryTypeDescription.Create(key, val);
 
-                return DictionaryTypeDescription.Create(key, val);
+                dictPromise.Fulfil(dictRet);
+
+                return dictRet;
             }
 
             if ((t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IList<>)) ||
@@ -668,26 +653,15 @@ namespace PublicBroadcasting.Impl
 
                 var valueType = listI.GetGenericArguments()[0];
 
-                var valDesc = typeof(Describer<>).MakeGenericType(valueType).GetMethod(SelfName);
+                var valDesc = typeof(Describer<>).MakeGenericType(valueType).GetMethod("Get");
 
                 TypeDescription val;
-                if (inProgress.ContainsKey(valueType))
-                {
-                    val = inProgress[valueType];
-                }
-                else
-                {
-                    val = (TypeDescription)valDesc.Invoke(null, new object[] { inProgress });
-                }
+
+                val = (TypeDescription)valDesc.Invoke(null, new object[0]);
+
 
                 return ListTypeDescription.Create(val);
             }
-
-            var promiseType = typeof(PromisedTypeDescription<>).MakeGenericType(t);
-            var promiseSingle = promiseType.GetField("Singleton");
-            var promise = (PromisedTypeDescription)promiseSingle.GetValue(null);
-
-            inProgress[t] = promise;
 
             var get = (typeof(TypeReflectionCache<>).MakeGenericType(t)).GetMethod("Get");
 
@@ -701,16 +675,9 @@ namespace PublicBroadcasting.Impl
 
                 var propType = prop.PropertyType;
 
-                if (inProgress.ContainsKey(propType))
-                {
-                    classMembers[propName] = inProgress[propType];
-                }
-                else
-                {
-                    var propDesc = typeof(Describer<>).MakeGenericType(propType).GetMethod(SelfName);
+                var propDesc = typeof(Describer<>).MakeGenericType(propType).GetMethod("Get");
 
-                    classMembers[propName] = (TypeDescription)propDesc.Invoke(null, new object[] { inProgress });
-                }
+                classMembers[propName] = (TypeDescription)propDesc.Invoke(null, new object[0]);
             }
 
             foreach (var field in cutdown.Fields)
@@ -718,28 +685,15 @@ namespace PublicBroadcasting.Impl
                 var fieldName = field.Name;
                 var fieldType = field.FieldType;
 
-                if (inProgress.ContainsKey(fieldType))
-                {
-                    classMembers[fieldName] = inProgress[fieldType];
-                }
-                else
-                {
-                    var fieldDesc = typeof(Describer<>).MakeGenericType(fieldType).GetMethod(SelfName);
+                var fieldDesc = typeof(Describer<>).MakeGenericType(fieldType).GetMethod("Get");
 
-                    classMembers[fieldName] = (TypeDescription)fieldDesc.Invoke(null, new object[] { inProgress });
-                }
+                classMembers[fieldName] = (TypeDescription)fieldDesc.Invoke(null, new object[0]);
             }
-
-            //var ret = ClassTypeDescription.Create(classMembers, t);
 
             var retType = typeof(ClassTypeDescription<>).MakeGenericType(t);
             var retSingle = retType.GetField("Singleton");
 
             var ret = (TypeDescription)retSingle.GetValue(null);
-
-            promise.Fulfil(ret);
-
-            ret.Seal();
 
             return ret;
         }
@@ -750,6 +704,21 @@ namespace PublicBroadcasting.Impl
             //   What happens if you call Get() from the static initializer?
             //   That's how.
             return AllPublic ?? AllPublicPromise;
+        }
+
+        public static TypeDescription GetForUse()
+        {
+            var ret = Get();
+
+            Action postPromise;
+            ret = ret.DePromise(out postPromise);
+            postPromise();
+
+            ret.Seal();
+
+            ret = ret.Flatten(GetIdProvider());
+
+            return ret;
         }
     }
 }
