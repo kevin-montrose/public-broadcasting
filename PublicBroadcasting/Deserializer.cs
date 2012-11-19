@@ -36,13 +36,15 @@ namespace PublicBroadcasting
 
             var type = effectDesc.GetPocoType(untyped.Description);
 
-            var arg = POCOMapper<T>.GetMapper(type);
+            var mapGetter = typeof(POCOMapper<,>).MakeGenericType(type, typeof(T)).GetMethod("Get");
+
+            var arg = (POCOMapper)mapGetter.Invoke(null, new object[0]);
 
             using(var mem = new MemoryStream(untyped.Payload))
             {
                 var raw = ProtoBuf.Serializer.NonGeneric.Deserialize(type, mem);
 
-                return (T)arg(raw);
+                return (T)arg.GetMapper()(raw);
             }
         }
     }
