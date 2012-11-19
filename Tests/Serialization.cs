@@ -223,8 +223,8 @@ namespace Tests
             Assert.AreEqual(2, de.Bits.Count);
             Assert.AreEqual(321, de.Bits["Do Stuff"]);
             Assert.AreEqual(456, de.Bits["Other Stuff"]);
-            Assert.AreEqual(3141519, de.Pairs.First().Value.Foo);
-            Assert.AreEqual("World", de.Pairs.Last().Value.SubObj.Hello);
+            Assert.AreEqual(3141519, de.Pairs.Single().Key.Foo);
+            Assert.AreEqual("World", de.Pairs.Single().Value.SubObj.Hello);
             Assert.AreEqual('d', de.Other.Car);
             Assert.AreEqual("Foo", de.Other.SubObj.SubOther.Bar);
             Assert.AreEqual("!!!", de.Other.SubObj.Hello);
