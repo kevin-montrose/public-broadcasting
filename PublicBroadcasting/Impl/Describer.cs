@@ -11,46 +11,6 @@ using System.Threading.Tasks;
 
 namespace PublicBroadcasting.Impl
 {
-    [ProtoContract]
-    [ProtoInclude(3, typeof(SimpleTypeDescription))]
-    [ProtoInclude(4, typeof(ClassTypeDescription))]
-    [ProtoInclude(5, typeof(ListTypeDescription))]
-    [ProtoInclude(6, typeof(DictionaryTypeDescription))]
-    [ProtoInclude(7, typeof(NullableTypeDescription))]
-    [ProtoInclude(8, typeof(BackReferenceTypeDescription))]
-    [ProtoInclude(9, typeof(NoTypeDescription))]
-    internal abstract class TypeDescription
-    {
-        internal abstract Type GetPocoType(TypeDescription existingDescription = null);
-
-        internal virtual void Seal(TypeDescription existing = null) { }
-
-        internal abstract TypeDescription DePromise(out Action afterPromise);
-
-        internal abstract TypeDescription Clone(Dictionary<TypeDescription, TypeDescription> backRefLookup);
-    }
-
-    [ProtoContract]
-    internal class NoTypeDescription : TypeDescription
-    {
-        internal NoTypeDescription() { }
-
-        internal override Type GetPocoType(TypeDescription existing = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        internal override TypeDescription DePromise(out Action afterPromise)
-        {
-            throw new NotImplementedException();
-        }
-
-        internal override TypeDescription Clone(Dictionary<TypeDescription, TypeDescription> ignored)
-        {
-            throw new NotImplementedException();
-        }
-    }
-
     internal class Describer<T>
     {
         private static readonly PromisedTypeDescription AllPublicPromise;
@@ -62,7 +22,7 @@ namespace PublicBroadcasting.Impl
 
             AllPublicPromise = PromisedTypeDescription<T>.Singleton;
             
-            var allPublic = BuildDescription();
+            var allPublic = BuildDescription(typeof(Describer<>));
 
             AllPublicPromise.Fulfil(allPublic);
 
@@ -80,7 +40,7 @@ namespace PublicBroadcasting.Impl
                 };
         }
 
-        public static TypeDescription BuildDescription()
+        public static TypeDescription BuildDescription(Type describerType)
         {
             var t = typeof(T);
 
@@ -112,7 +72,7 @@ namespace PublicBroadcasting.Impl
 
                 var valType = nullT.GetGenericArguments()[0];
 
-                var valDesc = typeof(Describer<>).MakeGenericType(valType).GetMethod("Get");
+                var valDesc = describerType.MakeGenericType(valType).GetMethod("Get");
                 var val = (TypeDescription)valDesc.Invoke(null, new object[0]);
 
                 var nullRet = new NullableTypeDescription(val);
@@ -134,8 +94,8 @@ namespace PublicBroadcasting.Impl
                 var keyType = dictI.GetGenericArguments()[0];
                 var valueType = dictI.GetGenericArguments()[1];
 
-                var keyDesc = typeof(Describer<>).MakeGenericType(keyType).GetMethod("Get");
-                var valDesc = typeof(Describer<>).MakeGenericType(valueType).GetMethod("Get");
+                var keyDesc = describerType.MakeGenericType(keyType).GetMethod("Get");
+                var valDesc = describerType.MakeGenericType(valueType).GetMethod("Get");
 
                 TypeDescription key, val;
 
@@ -160,7 +120,7 @@ namespace PublicBroadcasting.Impl
 
                 var valueType = listI.GetGenericArguments()[0];
 
-                var valDesc = typeof(Describer<>).MakeGenericType(valueType).GetMethod("Get");
+                var valDesc = describerType.MakeGenericType(valueType).GetMethod("Get");
 
                 TypeDescription val;
 
@@ -185,7 +145,7 @@ namespace PublicBroadcasting.Impl
 
                 var propType = prop.PropertyType;
 
-                var propDesc = typeof(Describer<>).MakeGenericType(propType).GetMethod("Get");
+                var propDesc = describerType.MakeGenericType(propType).GetMethod("Get");
 
                 classMembers[propName] = (TypeDescription)propDesc.Invoke(null, new object[0]);
             }
@@ -195,12 +155,12 @@ namespace PublicBroadcasting.Impl
                 var fieldName = field.Name;
                 var fieldType = field.FieldType;
 
-                var fieldDesc = typeof(Describer<>).MakeGenericType(fieldType).GetMethod("Get");
+                var fieldDesc = describerType.MakeGenericType(fieldType).GetMethod("Get");
 
                 classMembers[fieldName] = (TypeDescription)fieldDesc.Invoke(null, new object[0]);
             }
 
-            var retType = typeof(ClassTypeDescription<>).MakeGenericType(t);
+            var retType = typeof(ClassTypeDescription<,>).MakeGenericType(t, describerType.MakeGenericType(typeof(object)));
             var retSingle = retType.GetField("Singleton");
 
             var ret = (TypeDescription)retSingle.GetValue(null);

@@ -181,17 +181,19 @@ namespace PublicBroadcasting.Impl
         }
     }
 
-    internal class ClassTypeDescription<ForType>
+    internal class ClassTypeDescription<ForType, DescriberType>
     {
         public static readonly ClassTypeDescription Singleton;
 
         static ClassTypeDescription()
         {
+            var describerType = typeof(DescriberType).GetGenericTypeDefinition();
+
             var cutdown = TypeReflectionCache<ForType>.Get(IncludedMembers.Properties | IncludedMembers.Fields, IncludedVisibility.Public);
             var members = new Dictionary<string, TypeDescription>();
             foreach (var field in cutdown.Fields)
             {
-                var descType = typeof(Describer<>).MakeGenericType(field.FieldType);
+                var descType = describerType.MakeGenericType(field.FieldType);
                 var descGet = descType.GetMethod("Get");
                 var desc = (TypeDescription)descGet.Invoke(null, new object[0]);
 
@@ -202,7 +204,7 @@ namespace PublicBroadcasting.Impl
 
             foreach (var prop in cutdown.Properties)
             {
-                var descType = typeof(Describer<>).MakeGenericType(prop.PropertyType);
+                var descType = describerType.MakeGenericType(prop.PropertyType);
                 var descGet = descType.GetMethod("Get");
                 var desc = (TypeDescription)descGet.Invoke(null, new object[0]);
 

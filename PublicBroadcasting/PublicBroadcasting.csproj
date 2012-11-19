@@ -46,7 +46,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Deserializer.cs" />
-    <Compile Include="Impl\Describer.BackReferenceTypeDescription.cs" />
+    <Compile Include="Impl\Describer.BackReferenceTypeDescription.cs">
+      <DependentUpon>Describer.cs</DependentUpon>
+    </Compile>
     <Compile Include="Impl\Describer.ClassTypeDescription.cs">
       <DependentUpon>Describer.cs</DependentUpon>
     </Compile>
@@ -55,6 +57,9 @@
       <DependentUpon>Describer.cs</DependentUpon>
     </Compile>
     <Compile Include="Impl\Describer.ListTypeDescription.cs">
+      <DependentUpon>Describer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Impl\Describer.MiscTypeDescriptions.cs">
       <DependentUpon>Describer.cs</DependentUpon>
     </Compile>
     <Compile Include="Impl\Describer.NullableTypeDescription.cs">
