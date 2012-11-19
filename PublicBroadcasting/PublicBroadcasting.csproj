@@ -46,7 +46,26 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Deserializer.cs" />
+    <Compile Include="Impl\Describer.BackReferenceTypeDescription.cs" />
+    <Compile Include="Impl\Describer.ClassTypeDescription.cs">
+      <DependentUpon>Describer.cs</DependentUpon>
+    </Compile>
     <Compile Include="Impl\Describer.cs" />
+    <Compile Include="Impl\Describer.DictionaryTypeDescription.cs">
+      <DependentUpon>Describer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Impl\Describer.ListTypeDescription.cs">
+      <DependentUpon>Describer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Impl\Describer.NullableTypeDescription.cs">
+      <DependentUpon>Describer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Impl\Describer.PromisedTypeDescription.cs">
+      <DependentUpon>Describer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Impl\Describer.SimpleTypeDescription.cs">
+      <DependentUpon>Describer.cs</DependentUpon>
+    </Compile>
     <Compile Include="Impl\Envelope.cs" />
     <Compile Include="Impl\Flattener.cs" />
     <Compile Include="Impl\POCOBuilder.cs" />
