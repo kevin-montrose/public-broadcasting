@@ -57,7 +57,7 @@ namespace PublicBroadcasting
 
             var mapper = POCOBuilder<T>.GetMapper(members, visibility);
 
-            var payload = mapper(obj);
+            var payload = mapper.GetMapper()(obj);
 
             var envelope = Envelope.Get(desc, payload);
 

@@ -29,7 +29,7 @@ namespace Tests
         {
             var map = PublicBroadcasting.Impl.POCOBuilder<Foo>.GetMapper(IncludedMembers.Properties | IncludedMembers.Fields, IncludedVisibility.Public);
 
-            dynamic poco = map(new Foo { Bar = "Hello", Buzz = 8675309 });
+            dynamic poco = map.GetMapper()(new Foo { Bar = "Hello", Buzz = 8675309 });
 
             Assert.AreEqual("Hello", poco.Bar);
             Assert.AreEqual(8675309, poco.Buzz);
