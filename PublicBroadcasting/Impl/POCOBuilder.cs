@@ -37,7 +37,7 @@ namespace PublicBroadcasting.Impl
         }
     }
 
-    internal class POCOBuilder<From>
+    internal class POCOBuilder<From, Describer>
     {
         private static readonly Type[] EmptyTypes = new Type[0];
         private static readonly object[] EmptyObjects = new object[0];
@@ -62,7 +62,7 @@ namespace PublicBroadcasting.Impl
             const string SelfName = "GetMapper";
 
             var t = typeof(From);
-            var desc = Describer<From>.GetForUse(false);
+            var desc = (TypeDescription)typeof(Describer).GetMethod("GetForUse").Invoke(null, new object[] { false });
             var pocoType = desc.GetPocoType();
 
             if (desc is ListTypeDescription)
@@ -118,9 +118,11 @@ namespace PublicBroadcasting.Impl
 
                         var type = member is FieldInfo ? (member as FieldInfo).FieldType : (member as PropertyInfo).PropertyType;
 
-                        var self = typeof(POCOBuilder<>).MakeGenericType(type).GetMethod(SelfName);
+                        var descType = typeof(Describer).GetGenericTypeDefinition().MakeGenericType(type);
 
-                        return (POCOBuilder)self.Invoke(null, new object[] { IncludedMembers.Properties | IncludedMembers.Fields, IncludedVisibility.Public });
+                        var self = typeof(POCOBuilder<,>).MakeGenericType(type, descType).GetMethod(SelfName);
+
+                        return (POCOBuilder)self.Invoke(null, new object[0]);
                     }
                 );
 
@@ -152,7 +154,9 @@ namespace PublicBroadcasting.Impl
         {
             var fromListType = typeof(From).GetGenericArguments()[0];
 
-            var itemMapper = (POCOBuilder)(typeof(POCOBuilder<>).MakeGenericType(fromListType).GetMethod("GetMapper").Invoke(null,new object[] { IncludedMembers.Properties | IncludedMembers.Fields, IncludedVisibility.Public }));
+            var descType = typeof(Describer).GetGenericTypeDefinition().MakeGenericType(fromListType);
+
+            var itemMapper = (POCOBuilder)(typeof(POCOBuilder<,>).MakeGenericType(fromListType, descType).GetMethod("GetMapper").Invoke(null, new object[0]));
 
             return
                 new POCOBuilder(
@@ -188,8 +192,11 @@ namespace PublicBroadcasting.Impl
             var keyType = genArgs[0];
             var valType = genArgs[1];
 
-            var keyMapper = (POCOBuilder)(typeof(POCOBuilder<>).MakeGenericType(keyType).GetMethod("GetMapper").Invoke(null, new object[] { IncludedMembers.Properties | IncludedMembers.Fields, IncludedVisibility.Public }));
-            var valMapper = (POCOBuilder)(typeof(POCOBuilder<>).MakeGenericType(valType).GetMethod("GetMapper").Invoke(null, new object[] { IncludedMembers.Properties | IncludedMembers.Fields, IncludedVisibility.Public }));
+            var keyDescType = typeof(Describer).GetGenericTypeDefinition().MakeGenericType(keyType);
+            var valDescType = typeof(Describer).GetGenericTypeDefinition().MakeGenericType(valType);
+
+            var keyMapper = (POCOBuilder)(typeof(POCOBuilder<,>).MakeGenericType(keyType, keyDescType).GetMethod("GetMapper").Invoke(null, new object[0]));
+            var valMapper = (POCOBuilder)(typeof(POCOBuilder<,>).MakeGenericType(valType, valDescType).GetMethod("GetMapper").Invoke(null, new object[0]));
 
             return
                 new POCOBuilder(
@@ -226,11 +233,8 @@ namespace PublicBroadcasting.Impl
                 );
         }
 
-        public static POCOBuilder GetMapper(IncludedMembers members, IncludedVisibility visibility)
+        public static POCOBuilder GetMapper()
         {
-            if (members != (IncludedMembers.Fields | IncludedMembers.Properties)) throw new NotSupportedException("members must be Fields | Properties");
-            if (visibility != IncludedVisibility.Public) throw new NotSupportedException("visibility must be Public");
-
             return Builder ?? PromisedBuilder;
         }
     }

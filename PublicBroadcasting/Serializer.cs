@@ -43,12 +43,18 @@ namespace PublicBroadcasting
             if (members == 0) throw new ArgumentException("members");
             if (visibility == 0) throw new ArgumentException("visibility");
 
-            if (members != (IncludedMembers.Fields | IncludedMembers.Properties)) throw new NotSupportedException("members must be Fields | Properties");
-            if (visibility != IncludedVisibility.Public) throw new NotSupportedException("visibility must be Public");
+            TypeDescription desc;
+            POCOBuilder mapper;
 
-            var desc = Describer<T>.GetForUse(true);
-
-            var mapper = POCOBuilder<T>.GetMapper(members, visibility);
+            if (members == (IncludedMembers.Fields | IncludedMembers.Properties) && visibility == IncludedVisibility.Public)
+            {
+                desc = AllPublicDescriber<T>.GetForUse(true);
+                mapper = POCOBuilder<T, AllPublicDescriber<T>>.GetMapper();
+            }
+            else
+            {
+                throw new NotSupportedException();
+            }
 
             var payload = mapper.GetMapper()(obj);
 

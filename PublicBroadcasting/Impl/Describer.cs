@@ -11,38 +11,12 @@ using System.Threading.Tasks;
 
 namespace PublicBroadcasting.Impl
 {
-    internal class Describer<T>
+    internal class Describer
     {
-        private static readonly PromisedTypeDescription AllPublicPromise;
-        private static readonly TypeDescription AllPublic;
-
-        static Describer()
-        {
-            Debug.WriteLine("Describer: " + typeof(T).FullName);
-
-            AllPublicPromise = PromisedTypeDescription<T>.Singleton;
-            
-            var allPublic = BuildDescription(typeof(Describer<>));
-
-            AllPublicPromise.Fulfil(allPublic);
-
-            AllPublic = allPublic;
-        }
-
-        private static Func<int> GetIdProvider()
-        {
-            int startId = 0;
-
-            return
-                () =>
-                {
-                    return Interlocked.Increment(ref startId);
-                };
-        }
-
         public static TypeDescription BuildDescription(Type describerType)
         {
-            var t = typeof(T);
+            var t = describerType.GetGenericArguments()[0];
+            describerType = describerType.GetGenericTypeDefinition();
 
             if (t == typeof(long)) return SimpleTypeDescription.Long;
             if (t == typeof(ulong)) return SimpleTypeDescription.ULong;
@@ -164,34 +138,6 @@ namespace PublicBroadcasting.Impl
             var retSingle = retType.GetField("Singleton");
 
             var ret = (TypeDescription)retSingle.GetValue(null);
-
-            return ret;
-        }
-
-        public static TypeDescription Get()
-        {
-            // How does this happen you're thinking?
-            //   What happens if you call Get() from the static initializer?
-            //   That's how.
-            return AllPublic ?? AllPublicPromise;
-        }
-
-        public static TypeDescription GetForUse(bool flatten)
-        {
-            var ret = Get();
-
-            Action postPromise;
-            ret = ret.DePromise(out postPromise);
-            postPromise();
-
-            ret.Seal();
-
-            if (flatten)
-            {
-                ret = ret.Clone(new Dictionary<TypeDescription, TypeDescription>());
-
-                Flattener.Flatten(ret, GetIdProvider());
-            }
 
             return ret;
         }

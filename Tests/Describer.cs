@@ -12,30 +12,30 @@ namespace Tests
         [TestMethod]
         public void Simple()
         {
-            Assert.AreEqual(SimpleTypeDescription.Long, Describer<long>.Get());
-            Assert.AreEqual(SimpleTypeDescription.ULong, Describer<ulong>.Get());
-            Assert.AreEqual(SimpleTypeDescription.Int, Describer<int>.Get());
-            Assert.AreEqual(SimpleTypeDescription.UInt, Describer<uint>.Get());
-            Assert.AreEqual(SimpleTypeDescription.Short, Describer<short>.Get());
-            Assert.AreEqual(SimpleTypeDescription.UShort, Describer<ushort>.Get());
-            Assert.AreEqual(SimpleTypeDescription.Byte, Describer<byte>.Get());
-            Assert.AreEqual(SimpleTypeDescription.SByte, Describer<sbyte>.Get());
-            Assert.AreEqual(SimpleTypeDescription.Char, Describer<char>.Get());
-            Assert.AreEqual(SimpleTypeDescription.String, Describer<string>.Get());
-            Assert.AreEqual(SimpleTypeDescription.Decimal, Describer<decimal>.Get());
-            Assert.AreEqual(SimpleTypeDescription.Double, Describer<double>.Get());
-            Assert.AreEqual(SimpleTypeDescription.Float, Describer<float>.Get());
+            Assert.AreEqual(SimpleTypeDescription.Long, AllPublicDescriber<long>.Get());
+            Assert.AreEqual(SimpleTypeDescription.ULong, AllPublicDescriber<ulong>.Get());
+            Assert.AreEqual(SimpleTypeDescription.Int, AllPublicDescriber<int>.Get());
+            Assert.AreEqual(SimpleTypeDescription.UInt, AllPublicDescriber<uint>.Get());
+            Assert.AreEqual(SimpleTypeDescription.Short, AllPublicDescriber<short>.Get());
+            Assert.AreEqual(SimpleTypeDescription.UShort, AllPublicDescriber<ushort>.Get());
+            Assert.AreEqual(SimpleTypeDescription.Byte, AllPublicDescriber<byte>.Get());
+            Assert.AreEqual(SimpleTypeDescription.SByte, AllPublicDescriber<sbyte>.Get());
+            Assert.AreEqual(SimpleTypeDescription.Char, AllPublicDescriber<char>.Get());
+            Assert.AreEqual(SimpleTypeDescription.String, AllPublicDescriber<string>.Get());
+            Assert.AreEqual(SimpleTypeDescription.Decimal, AllPublicDescriber<decimal>.Get());
+            Assert.AreEqual(SimpleTypeDescription.Double, AllPublicDescriber<double>.Get());
+            Assert.AreEqual(SimpleTypeDescription.Float, AllPublicDescriber<float>.Get());
         }
 
         [TestMethod]
         public void Dictionary()
         {
-            var strToStr = Describer<Dictionary<string, string>>.Get();
+            var strToStr = AllPublicDescriber<Dictionary<string, string>>.Get();
             Assert.AreEqual(typeof(DictionaryTypeDescription), strToStr.GetType());
             Assert.AreEqual(SimpleTypeDescription.String, (strToStr as DictionaryTypeDescription).KeyType);
             Assert.AreEqual(SimpleTypeDescription.String, (strToStr as DictionaryTypeDescription).ValueType);
 
-            var strToInt = Describer<Dictionary<string, int>>.Get();
+            var strToInt = AllPublicDescriber<Dictionary<string, int>>.Get();
             Assert.AreEqual(typeof(DictionaryTypeDescription), strToInt.GetType());
             Assert.AreEqual(SimpleTypeDescription.String, (strToInt as DictionaryTypeDescription).KeyType);
             Assert.AreEqual(SimpleTypeDescription.Int, (strToInt as DictionaryTypeDescription).ValueType);
@@ -44,11 +44,11 @@ namespace Tests
         [TestMethod]
         public void List()
         {
-            var ints = Describer<List<int>>.Get();
+            var ints = AllPublicDescriber<List<int>>.Get();
             Assert.AreEqual(typeof(ListTypeDescription), ints.GetType());
             Assert.AreEqual(SimpleTypeDescription.Int, (ints as ListTypeDescription).Contains);
 
-            var chars = Describer<char[]>.Get();
+            var chars = AllPublicDescriber<char[]>.Get();
             Assert.AreEqual(typeof(ListTypeDescription), chars.GetType());
             Assert.AreEqual(SimpleTypeDescription.Char, (chars as ListTypeDescription).Contains);
         }
@@ -63,7 +63,7 @@ namespace Tests
         [TestMethod]
         public void Class()
         {
-            var c = Describer<Dummy>.Get();
+            var c = AllPublicDescriber<Dummy>.Get();
             Assert.AreEqual(typeof(ClassTypeDescription), c.GetType());
             var asClass = c as ClassTypeDescription;
 
@@ -86,7 +86,7 @@ namespace Tests
         [TestMethod]
         public void CircularClass()
         {
-            var c = Describer<Circular>.GetForUse(true);
+            var c = AllPublicDescriber<Circular>.GetForUse(true);
             Assert.AreEqual(typeof(ClassTypeDescription), c.GetType());
             var asClass = c as ClassTypeDescription;
 

@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Deserializer.cs" />
+    <Compile Include="Impl\Describer.AllPublic.cs" />
     <Compile Include="Impl\Describer.BackReferenceTypeDescription.cs">
       <DependentUpon>Describer.cs</DependentUpon>
     </Compile>
