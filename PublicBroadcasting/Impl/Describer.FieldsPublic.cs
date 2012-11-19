@@ -8,30 +8,30 @@ using System.Threading.Tasks;
 
 namespace PublicBroadcasting.Impl
 {
-    internal class AllPublicDescriber<T>
+    internal class FieldsPublicDescriber<T>
     {
-        private static readonly PromisedTypeDescription AllPublicPromise;
-        private static readonly TypeDescription AllPublic;
+        private static readonly PromisedTypeDescription AllFieldsPromise;
+        private static readonly TypeDescription AllFields;
 
-        static AllPublicDescriber()
+        static FieldsPublicDescriber()
         {
-            Debug.WriteLine("AllPublicDescriber: " + typeof(T).FullName);
+            Debug.WriteLine("FieldsPublicDescriber: " + typeof(T).FullName);
 
-            var promiseType = typeof(PromisedTypeDescription<,>).MakeGenericType(typeof(T), typeof(AllPublicDescriber<>).MakeGenericType(typeof(T)));
+            var promiseType = typeof(PromisedTypeDescription<,>).MakeGenericType(typeof(T), typeof(FieldsPublicDescriber<>).MakeGenericType(typeof(T)));
             var promiseSingle = promiseType.GetField("Singleton");
 
-            AllPublicPromise = (PromisedTypeDescription)promiseSingle.GetValue(null);
+            AllFieldsPromise = (PromisedTypeDescription)promiseSingle.GetValue(null);
 
-            var allPublic = Describer.BuildDescription(typeof(AllPublicDescriber<>).MakeGenericType(typeof(T)));
+            var allFields = Describer.BuildDescription(typeof(FieldsPublicDescriber<>).MakeGenericType(typeof(T)));
 
-            AllPublicPromise.Fulfil(allPublic);
+            AllFieldsPromise.Fulfil(allFields);
 
-            AllPublic = allPublic;
+            AllFields = allFields;
         }
 
         public static IncludedMembers GetMemberMask()
         {
-            return IncludedMembers.Fields | IncludedMembers.Properties;
+            return IncludedMembers.Fields;
         }
 
         public static IncludedVisibility GetVisibilityMask()
@@ -44,7 +44,7 @@ namespace PublicBroadcasting.Impl
             // How does this happen you're thinking?
             //   What happens if you call Get() from the static initializer?
             //   That's how.
-            return AllPublic ?? AllPublicPromise;
+            return AllFields ?? AllFieldsPromise;
         }
 
         public static TypeDescription GetForUse(bool flatten)

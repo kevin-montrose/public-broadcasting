@@ -187,9 +187,15 @@ namespace PublicBroadcasting.Impl
 
         static ClassTypeDescription()
         {
+            var cutdownVisibility = typeof(DescriberType).GetMethod("GetVisibilityMask");
+            var cutdownMembers = typeof(DescriberType).GetMethod("GetMemberMask");
+
+            var visibilityMask = (IncludedVisibility)cutdownVisibility.Invoke(null, new object[0]);
+            var membersMask = (IncludedMembers)cutdownMembers.Invoke(null, new object[0]);
+
             var describerType = typeof(DescriberType).GetGenericTypeDefinition();
 
-            var cutdown = TypeReflectionCache<ForType>.Get(IncludedMembers.Properties | IncludedMembers.Fields, IncludedVisibility.Public);
+            var cutdown = TypeReflectionCache<ForType>.Get(membersMask, visibilityMask);
             var members = new Dictionary<string, TypeDescription>();
             foreach (var field in cutdown.Fields)
             {

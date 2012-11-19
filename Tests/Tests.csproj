@@ -51,6 +51,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="Configs.cs" />
     <Compile Include="Describer.cs" />
     <Compile Include="Dynamic.cs" />
     <Compile Include="POCOBuilder.cs" />

@@ -336,7 +336,7 @@ namespace PublicBroadcasting.Impl
         ///     - overrides Equals(object)
         ///     - overrides GetHashCode()
         /// </summary>
-        private static bool IsAnonymouseClass(Type type)
+        private static bool IsAnonymouseClass(Type type) // don't fix the typo, it's fitting.
         {
             if (type.IsValueType) return false;
             if (type.BaseType != typeof(object)) return false;

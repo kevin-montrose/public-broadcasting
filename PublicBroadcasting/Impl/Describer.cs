@@ -16,6 +16,14 @@ namespace PublicBroadcasting.Impl
         public static TypeDescription BuildDescription(Type describerType)
         {
             var t = describerType.GetGenericArguments()[0];
+
+            var cutdownVisibility = describerType.GetMethod("GetVisibilityMask");
+            var cutdownMembers = describerType.GetMethod("GetMemberMask");
+
+            var visibilityMask = (IncludedVisibility)cutdownVisibility.Invoke(null, new object[0]);
+            var membersMask = (IncludedMembers)cutdownMembers.Invoke(null, new object[0]);
+
+            // from here on, the concrete type is useless, we care about the "parent" describer
             describerType = describerType.GetGenericTypeDefinition();
 
             if (t == typeof(long)) return SimpleTypeDescription.Long;
@@ -40,7 +48,7 @@ namespace PublicBroadcasting.Impl
             {
                 var nullT = t;
 
-                var nullPromiseType = typeof(PromisedTypeDescription<>).MakeGenericType(nullT);
+                var nullPromiseType = typeof(PromisedTypeDescription<,>).MakeGenericType(nullT, describerType.MakeGenericType(nullT));
                 var nullPromiseSingle = nullPromiseType.GetField("Singleton");
                 var nullPromise = (PromisedTypeDescription)nullPromiseSingle.GetValue(null);
 
@@ -61,7 +69,7 @@ namespace PublicBroadcasting.Impl
             {
                 var dictI = t.GetInterfaces().First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>));
 
-                var dictPromiseType = typeof(PromisedTypeDescription<>).MakeGenericType(dictI);
+                var dictPromiseType = typeof(PromisedTypeDescription<,>).MakeGenericType(dictI, describerType.MakeGenericType(dictI));
                 var dictPromiseSingle = dictPromiseType.GetField("Singleton");
                 var dictPromise = (PromisedTypeDescription)dictPromiseSingle.GetValue(null);
 
@@ -88,7 +96,7 @@ namespace PublicBroadcasting.Impl
             {
                 var listI = t.GetInterfaces().First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>));
 
-                var listPromiseType = typeof(PromisedTypeDescription<>).MakeGenericType(listI);
+                var listPromiseType = typeof(PromisedTypeDescription<,>).MakeGenericType(listI, describerType.MakeGenericType(listI));
                 var listPromiseSingle = listPromiseType.GetField("Singleton");
                 var listPromise = (PromisedTypeDescription)listPromiseSingle.GetValue(null);
 
@@ -109,7 +117,7 @@ namespace PublicBroadcasting.Impl
 
             var get = (typeof(TypeReflectionCache<>).MakeGenericType(t)).GetMethod("Get");
 
-            var cutdown = (CutdownType)get.Invoke(null, new object[] { IncludedMembers.Properties | IncludedMembers.Fields, IncludedVisibility.Public });
+            var cutdown = (CutdownType)get.Invoke(null, new object[] { membersMask, visibilityMask });
 
             var classMembers = new Dictionary<string, TypeDescription>(cutdown.Properties.Count + cutdown.Fields.Count);
 
@@ -140,6 +148,17 @@ namespace PublicBroadcasting.Impl
             var ret = (TypeDescription)retSingle.GetValue(null);
 
             return ret;
+        }
+
+        internal static Func<int> GetIdProvider()
+        {
+            int startId = 0;
+
+            return
+                () =>
+                {
+                    return Interlocked.Increment(ref startId);
+                };
         }
     }
 }

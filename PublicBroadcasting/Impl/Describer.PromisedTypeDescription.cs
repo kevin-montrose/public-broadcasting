@@ -47,7 +47,7 @@ namespace PublicBroadcasting.Impl
         }
     }
 
-    internal class PromisedTypeDescription<ForType>
+    internal class PromisedTypeDescription<ForType, ForDescriber>
     {
         public static readonly PromisedTypeDescription Singleton;
 

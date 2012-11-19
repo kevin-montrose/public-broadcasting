@@ -14,9 +14,24 @@ namespace PublicBroadcasting
     {
         public static byte[] Serialize<T>(T obj)
         {
+            return Serialize(obj, IncludedMembers.Properties | IncludedMembers.Fields, IncludedVisibility.Public);
+        }
+
+        public static byte[] Serialize<T>(T obj, IncludedMembers members)
+        {
+            return Serialize(obj, members, IncludedVisibility.Public);
+        }
+
+        public static byte[] Serialize<T>(T obj, IncludedVisibility visibility)
+        {
+            return Serialize(obj, IncludedMembers.Properties | IncludedMembers.Properties, visibility);
+        }
+
+        public static byte[] Serialize<T>(T obj, IncludedMembers members, IncludedVisibility visibility)
+        {
             using (var mem = new MemoryStream())
             {
-                Serialize(mem, obj);
+                Serialize(mem, obj, members, visibility);
 
                 return mem.ToArray();
             }
@@ -37,6 +52,32 @@ namespace PublicBroadcasting
             Serialize(stream, obj, IncludedMembers.Properties | IncludedMembers.Fields, visibility);
         }
 
+        private static void GetDescriptionAndBuilder<T>(IncludedMembers members, IncludedVisibility visibility, out TypeDescription description, out POCOBuilder builder)
+        {
+            if (visibility == IncludedVisibility.Public)
+            {
+                if (members == (IncludedMembers.Properties | IncludedMembers.Fields))
+                {
+                    description = AllPublicDescriber<T>.GetForUse(true);
+                    builder = POCOBuilder<T, AllPublicDescriber<T>>.GetMapper();
+                    
+                    return;
+                }
+
+                if (members == IncludedMembers.Fields)
+                {
+                    description = FieldsPublicDescriber<T>.GetForUse(true);
+                    builder = POCOBuilder<T, FieldsPublicDescriber<T>>.GetMapper();
+
+                    return;
+                }
+
+                throw new NotSupportedException();
+            }
+
+            throw new NotSupportedException();
+        }
+
         public static void Serialize<T>(Stream stream, T obj, IncludedMembers members, IncludedVisibility visibility)
         {
             if (stream == null) throw new ArgumentNullException("stream");
@@ -44,19 +85,10 @@ namespace PublicBroadcasting
             if (visibility == 0) throw new ArgumentException("visibility");
 
             TypeDescription desc;
-            POCOBuilder mapper;
+            POCOBuilder builder;
+            GetDescriptionAndBuilder<T>(members, visibility, out desc, out builder);
 
-            if (members == (IncludedMembers.Fields | IncludedMembers.Properties) && visibility == IncludedVisibility.Public)
-            {
-                desc = AllPublicDescriber<T>.GetForUse(true);
-                mapper = POCOBuilder<T, AllPublicDescriber<T>>.GetMapper();
-            }
-            else
-            {
-                throw new NotSupportedException();
-            }
-
-            var payload = mapper.GetMapper()(obj);
+            var payload = builder.GetMapper()(obj);
 
             var envelope = Envelope.Get(desc, payload);
 
