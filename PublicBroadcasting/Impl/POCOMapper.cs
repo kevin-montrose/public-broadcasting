@@ -51,7 +51,7 @@ namespace PublicBroadcasting.Impl
             Mapper = mapper;
         }
 
-        public static POCOMapper GetDictionaryMapper(Dictionary<Type, PromisedPOCOMapper> inProgress)
+        private static POCOMapper GetDictionaryMapper()
         {
             var toKeyType = typeof(To).GetGenericArguments()[0];
             var toValType = typeof(To).GetGenericArguments()[1];
@@ -59,11 +59,11 @@ namespace PublicBroadcasting.Impl
             var fromKeyType = typeof(From).GetGenericArguments()[0];
             var fromValType = typeof(From).GetGenericArguments()[1];
 
-            var keyMapper = typeof(POCOMapper<,>).MakeGenericType(fromKeyType, toKeyType).GetMethod("GetMapper");
-            var keyMap = (POCOMapper)keyMapper.Invoke(null, new object[] { inProgress });
+            var keyMapper = typeof(POCOMapper<,>).MakeGenericType(fromKeyType, toKeyType).GetMethod("Get");
+            var keyMap = (POCOMapper)keyMapper.Invoke(null, new object[0]);
 
-            var valMapper = typeof(POCOMapper<,>).MakeGenericType(fromValType, toValType).GetMethod("GetMapper");
-            var valMap = (POCOMapper)valMapper.Invoke(null, new object[] { inProgress });
+            var valMapper = typeof(POCOMapper<,>).MakeGenericType(fromValType, toValType).GetMethod("Get");
+            var valMap = (POCOMapper)valMapper.Invoke(null, new object[0]);
 
             var newDictType = typeof(Dictionary<,>).MakeGenericType(toKeyType, toValType);
             var newDictCons = newDictType.GetConstructor(new Type[0]);
@@ -72,6 +72,8 @@ namespace PublicBroadcasting.Impl
                 new POCOMapper(
                     dictX =>
                     {
+                        if (dictX == null) return null;
+
                         var ret = (IDictionary)newDictCons.Invoke(new object[0]);
 
                         var asDict = (IDictionary)dictX;
@@ -94,13 +96,13 @@ namespace PublicBroadcasting.Impl
                 );
         }
 
-        public static POCOMapper GetListMapper(Dictionary<Type, PromisedPOCOMapper> inProgress)
+        private static POCOMapper GetListMapper()
         {
             var toListType = typeof(To).GetGenericArguments()[0];
             var fromListType = typeof(From).GetGenericArguments()[0];
 
-            var mapper = typeof(POCOMapper<,>).MakeGenericType(fromListType, toListType).GetMethod("GetMapper");
-            var map = (POCOMapper)mapper.Invoke(null, new object[] { inProgress });
+            var mapper = typeof(POCOMapper<,>).MakeGenericType(fromListType, toListType).GetMethod("Get");
+            var map = (POCOMapper)mapper.Invoke(null, new object[0]);
 
             var newListType = typeof(List<>).MakeGenericType(toListType);
             var newListCons = newListType.GetConstructor(new Type[0]);
@@ -109,6 +111,8 @@ namespace PublicBroadcasting.Impl
                 new POCOMapper(
                     listX =>
                     {
+                        if (listX == null) return null;
+
                         var ret = (IList)newListCons.Invoke(new object[0]);
 
                         var asEnum = (IEnumerable)listX;
@@ -125,26 +129,8 @@ namespace PublicBroadcasting.Impl
                 );
         }
 
-        private static bool Trivial<V>(Type toType, Type fromType, out POCOMapper convert)
+        private static POCOMapper GetMapper()
         {
-            if (fromType == typeof(V))
-            {
-                if (toType != typeof(V)) throw new Exception("Type mismatch, expected " + typeof(V));
-
-                convert = new POCOMapper(x => (V)x);
-
-                return true;
-            }
-
-            convert = null;
-
-            return false;
-        }
-
-        public static POCOMapper GetMapper(Dictionary<Type, PromisedPOCOMapper> inProgress = null)
-        {
-            inProgress = inProgress ?? new Dictionary<Type, PromisedPOCOMapper>();
-
             if (typeof(From) == typeof(To))
             {
                 return new POCOMapper(x => (To)x);
@@ -162,7 +148,7 @@ namespace PublicBroadcasting.Impl
                     throw new Exception(tTo.FullName + " is not a valid deserialization, expected a dictionary");
                 }
 
-                return GetDictionaryMapper(inProgress);
+                return GetDictionaryMapper();
             }
 
             if ((tFrom.IsGenericType && tFrom.GetGenericTypeDefinition() == typeof(IList<>)) ||
@@ -174,12 +160,8 @@ namespace PublicBroadcasting.Impl
                     throw new Exception(tTo.FullName + " is not a valid deserialization, expected a list");
                 }
 
-                return GetListMapper(inProgress);
+                return GetListMapper();
             }
-
-            var promised = new PromisedPOCOMapper();
-
-            inProgress[tTo] = promised;
 
             Dictionary<string, POCOMapper> members = null;
 
@@ -198,14 +180,9 @@ namespace PublicBroadcasting.Impl
 
                         var toPropType = to is FieldInfo ? (to as FieldInfo).FieldType : (to as PropertyInfo).PropertyType;
 
-                        if (inProgress.ContainsKey(toPropType))
-                        {
-                            return inProgress[toPropType];
-                        }
-
                         var mapper = typeof(POCOMapper<,>).MakeGenericType(propType, toPropType);
 
-                        return (POCOMapper)mapper.GetMethod("GetMapper").Invoke(null, new object[] { inProgress });
+                        return (POCOMapper)mapper.GetMethod("Get").Invoke(null, new object[0]);
                     }
                 ).Where(kv => kv.Value != null).ToDictionary(kv => kv.Key, kv => kv.Value);
 
@@ -239,8 +216,6 @@ namespace PublicBroadcasting.Impl
 
                     return ret;
                 };
-
-            promised.Fulfil(retFunc);
 
             return new POCOMapper(retFunc);
         }

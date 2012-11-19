@@ -182,7 +182,7 @@ namespace Tests
 
         class Compl
         {
-            /*public class Sub
+            public class Sub
             {
                 public string Hello { get; set; }
                 public Compl SubOther { get; set; }
@@ -192,31 +192,31 @@ namespace Tests
             public string Bar;
             public char Car;
             public Dictionary<string, int> Bits { get; set; }
-            public List<sbyte> Stuff { get; set; }*/
+            public List<sbyte> Stuff { get; set; }
 
             public Dictionary<Compl, Compl> Pairs;
 
-            /*public Compl Other { get; set; }
+            public Compl Other { get; set; }
 
-            public Sub SubObj { get; set; }*/
+            public Sub SubObj { get; set; }
         }
 
-        //[TestMethod]
+        [TestMethod]
         public void Complicated()
         {
             Compl obj = new Compl();
-            //obj.Foo = 123;
-            //obj.Bar = "Bizz";
-            //obj.Car = 'c';
-            //obj.Bits = new Dictionary<string, int> { { "Do Stuff", 321 }, { "Other Stuff", 456 } };
-            //obj.Pairs = new Dictionary<Compl, Compl> { { new Compl { Foo = 3141519 }, new Compl { SubObj = new Compl.Sub { Hello = "World" } } } };
-            //obj.Other = new Compl { Car = 'd', SubObj = new Compl.Sub { SubOther = new Compl { Bar = "Foo" }, Hello = "!!!" } };
-            //obj.SubObj = new Compl.Sub { Hello = "Thing" };
+            obj.Foo = 123;
+            obj.Bar = "Bizz";
+            obj.Car = 'c';
+            obj.Bits = new Dictionary<string, int> { { "Do Stuff", 321 }, { "Other Stuff", 456 } };
+            obj.Pairs = new Dictionary<Compl, Compl> { { new Compl { Foo = 3141519 }, new Compl { SubObj = new Compl.Sub { Hello = "World" } } } };
+            obj.Other = new Compl { Car = 'd', SubObj = new Compl.Sub { SubOther = new Compl { Bar = "Foo" }, Hello = "!!!" } };
+            obj.SubObj = new Compl.Sub { Hello = "Thing" };
 
             var bytes = Serializer.Serialize(obj);
             var de = Deserializer.Deserialize<Compl>(bytes);
 
-            /*Assert.IsNotNull(de);
+            Assert.IsNotNull(de);
             Assert.AreEqual(obj.Foo, de.Foo);
             Assert.AreEqual(obj.Bar, de.Bar);
             Assert.AreEqual(obj.Car, de.Car);
@@ -228,7 +228,7 @@ namespace Tests
             Assert.AreEqual('d', de.Other.Car);
             Assert.AreEqual("Foo", de.Other.SubObj.SubOther.Bar);
             Assert.AreEqual("!!!", de.Other.SubObj.Hello);
-            Assert.AreEqual("Thing", de.SubObj.Hello);*/
+            Assert.AreEqual("Thing", de.SubObj.Hello);
         }
     }
 }
