@@ -290,5 +290,22 @@ namespace Tests
 
             Assert.AreEqual(222, n.Back.Back.Fizz.Value);
         }
+
+        private T DeserializeByExample<T>(T example, byte[] bytes)
+        {
+            return Deserializer.Deserialize<T>(bytes);
+        }
+
+        [TestMethod]
+        public void Anon()
+        {
+            var anonExample = new { String = "str", Int = 123 };
+
+            var bytes = Serializer.Serialize(new { String = "Foo", Int = 456 });
+            var de = DeserializeByExample(anonExample, bytes);
+
+            Assert.AreEqual("Foo", de.String);
+            Assert.AreEqual(456, de.Int);
+        }
     }
 }
