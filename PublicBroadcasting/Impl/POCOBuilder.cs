@@ -42,16 +42,111 @@ namespace PublicBroadcasting.Impl
         private static readonly Type[] EmptyTypes = new Type[0];
         private static readonly object[] EmptyObjects = new object[0];
 
+        private static POCOBuilder Builder { get; set; }
+        private static PromisedPOCOBuilder PromisedBuilder { get; set; }
+
         static POCOBuilder()
         {
             Debug.WriteLine("POCOBuilder: " + typeof(From).FullName);
+
+            PromisedBuilder = new PromisedPOCOBuilder();
+
+            var builder = Build();
+            PromisedBuilder.Fulfil(builder.GetMapper());
+
+            Builder = builder;
         }
 
-        private static POCOBuilder GetListMapper(IncludedMembers members, IncludedVisibility visibility, Dictionary<Type, PromisedPOCOBuilder> inProgress = null)
+        private static POCOBuilder Build()
+        {
+            const string SelfName = "GetMapper";
+
+            var t = typeof(From);
+            var desc = Describer<From>.GetForUse();
+            var pocoType = desc.GetPocoType();
+
+            if (desc is ListTypeDescription)
+            {
+                return GetListMapper();
+            }
+
+            if (desc is DictionaryTypeDescription)
+            {
+                return GetDictionaryMapper();
+            }
+
+            if (desc is SimpleTypeDescription)
+            {
+                if (desc == SimpleTypeDescription.Byte) return new POCOBuilder(x => Convert.ToByte(x));
+                if (desc == SimpleTypeDescription.SByte) return new POCOBuilder(x => Convert.ToSByte(x));
+                if (desc == SimpleTypeDescription.Short) return new POCOBuilder(x => Convert.ToInt16(x));
+                if (desc == SimpleTypeDescription.UShort) return new POCOBuilder(x => Convert.ToUInt16(x));
+                if (desc == SimpleTypeDescription.Int) return new POCOBuilder(x => Convert.ToInt32(x));
+                if (desc == SimpleTypeDescription.UInt) return new POCOBuilder(x => Convert.ToUInt32(x));
+                if (desc == SimpleTypeDescription.Long) return new POCOBuilder(x => Convert.ToInt64(x));
+                if (desc == SimpleTypeDescription.ULong) return new POCOBuilder(x => Convert.ToUInt64(x));
+                if (desc == SimpleTypeDescription.Double) return new POCOBuilder(x => Convert.ToDouble(x));
+                if (desc == SimpleTypeDescription.Float) return new POCOBuilder(x => Convert.ToSingle(x));
+                if (desc == SimpleTypeDescription.Decimal) return new POCOBuilder(x => Convert.ToDecimal(x));
+                if (desc == SimpleTypeDescription.Char) return new POCOBuilder(x => Convert.ToChar(x));
+                if (desc == SimpleTypeDescription.String) return new POCOBuilder(x => Convert.ToString(x));
+
+                throw new Exception("Shouldn't be possible, found " + desc);
+            }
+
+            var asClass = (ClassTypeDescription)desc;
+
+            var from = TypeAccessor.Create(t);
+            var to = TypeAccessor.Create(pocoType);
+
+            var newPoco = pocoType.GetConstructor(EmptyTypes);
+
+            Dictionary<string, POCOBuilder> propMaps = null;
+
+            propMaps =
+                asClass.Members.ToDictionary(
+                    kv => kv.Key,
+                    kv =>
+                    {
+                        var member = t.GetMember(kv.Key, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)[0];
+
+                        var type = member is FieldInfo ? (member as FieldInfo).FieldType : (member as PropertyInfo).PropertyType;
+
+                        var self = typeof(POCOBuilder<>).MakeGenericType(type).GetMethod(SelfName);
+
+                        return (POCOBuilder)self.Invoke(null, new object[] { IncludedMembers.Properties | IncludedMembers.Fields, IncludedVisibility.Public });
+                    }
+                );
+
+            Func<object, object> mapFuncRet =
+                x =>
+                {
+                    if (x == null) return null;
+
+                    var ret = newPoco.Invoke(EmptyObjects);
+
+                    foreach (var member in asClass.Members)
+                    {
+                        var fromVal = from[x, member.Key];
+
+                        if (fromVal == null) continue;
+
+                        var toVal = propMaps[member.Key].GetMapper()(fromVal);
+
+                        to[ret, member.Key] = toVal;
+                    }
+
+                    return ret;
+                };
+
+            return new POCOBuilder(mapFuncRet);
+        }
+
+        private static POCOBuilder GetListMapper()
         {
             var fromListType = typeof(From).GetGenericArguments()[0];
 
-            var itemMapper = (POCOBuilder)(typeof(POCOBuilder<>).MakeGenericType(fromListType).GetMethod("GetMapper").Invoke(null, new object[] { members, visibility, inProgress }));
+            var itemMapper = (POCOBuilder)(typeof(POCOBuilder<>).MakeGenericType(fromListType).GetMethod("GetMapper").Invoke(null,new object[] { IncludedMembers.Properties | IncludedMembers.Fields, IncludedVisibility.Public }));
 
             return
                 new POCOBuilder(
@@ -80,15 +175,15 @@ namespace PublicBroadcasting.Impl
                 );
         }
 
-        public static POCOBuilder GetDictionaryMapper(IncludedMembers members, IncludedVisibility visibility, Dictionary<Type, PromisedPOCOBuilder> inProgress = null)
+        public static POCOBuilder GetDictionaryMapper()
         {
             var genArgs = typeof(From).GetGenericArguments();
 
             var keyType = genArgs[0];
             var valType = genArgs[1];
 
-            var keyMapper = (POCOBuilder)(typeof(POCOBuilder<>).MakeGenericType(keyType).GetMethod("GetMapper").Invoke(null, new object[] { members, visibility, inProgress }));
-            var valMapper = (POCOBuilder)(typeof(POCOBuilder<>).MakeGenericType(valType).GetMethod("GetMapper").Invoke(null, new object[] { members, visibility, inProgress }));
+            var keyMapper = (POCOBuilder)(typeof(POCOBuilder<>).MakeGenericType(keyType).GetMethod("GetMapper").Invoke(null, new object[] { IncludedMembers.Properties | IncludedMembers.Fields, IncludedVisibility.Public }));
+            var valMapper = (POCOBuilder)(typeof(POCOBuilder<>).MakeGenericType(valType).GetMethod("GetMapper").Invoke(null, new object[] { IncludedMembers.Properties | IncludedMembers.Fields, IncludedVisibility.Public }));
 
             return
                 new POCOBuilder(
@@ -125,103 +220,12 @@ namespace PublicBroadcasting.Impl
                 );
         }
 
-        public static POCOBuilder GetMapper(IncludedMembers members, IncludedVisibility visibility, Dictionary<Type, PromisedPOCOBuilder> inProgress = null)
+        public static POCOBuilder GetMapper(IncludedMembers members, IncludedVisibility visibility)
         {
-            inProgress = inProgress ?? new Dictionary<Type, PromisedPOCOBuilder>();
-
-            const string SelfName = "GetMapper";
-
             if (members != (IncludedMembers.Fields | IncludedMembers.Properties)) throw new NotSupportedException("members must be Fields | Properties");
             if (visibility != IncludedVisibility.Public) throw new NotSupportedException("visibility must be Public");
 
-            var t = typeof(From);
-            var desc = Describer<From>.GetForUse();
-            var pocoType = desc.GetPocoType();
-
-            if (desc is ListTypeDescription)
-            {
-                return GetListMapper(members, visibility, inProgress);
-            }
-
-            if (desc is DictionaryTypeDescription)
-            {
-                return GetDictionaryMapper(members, visibility, inProgress);
-            }
-
-            if (desc is SimpleTypeDescription)
-            {
-                if (desc == SimpleTypeDescription.Byte) return new POCOBuilder(x => Convert.ToByte(x));
-                if (desc == SimpleTypeDescription.SByte) return new POCOBuilder(x => Convert.ToSByte(x));
-                if (desc == SimpleTypeDescription.Short) return new POCOBuilder(x => Convert.ToInt16(x));
-                if (desc == SimpleTypeDescription.UShort) return new POCOBuilder(x => Convert.ToUInt16(x));
-                if (desc == SimpleTypeDescription.Int) return new POCOBuilder(x => Convert.ToInt32(x));
-                if (desc == SimpleTypeDescription.UInt) return new POCOBuilder(x => Convert.ToUInt32(x));
-                if (desc == SimpleTypeDescription.Long) return new POCOBuilder(x => Convert.ToInt64(x));
-                if (desc == SimpleTypeDescription.ULong) return new POCOBuilder(x => Convert.ToUInt64(x));
-                if (desc == SimpleTypeDescription.Double) return new POCOBuilder(x => Convert.ToDouble(x));
-                if (desc == SimpleTypeDescription.Float) return new POCOBuilder(x => Convert.ToSingle(x));
-                if (desc == SimpleTypeDescription.Decimal) return new POCOBuilder(x => Convert.ToDecimal(x));
-                if (desc == SimpleTypeDescription.Char) return new POCOBuilder(x => Convert.ToChar(x));
-                if (desc == SimpleTypeDescription.String) return new POCOBuilder(x => Convert.ToString(x));
-
-                throw new Exception("Shouldn't be possible, found " + desc);
-            }
-
-            var asClass = (ClassTypeDescription)desc;
-
-            var from = TypeAccessor.Create(t);
-            var to = TypeAccessor.Create(pocoType);
-
-            inProgress[t] = new PromisedPOCOBuilder();
-
-            var newPoco = pocoType.GetConstructor(EmptyTypes);
-
-            Dictionary<string, POCOBuilder> propMaps = null;
-
-            propMaps = 
-                asClass.Members.ToDictionary(
-                    kv => kv.Key, 
-                    kv => 
-                    {
-                        var member = t.GetMember(kv.Key, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)[0];
-
-                        var type = member is FieldInfo ? (member as FieldInfo).FieldType : (member as PropertyInfo).PropertyType;
-
-                        if (inProgress.ContainsKey(type))
-                        {
-                            return inProgress[type];
-                        }
-
-                        var self = typeof(POCOBuilder<>).MakeGenericType(type).GetMethod(SelfName);
-
-                        return (POCOBuilder)self.Invoke(null, new object[] { members, visibility, inProgress });
-                    }
-                );
-
-            Func<object, object> mapFuncRet =
-                x =>
-                {
-                    if (x == null) return null;
-
-                    var ret = newPoco.Invoke(EmptyObjects);
-
-                    foreach (var member in asClass.Members)
-                    {
-                        var fromVal = from[x, member.Key];
-
-                        if (fromVal == null) continue;
-
-                        var toVal = propMaps[member.Key].GetMapper()(fromVal);
-
-                        to[ret, member.Key] = toVal;
-                    }
-
-                    return ret;
-                };
-
-            inProgress[t].Fulfil(mapFuncRet);
-
-            return new POCOBuilder(mapFuncRet);
+            return Builder ?? PromisedBuilder;
         }
     }
 }
