@@ -167,7 +167,15 @@ namespace PublicBroadcasting.Impl
 
         private static POCOBuilder GetListMapper()
         {
-            var fromListType = typeof(From).GetGenericArguments()[0];
+            Type fromListType;
+
+            if (typeof(From).IsArray)
+            {
+                fromListType = typeof(From).GetElementType();
+            }else
+            {
+                fromListType = typeof(From).GetGenericArguments()[0];
+            }
 
             var descType = typeof(Describer).GetGenericTypeDefinition().MakeGenericType(fromListType);
 

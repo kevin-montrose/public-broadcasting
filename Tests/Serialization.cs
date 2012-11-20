@@ -379,5 +379,62 @@ namespace Tests
             Assert.AreEqual("Foo", de.String);
             Assert.AreEqual(456, de.Int);
         }
+
+        class Arr
+        {
+            public string Foo { get; set; }
+            public double[] Bar { get; set; }
+        }
+
+        class NoArr
+        {
+            public string Foo { get; set; }
+            public IList<double> Bar { get; set; }
+        }
+
+        [TestMethod]
+        public void Arrays()
+        {
+            var b1 = Serializer.Serialize(new Arr { Foo = "Hello World", Bar = new double[] { 1.0, 2.5, 3.75 } });
+            var a1 = Deserializer.Deserialize<Arr>(b1);
+            var n1 = Deserializer.Deserialize<NoArr>(b1);
+
+            Assert.AreEqual("Hello World", a1.Foo);
+            Assert.AreEqual("Hello World", n1.Foo);
+
+            Assert.AreEqual(3, a1.Bar.Length);
+            Assert.AreEqual(3, n1.Bar.Count);
+
+            Assert.AreEqual(1.0, a1.Bar[0]);
+            Assert.AreEqual(1.0, n1.Bar[0]);
+
+            Assert.AreEqual(2.5, a1.Bar[1]);
+            Assert.AreEqual(2.5, n1.Bar[1]);
+
+            Assert.AreEqual(3.75, a1.Bar[2]);
+            Assert.AreEqual(3.75, n1.Bar[2]);
+
+            var b2 = Serializer.Serialize(new NoArr { Foo = "Fizz Buzz", Bar = new List<double> { 10, 9.25, 8.5, 7.75 } });
+            var a2 = Deserializer.Deserialize<Arr>(b2);
+            var n2 = Deserializer.Deserialize<NoArr>(b2);
+
+            Assert.AreEqual("Fizz Buzz", a2.Foo);
+            Assert.AreEqual("Fizz Buzz", n2.Foo);
+
+            Assert.AreEqual(4, a2.Bar.Length);
+            Assert.AreEqual(4, n2.Bar.Count);
+
+            Assert.AreEqual(10, a2.Bar[0]);
+            Assert.AreEqual(10, n2.Bar[0]);
+
+            Assert.AreEqual(9.25, a2.Bar[1]);
+            Assert.AreEqual(9.25, n2.Bar[1]);
+
+            Assert.AreEqual(8.5, a2.Bar[2]);
+            Assert.AreEqual(8.5, n2.Bar[2]);
+
+            Assert.AreEqual(7.75, a2.Bar[3]);
+            Assert.AreEqual(7.75, n2.Bar[3]);
+        }
     }
 }

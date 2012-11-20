@@ -208,6 +208,7 @@
       <DependentUpon>Describer.cs</DependentUpon>
     </Compile>
     <Compile Include="Impl\Envelope.cs" />
+    <Compile Include="Impl\ExtensionMethods.cs" />
     <Compile Include="Impl\Flattener.cs" />
     <Compile Include="Impl\POCOBuilder.cs" />
     <Compile Include="Impl\POCOMapper.cs" />

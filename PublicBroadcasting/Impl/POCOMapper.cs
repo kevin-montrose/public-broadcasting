@@ -99,8 +99,27 @@ namespace PublicBroadcasting.Impl
 
         private static POCOMapper GetListMapper()
         {
-            var toListType = typeof(To).GetGenericArguments()[0];
-            var fromListType = typeof(From).GetGenericArguments()[0];
+            bool toToArray = false;
+            Type toListType, fromListType;
+
+            if (typeof(To).IsArray)
+            {
+                toListType = typeof(To).GetElementType();
+                toToArray = true;
+            }
+            else
+            {
+                toListType = typeof(To).GetGenericArguments()[0];
+            }
+
+            if (typeof(From).IsArray)
+            {
+                fromListType = typeof(From).GetElementType();
+            }
+            else
+            {
+                fromListType = typeof(From).GetGenericArguments()[0];
+            }
 
             var mapper = typeof(POCOMapper<,>).MakeGenericType(fromListType, toListType).GetMethod("Get");
             var map = (POCOMapper)mapper.Invoke(null, new object[0]);
@@ -123,6 +142,11 @@ namespace PublicBroadcasting.Impl
                             var mapped = map.GetMapper()(o);
 
                             ret.Add(mapped);
+                        }
+
+                        if (toToArray)
+                        {
+                            return ret.ToArray(toListType);
                         }
 
                         return ret;
