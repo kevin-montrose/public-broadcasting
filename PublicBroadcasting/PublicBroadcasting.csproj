@@ -55,6 +55,15 @@
     <Compile Include="Impl\Describer.AllProtected.cs">
       <DependentUpon>Describer.cs</DependentUpon>
     </Compile>
+    <Compile Include="Impl\Describer.AllPublicInternal.cs">
+      <DependentUpon>Describer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Impl\Describer.AllPublicPrivate.cs">
+      <DependentUpon>Describer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Impl\Describer.AllPublicProtected.cs">
+      <DependentUpon>Describer.cs</DependentUpon>
+    </Compile>
     <Compile Include="Impl\Describer.FieldsInternal.cs">
       <DependentUpon>Describer.cs</DependentUpon>
     </Compile>
@@ -80,6 +89,15 @@
     <Compile Include="Impl\Describer.DictionaryTypeDescription.cs">
       <DependentUpon>Describer.cs</DependentUpon>
     </Compile>
+    <Compile Include="Impl\Describer.FieldsPublicInternal.cs">
+      <DependentUpon>Describer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Impl\Describer.FieldsPublicPrivate.cs">
+      <DependentUpon>Describer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Impl\Describer.FieldsPublicProtected.cs">
+      <DependentUpon>Describer.cs</DependentUpon>
+    </Compile>
     <Compile Include="Impl\Describer.ListTypeDescription.cs">
       <DependentUpon>Describer.cs</DependentUpon>
     </Compile>
@@ -102,6 +120,15 @@
       <DependentUpon>Describer.cs</DependentUpon>
     </Compile>
     <Compile Include="Impl\Describer.PropertiesPublic.cs">
+      <DependentUpon>Describer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Impl\Describer.PropertiesPublicInternal.cs">
+      <DependentUpon>Describer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Impl\Describer.PropertiesPublicPrivate.cs">
+      <DependentUpon>Describer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Impl\Describer.PropertiesPublicProtected.cs">
       <DependentUpon>Describer.cs</DependentUpon>
     </Compile>
     <Compile Include="Impl\Describer.SimpleTypeDescription.cs">

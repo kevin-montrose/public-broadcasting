@@ -23,7 +23,7 @@ namespace PublicBroadcasting.Impl
             var visibilityMask = (IncludedVisibility)cutdownVisibility.Invoke(null, new object[0]);
             var membersMask = (IncludedMembers)cutdownMembers.Invoke(null, new object[0]);
 
-            // from here on, the concrete type is useless, we care about the "parent" describer
+            // from here on, the concrete type is useless, we care about the generic "parent" describer
             describerType = describerType.GetGenericTypeDefinition();
 
             if (t == typeof(long)) return SimpleTypeDescription.Long;
