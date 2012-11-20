@@ -6,33 +6,33 @@ using System.Threading.Tasks;
 
 namespace PublicBroadcasting.Impl
 {
-    internal class PropertiesPublicDescriber<T>
+    internal class AllProtectedDescriber<T>
     {
-        private static readonly PromisedTypeDescription PropertiesPublicPromise;
-        private static readonly TypeDescription PropertiesPublic;
+        private static readonly PromisedTypeDescription AllProtectedPromise;
+        private static readonly TypeDescription AllProtected;
 
-        static PropertiesPublicDescriber()
+        static AllProtectedDescriber()
         {
-            var promiseType = typeof(PromisedTypeDescription<,>).MakeGenericType(typeof(T), typeof(PropertiesPublicDescriber<>).MakeGenericType(typeof(T)));
+            var promiseType = typeof(PromisedTypeDescription<,>).MakeGenericType(typeof(T), typeof(AllProtectedDescriber<>).MakeGenericType(typeof(T)));
             var promiseSingle = promiseType.GetField("Singleton");
 
-            PropertiesPublicPromise = (PromisedTypeDescription)promiseSingle.GetValue(null);
+            AllProtectedPromise = (PromisedTypeDescription)promiseSingle.GetValue(null);
 
-            var res = Describer.BuildDescription(typeof(PropertiesPublicDescriber<>).MakeGenericType(typeof(T)));
+            var allProtected = Describer.BuildDescription(typeof(AllProtectedDescriber<>).MakeGenericType(typeof(T)));
 
-            PropertiesPublicPromise.Fulfil(res);
+            AllProtectedPromise.Fulfil(allProtected);
 
-            PropertiesPublic = res;
+            AllProtected = allProtected;
         }
 
         public static IncludedMembers GetMemberMask()
         {
-            return IncludedMembers.Properties;
+            return IncludedMembers.Fields | IncludedMembers.Properties;
         }
 
         public static IncludedVisibility GetVisibilityMask()
         {
-            return IncludedVisibility.Public;
+            return IncludedVisibility.Protected;
         }
 
         public static TypeDescription Get()
@@ -40,7 +40,7 @@ namespace PublicBroadcasting.Impl
             // How does this happen you're thinking?
             //   What happens if you call Get() from the static initializer?
             //   That's how.
-            return PropertiesPublic ?? PropertiesPublicPromise;
+            return AllProtected ?? AllProtectedPromise;
         }
 
         public static TypeDescription GetForUse(bool flatten)

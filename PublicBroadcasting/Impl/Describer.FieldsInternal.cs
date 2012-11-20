@@ -6,33 +6,33 @@ using System.Threading.Tasks;
 
 namespace PublicBroadcasting.Impl
 {
-    internal class PropertiesPublicDescriber<T>
+    internal class FieldsInternalDescriber<T>
     {
-        private static readonly PromisedTypeDescription PropertiesPublicPromise;
-        private static readonly TypeDescription PropertiesPublic;
+        private static readonly PromisedTypeDescription FieldsInternalPromise;
+        private static readonly TypeDescription FieldsInternal;
 
-        static PropertiesPublicDescriber()
+        static FieldsInternalDescriber()
         {
-            var promiseType = typeof(PromisedTypeDescription<,>).MakeGenericType(typeof(T), typeof(PropertiesPublicDescriber<>).MakeGenericType(typeof(T)));
+            var promiseType = typeof(PromisedTypeDescription<,>).MakeGenericType(typeof(T), typeof(FieldsInternalDescriber<>).MakeGenericType(typeof(T)));
             var promiseSingle = promiseType.GetField("Singleton");
 
-            PropertiesPublicPromise = (PromisedTypeDescription)promiseSingle.GetValue(null);
+            FieldsInternalPromise = (PromisedTypeDescription)promiseSingle.GetValue(null);
 
-            var res = Describer.BuildDescription(typeof(PropertiesPublicDescriber<>).MakeGenericType(typeof(T)));
+            var res = Describer.BuildDescription(typeof(FieldsInternalDescriber<>).MakeGenericType(typeof(T)));
 
-            PropertiesPublicPromise.Fulfil(res);
+            FieldsInternalPromise.Fulfil(res);
 
-            PropertiesPublic = res;
+            FieldsInternal = res;
         }
 
         public static IncludedMembers GetMemberMask()
         {
-            return IncludedMembers.Properties;
+            return IncludedMembers.Fields;
         }
 
         public static IncludedVisibility GetVisibilityMask()
         {
-            return IncludedVisibility.Public;
+            return IncludedVisibility.Internal;
         }
 
         public static TypeDescription Get()
@@ -40,7 +40,7 @@ namespace PublicBroadcasting.Impl
             // How does this happen you're thinking?
             //   What happens if you call Get() from the static initializer?
             //   That's how.
-            return PropertiesPublic ?? PropertiesPublicPromise;
+            return FieldsInternal ?? FieldsInternalPromise;
         }
 
         public static TypeDescription GetForUse(bool flatten)

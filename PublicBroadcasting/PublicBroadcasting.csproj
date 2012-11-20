@@ -46,6 +46,24 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Deserializer.cs" />
+    <Compile Include="Impl\Describer.AllInternal.cs">
+      <DependentUpon>Describer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Impl\Describer.AllPrivate.cs">
+      <DependentUpon>Describer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Impl\Describer.AllProtected.cs">
+      <DependentUpon>Describer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Impl\Describer.FieldsInternal.cs">
+      <DependentUpon>Describer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Impl\Describer.FieldsPrivate.cs">
+      <DependentUpon>Describer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Impl\Describer.FieldsProtected.cs">
+      <DependentUpon>Describer.cs</DependentUpon>
+    </Compile>
     <Compile Include="Impl\Describer.FieldsPublic.cs">
       <DependentUpon>Describer.cs</DependentUpon>
     </Compile>
@@ -72,6 +90,15 @@
       <DependentUpon>Describer.cs</DependentUpon>
     </Compile>
     <Compile Include="Impl\Describer.PromisedTypeDescription.cs">
+      <DependentUpon>Describer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Impl\Describer.PropertiesInternal.cs">
+      <DependentUpon>Describer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Impl\Describer.PropertiesPrivate.cs">
+      <DependentUpon>Describer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Impl\Describer.PropertiesProtected.cs">
       <DependentUpon>Describer.cs</DependentUpon>
     </Compile>
     <Compile Include="Impl\Describer.PropertiesPublic.cs">

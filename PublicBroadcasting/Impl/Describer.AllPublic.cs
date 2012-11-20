@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -15,18 +14,16 @@ namespace PublicBroadcasting.Impl
 
         static AllPublicDescriber()
         {
-            Debug.WriteLine("AllPublicDescriber: " + typeof(T).FullName);
-
             var promiseType = typeof(PromisedTypeDescription<,>).MakeGenericType(typeof(T), typeof(AllPublicDescriber<>).MakeGenericType(typeof(T)));
             var promiseSingle = promiseType.GetField("Singleton");
 
             AllPublicPromise = (PromisedTypeDescription)promiseSingle.GetValue(null);
 
-            var allPublic = Describer.BuildDescription(typeof(AllPublicDescriber<>).MakeGenericType(typeof(T)));
+            var res = Describer.BuildDescription(typeof(AllPublicDescriber<>).MakeGenericType(typeof(T)));
 
-            AllPublicPromise.Fulfil(allPublic);
+            AllPublicPromise.Fulfil(res);
 
-            AllPublic = allPublic;
+            AllPublic = res;
         }
 
         public static IncludedMembers GetMemberMask()

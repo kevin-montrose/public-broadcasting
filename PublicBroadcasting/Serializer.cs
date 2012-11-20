@@ -83,7 +83,94 @@ namespace PublicBroadcasting
                 throw new ArgumentOutOfRangeException("members");
             }
 
-            throw new NotSupportedException();
+            if (visibility == IncludedVisibility.Protected)
+            {
+                if (members == (IncludedMembers.Properties | IncludedMembers.Fields))
+                {
+                    description = AllProtectedDescriber<T>.GetForUse(true);
+                    builder = POCOBuilder<T, AllProtectedDescriber<T>>.GetMapper();
+
+                    return;
+                }
+
+                if (members == IncludedMembers.Fields)
+                {
+                    description = FieldsProtectedDescriber<T>.GetForUse(true);
+                    builder = POCOBuilder<T, FieldsProtectedDescriber<T>>.GetMapper();
+
+                    return;
+                }
+
+                if (members == IncludedMembers.Properties)
+                {
+                    description = PropertiesProtectedDescriber<T>.GetForUse(true);
+                    builder = POCOBuilder<T, PropertiesProtectedDescriber<T>>.GetMapper();
+
+                    return;
+                }
+
+                throw new ArgumentOutOfRangeException("members");
+            }
+
+            if (visibility == IncludedVisibility.Internal)
+            {
+                if (members == (IncludedMembers.Properties | IncludedMembers.Fields))
+                {
+                    description = AllInternalDescriber<T>.GetForUse(true);
+                    builder = POCOBuilder<T, AllInternalDescriber<T>>.GetMapper();
+
+                    return;
+                }
+
+                if (members == IncludedMembers.Fields)
+                {
+                    description = FieldsInternalDescriber<T>.GetForUse(true);
+                    builder = POCOBuilder<T, FieldsInternalDescriber<T>>.GetMapper();
+
+                    return;
+                }
+
+                if (members == IncludedMembers.Properties)
+                {
+                    description = PropertiesInternalDescriber<T>.GetForUse(true);
+                    builder = POCOBuilder<T, PropertiesInternalDescriber<T>>.GetMapper();
+
+                    return;
+                }
+
+                throw new ArgumentOutOfRangeException("members");
+            }
+
+            if (visibility == IncludedVisibility.Private)
+            {
+                if (members == (IncludedMembers.Properties | IncludedMembers.Fields))
+                {
+                    description = AllPrivateDescriber<T>.GetForUse(true);
+                    builder = POCOBuilder<T, AllPrivateDescriber<T>>.GetMapper();
+
+                    return;
+                }
+
+                if (members == IncludedMembers.Fields)
+                {
+                    description = FieldsPrivateDescriber<T>.GetForUse(true);
+                    builder = POCOBuilder<T, FieldsPrivateDescriber<T>>.GetMapper();
+
+                    return;
+                }
+
+                if (members == IncludedMembers.Properties)
+                {
+                    description = PropertiesPrivateDescriber<T>.GetForUse(true);
+                    builder = POCOBuilder<T, PropertiesPrivateDescriber<T>>.GetMapper();
+
+                    return;
+                }
+
+                throw new ArgumentOutOfRangeException("members");
+            }
+
+            throw new NotImplementedException();
         }
 
         public static void Serialize<T>(Stream stream, T obj, IncludedMembers members, IncludedVisibility visibility)
