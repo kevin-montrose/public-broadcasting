@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Deserializer.cs" />
+    <Compile Include="Impl\Describer.AllAll.cs" />
     <Compile Include="Impl\Describer.AllInternal.cs">
       <DependentUpon>Describer.cs</DependentUpon>
     </Compile>
@@ -73,6 +74,7 @@
     <Compile Include="Impl\Describer.AllPublicProtectedPrivate.cs">
       <DependentUpon>Describer.cs</DependentUpon>
     </Compile>
+    <Compile Include="Impl\Describer.FieldsAll.cs" />
     <Compile Include="Impl\Describer.FieldsInternal.cs">
       <DependentUpon>Describer.cs</DependentUpon>
     </Compile>
@@ -128,6 +130,7 @@
     <Compile Include="Impl\Describer.PromisedTypeDescription.cs">
       <DependentUpon>Describer.cs</DependentUpon>
     </Compile>
+    <Compile Include="Impl\Describer.PropertiesAll.cs" />
     <Compile Include="Impl\Describer.PropertiesInternal.cs">
       <DependentUpon>Describer.cs</DependentUpon>
     </Compile>
