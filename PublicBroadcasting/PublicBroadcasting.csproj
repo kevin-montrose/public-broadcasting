@@ -46,49 +46,51 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Deserializer.cs" />
-    <Compile Include="Impl\Describer.AllAll.cs" />
-    <Compile Include="Impl\Describer.AllInternal.cs">
-      <DependentUpon>Describer.cs</DependentUpon>
+    <Compile Include="Impl\Config.AllAll.cs">
+      <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Describer.AllPrivate.cs">
-      <DependentUpon>Describer.cs</DependentUpon>
+    <Compile Include="Impl\Config.AllInternal.cs">
+      <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Describer.AllProtected.cs">
-      <DependentUpon>Describer.cs</DependentUpon>
+    <Compile Include="Impl\Config.AllPrivate.cs">
+      <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Describer.AllPublicInternal.cs">
-      <DependentUpon>Describer.cs</DependentUpon>
+    <Compile Include="Impl\Config.AllProtected.cs">
+      <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Describer.AllPublicInternalPrivate.cs">
-      <DependentUpon>Describer.cs</DependentUpon>
+    <Compile Include="Impl\Config.AllPublic.cs">
+      <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Describer.AllPublicPrivate.cs">
-      <DependentUpon>Describer.cs</DependentUpon>
+    <Compile Include="Impl\Config.AllPublicInternal.cs">
+      <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Describer.AllPublicProtected.cs">
-      <DependentUpon>Describer.cs</DependentUpon>
+    <Compile Include="Impl\Config.AllPublicInternalPrivate.cs">
+      <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Describer.AllPublicProtectedInternal.cs">
-      <DependentUpon>Describer.cs</DependentUpon>
+    <Compile Include="Impl\Config.AllPublicPrivate.cs">
+      <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Describer.AllPublicProtectedPrivate.cs">
-      <DependentUpon>Describer.cs</DependentUpon>
+    <Compile Include="Impl\Config.AllPublicProtected.cs">
+      <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Describer.FieldsAll.cs" />
-    <Compile Include="Impl\Describer.FieldsInternal.cs">
-      <DependentUpon>Describer.cs</DependentUpon>
+    <Compile Include="Impl\Config.AllPublicProtectedInternal.cs">
+      <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Describer.FieldsPrivate.cs">
-      <DependentUpon>Describer.cs</DependentUpon>
+    <Compile Include="Impl\Config.AllPublicProtectedPrivate.cs">
+      <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Describer.FieldsProtected.cs">
-      <DependentUpon>Describer.cs</DependentUpon>
+    <Compile Include="Impl\Config.cs" />
+    <Compile Include="Impl\Config.FieldsAll.cs">
+      <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Describer.FieldsPublic.cs">
-      <DependentUpon>Describer.cs</DependentUpon>
+    <Compile Include="Impl\Config.FieldsInternal.cs">
+      <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Describer.AllPublic.cs">
-      <DependentUpon>Describer.cs</DependentUpon>
+    <Compile Include="Impl\Config.FieldsPrivate.cs">
+      <DependentUpon>Config.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Impl\Config.FieldsProtected.cs">
+      <DependentUpon>Config.cs</DependentUpon>
     </Compile>
     <Compile Include="Impl\Describer.BackReferenceTypeDescription.cs">
       <DependentUpon>Describer.cs</DependentUpon>
@@ -100,23 +102,26 @@
     <Compile Include="Impl\Describer.DictionaryTypeDescription.cs">
       <DependentUpon>Describer.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Describer.FieldsPublicInternal.cs">
-      <DependentUpon>Describer.cs</DependentUpon>
+    <Compile Include="Impl\Config.FieldsPublic.cs">
+      <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Describer.FieldsPublicInternalPrivate.cs">
-      <DependentUpon>Describer.cs</DependentUpon>
+    <Compile Include="Impl\Config.FieldsPublicInternal.cs">
+      <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Describer.FieldsPublicPrivate.cs">
-      <DependentUpon>Describer.cs</DependentUpon>
+    <Compile Include="Impl\Config.FieldsPublicInternalPrivate.cs">
+      <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Describer.FieldsPublicProtected.cs">
-      <DependentUpon>Describer.cs</DependentUpon>
+    <Compile Include="Impl\Config.FieldsPublicPrivate.cs">
+      <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Describer.FieldsPublicProtectedInternal.cs">
-      <DependentUpon>Describer.cs</DependentUpon>
+    <Compile Include="Impl\Config.FieldsPublicProtected.cs">
+      <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Describer.FieldsPublicProtectedPrivate.cs">
-      <DependentUpon>Describer.cs</DependentUpon>
+    <Compile Include="Impl\Config.FieldsPublicProtectedInternal.cs">
+      <DependentUpon>Config.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Impl\Config.FieldsPublicProtectedPrivate.cs">
+      <DependentUpon>Config.cs</DependentUpon>
     </Compile>
     <Compile Include="Impl\Describer.ListTypeDescription.cs">
       <DependentUpon>Describer.cs</DependentUpon>
@@ -130,36 +135,38 @@
     <Compile Include="Impl\Describer.PromisedTypeDescription.cs">
       <DependentUpon>Describer.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Describer.PropertiesAll.cs" />
-    <Compile Include="Impl\Describer.PropertiesInternal.cs">
-      <DependentUpon>Describer.cs</DependentUpon>
+    <Compile Include="Impl\Config.PropertiesAll.cs">
+      <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Describer.PropertiesPrivate.cs">
-      <DependentUpon>Describer.cs</DependentUpon>
+    <Compile Include="Impl\Config.PropertiesInternal.cs">
+      <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Describer.PropertiesProtected.cs">
-      <DependentUpon>Describer.cs</DependentUpon>
+    <Compile Include="Impl\Config.PropertiesPrivate.cs">
+      <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Describer.PropertiesPublic.cs">
-      <DependentUpon>Describer.cs</DependentUpon>
+    <Compile Include="Impl\Config.PropertiesProtected.cs">
+      <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Describer.PropertiesPublicInternal.cs">
-      <DependentUpon>Describer.cs</DependentUpon>
+    <Compile Include="Impl\Config.PropertiesPublic.cs">
+      <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Describer.PropertiesPublicInternalPrivate.cs">
-      <DependentUpon>Describer.cs</DependentUpon>
+    <Compile Include="Impl\Config.PropertiesPublicInternal.cs">
+      <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Describer.PropertiesPublicPrivate.cs">
-      <DependentUpon>Describer.cs</DependentUpon>
+    <Compile Include="Impl\Config.PropertiesPublicInternalPrivate.cs">
+      <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Describer.PropertiesPublicProtected.cs">
-      <DependentUpon>Describer.cs</DependentUpon>
+    <Compile Include="Impl\Config.PropertiesPublicPrivate.cs">
+      <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Describer.PropertiesPublicProtectedInternal.cs">
-      <DependentUpon>Describer.cs</DependentUpon>
+    <Compile Include="Impl\Config.PropertiesPublicProtected.cs">
+      <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Describer.PropertiesPublicProtectedPrivate.cs">
-      <DependentUpon>Describer.cs</DependentUpon>
+    <Compile Include="Impl\Config.PropertiesPublicProtectedInternal.cs">
+      <DependentUpon>Config.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Impl\Config.PropertiesPublicProtectedPrivate.cs">
+      <DependentUpon>Config.cs</DependentUpon>
     </Compile>
     <Compile Include="Impl\Describer.SimpleTypeDescription.cs">
       <DependentUpon>Describer.cs</DependentUpon>
