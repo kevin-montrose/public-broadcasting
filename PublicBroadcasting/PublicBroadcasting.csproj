@@ -58,6 +58,13 @@
     <Compile Include="Impl\Config.AllProtected.cs">
       <DependentUpon>Config.cs</DependentUpon>
     </Compile>
+    <Compile Include="Impl\Config.AllProtectedInternal.cs">
+      <DependentUpon>Config.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Impl\Config.AllProtectedInternalPrivate.cs" />
+    <Compile Include="Impl\Config.AllProtectedPrivate.cs">
+      <DependentUpon>Config.cs</DependentUpon>
+    </Compile>
     <Compile Include="Impl\Config.AllPublic.cs">
       <DependentUpon>Config.cs</DependentUpon>
     </Compile>
@@ -90,6 +97,20 @@
       <DependentUpon>Config.cs</DependentUpon>
     </Compile>
     <Compile Include="Impl\Config.FieldsProtected.cs">
+      <DependentUpon>Config.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Impl\Config.FieldsProtectedInternal.cs">
+      <DependentUpon>Config.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Impl\Config.FieldsProtectedInternalPrivate.cs" />
+    <Compile Include="Impl\Config.FieldsProtectedPrivate.cs">
+      <DependentUpon>Config.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Impl\Config.PropertiesProtectedInternal.cs">
+      <DependentUpon>Config.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Impl\Config.PropertiesProtectedInternalPrivate.cs" />
+    <Compile Include="Impl\Config.PropertiesProtectedPrivate.cs">
       <DependentUpon>Config.cs</DependentUpon>
     </Compile>
     <Compile Include="Impl\Describer.BackReferenceTypeDescription.cs">
