@@ -12,6 +12,34 @@ namespace Tests
     [TestClass]
     public class Serialization
     {
+        struct S
+        {
+            public struct Blah
+            {
+                public int Foo { get; set; }
+                public string Bar { get; set; }
+            }
+
+            public int Foo { get; set; }
+
+            public string Bar { get; set; }
+
+            public Blah Next { get; set; }
+        }
+
+        [TestMethod]
+        public void Structs()
+        {
+            var bytes = Serializer.Serialize(new S { Foo = 123, Bar = "Hello", Next = new S.Blah { Foo = 456, Bar = "World" } });
+            var s = Deserializer.Deserialize<S>(bytes);
+
+            Assert.AreEqual(123, s.Foo);
+            Assert.AreEqual("Hello", s.Bar);
+            Assert.AreNotEqual(default(S.Blah), s.Next);
+            Assert.AreEqual(456, s.Next.Foo);
+            Assert.AreEqual("World", s.Next.Bar);
+        }
+
         [TestMethod]
         public void Simple()
         {

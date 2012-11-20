@@ -158,19 +158,29 @@ namespace PublicBroadcasting.Impl
                     }
                 ).Where(kv => kv.Value != null).ToDictionary(kv => kv.Key, kv => kv.Value);
 
-            var cons = tTo.GetConstructor(new Type[0]);
+            Func<object> allocT;
 
-            if (cons == null) throw new Exception("No parameterless constructor found for " + tTo.FullName);
+            if (tTo.IsValueType)
+            {
+                allocT = () => { return Activator.CreateInstance(tTo); };
+            }
+            else
+            {
+                var cons = tTo.GetConstructor(new Type[0]);
+
+                if (cons == null) throw new Exception("No parameterless constructor found for " + tTo.FullName);
+
+                allocT = () => { return cons.Invoke(new object[0]); };
+            }
 
             var fromType = TypeAccessor.Create(tFrom);
-            var toType = TypeAccessor.Create(tTo);
 
             Func<object, object> retFunc =
                 x =>
                 {
                     if (x == null) return null;
 
-                    var ret = (To)cons.Invoke(new object[0]);
+                    var ret = allocT();
 
                     foreach (var mem in members)
                     {
@@ -183,10 +193,19 @@ namespace PublicBroadcasting.Impl
 
                         var fromMapped = memVal.GetMapper()(from);
 
-                        toType[ret, memKey] = fromMapped;
+                        var toMember = tTo.GetMember(memKey, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).Where(m => m is FieldInfo || m is PropertyInfo).Single();
+
+                        if (toMember is FieldInfo)
+                        {
+                            ((FieldInfo)toMember).SetValue(ret, fromMapped);
+                        }
+                        else
+                        {
+                            ((PropertyInfo)toMember).SetValue(ret, fromMapped);
+                        }
                     }
 
-                    return ret;
+                    return (To)ret;
                 };
 
             return new POCOMapper(retFunc);
