@@ -3,35 +3,34 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace PublicBroadcasting.Impl
 {
-    internal class FieldsPublicDescriber<T>
+    internal class PropertiesPublicDescriber<T>
     {
-        private static readonly PromisedTypeDescription FieldsPublicPromise;
-        private static readonly TypeDescription FieldsPublic;
+        private static readonly PromisedTypeDescription PropertiesPublicPromise;
+        private static readonly TypeDescription PropertiesPublic;
 
-        static FieldsPublicDescriber()
+        static PropertiesPublicDescriber()
         {
             Debug.WriteLine("FieldsPublicDescriber: " + typeof(T).FullName);
 
-            var promiseType = typeof(PromisedTypeDescription<,>).MakeGenericType(typeof(T), typeof(FieldsPublicDescriber<>).MakeGenericType(typeof(T)));
+            var promiseType = typeof(PromisedTypeDescription<,>).MakeGenericType(typeof(T), typeof(PropertiesPublicDescriber<>).MakeGenericType(typeof(T)));
             var promiseSingle = promiseType.GetField("Singleton");
 
-            FieldsPublicPromise = (PromisedTypeDescription)promiseSingle.GetValue(null);
+            PropertiesPublicPromise = (PromisedTypeDescription)promiseSingle.GetValue(null);
 
-            var allFields = Describer.BuildDescription(typeof(FieldsPublicDescriber<>).MakeGenericType(typeof(T)));
+            var allFields = Describer.BuildDescription(typeof(PropertiesPublicDescriber<>).MakeGenericType(typeof(T)));
 
-            FieldsPublicPromise.Fulfil(allFields);
+            PropertiesPublicPromise.Fulfil(allFields);
 
-            FieldsPublic = allFields;
+            PropertiesPublic = allFields;
         }
 
         public static IncludedMembers GetMemberMask()
         {
-            return IncludedMembers.Fields;
+            return IncludedMembers.Properties;
         }
 
         public static IncludedVisibility GetVisibilityMask()
@@ -44,7 +43,7 @@ namespace PublicBroadcasting.Impl
             // How does this happen you're thinking?
             //   What happens if you call Get() from the static initializer?
             //   That's how.
-            return FieldsPublic ?? FieldsPublicPromise;
+            return PropertiesPublic ?? PropertiesPublicPromise;
         }
 
         public static TypeDescription GetForUse(bool flatten)

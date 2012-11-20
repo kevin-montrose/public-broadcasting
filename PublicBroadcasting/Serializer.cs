@@ -72,7 +72,15 @@ namespace PublicBroadcasting
                     return;
                 }
 
-                throw new NotSupportedException();
+                if (members == IncludedMembers.Properties)
+                {
+                    description = PropertiesPublicDescriber<T>.GetForUse(true);
+                    builder = POCOBuilder<T, PropertiesPublicDescriber<T>>.GetMapper();
+
+                    return;
+                }
+
+                throw new ArgumentOutOfRangeException("members");
             }
 
             throw new NotSupportedException();

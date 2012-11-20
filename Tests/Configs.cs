@@ -37,5 +37,23 @@ namespace Tests
             Assert.IsNotNull(field.Next);
             Assert.IsNull(field.Next.Foo);
         }
+
+        [TestMethod]
+        public void PropertiesPublic()
+        {
+            var propBytes = Serializer.Serialize(new A { Foo = "Hello", Bar = "World", Next = new A { Foo = "Buzz" } }, IncludedMembers.Properties);
+            var allBytes = Serializer.Serialize(new A { Foo = "Hello", Bar = "World", Next = new A { Foo = "Buzz" } });
+
+            var prop = Deserializer.Deserialize<A>(propBytes);
+            var all = Deserializer.Deserialize<A>(allBytes);
+
+            Assert.AreEqual("Hello", all.Foo);
+            Assert.AreEqual("World", all.Bar);
+            Assert.AreEqual("Buzz", all.Next.Foo);
+
+            Assert.AreEqual("Hello", prop.Foo);
+            Assert.IsNull(prop.Bar);
+            Assert.IsNull(prop.Next);
+        }
     }
 }
