@@ -56,6 +56,50 @@ namespace Tests
             Assert.IsTrue(@bool);
         }
 
+        [TestMethod]
+        public void DateTimes()
+        {
+            var lastWeek = DateTime.UtcNow - TimeSpan.FromDays(7);
+
+            var bytes = Serializer.Serialize(lastWeek);
+            var dt = Deserializer.Deserialize<DateTime>(bytes);
+
+            Assert.AreEqual(lastWeek, dt);
+        }
+
+        [TestMethod]
+        public void Uris()
+        {
+            var uri = new Uri("http://www.example.com/test");
+
+            var bytes = Serializer.Serialize(uri);
+            var u = Deserializer.Deserialize<Uri>(bytes);
+
+            Assert.AreEqual(uri, u);
+        }
+
+        [TestMethod]
+        public void Guids()
+        {
+            var guid = Guid.NewGuid();
+
+            var bytes = Serializer.Serialize(guid);
+            var g = Deserializer.Deserialize<Guid>(bytes);
+
+            Assert.AreEqual(guid, g);
+        }
+
+        [TestMethod]
+        public void TimeSpans()
+        {
+            var twoDays = TimeSpan.FromDays(2);
+
+            var bytes = Serializer.Serialize(twoDays);
+            var ts = Deserializer.Deserialize<TimeSpan>(bytes);
+
+            Assert.AreEqual(twoDays, ts);
+        }
+
         class A
         {
             public string Foo { get; set; }

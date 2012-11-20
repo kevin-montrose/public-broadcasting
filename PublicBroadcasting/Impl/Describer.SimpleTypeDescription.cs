@@ -17,13 +17,17 @@ namespace PublicBroadcasting.Impl
         private const int LongTag = 4;
         private const int ByteTag = 5;
         private const int CharTag = 6;
-        private const int UIntTag = 7;
-        private const int ULongTag = 8;
-        private const int ShortTag = 9;
-        private const int UShortTag = 10;
-        private const int FloatTag = 11;
-        private const int DecimalTag = 12;
-        private const int SByteTag = 13;
+        private const int DateTimeTag = 7;
+        private const int TimeSpanTag = 8;
+        private const int UIntTag = 9;
+        private const int ULongTag = 10;
+        private const int ShortTag = 11;
+        private const int UShortTag = 12;
+        private const int FloatTag = 13;
+        private const int DecimalTag = 14;
+        private const int GuidTag = 15;
+        private const int UriTag = 16;
+        private const int SByteTag = 17;
 
         internal static readonly SimpleTypeDescription Int = new SimpleTypeDescription(IntTag);
         internal static readonly SimpleTypeDescription UInt = new SimpleTypeDescription(UIntTag);
@@ -43,19 +47,26 @@ namespace PublicBroadcasting.Impl
         internal static readonly SimpleTypeDescription String = new SimpleTypeDescription(StringTag);
         internal static readonly SimpleTypeDescription Char = new SimpleTypeDescription(CharTag);
 
+        internal static readonly SimpleTypeDescription DateTime = new SimpleTypeDescription(DateTimeTag);
+        internal static readonly SimpleTypeDescription TimeSpan = new SimpleTypeDescription(TimeSpanTag);
+
+        internal static readonly SimpleTypeDescription Guid = new SimpleTypeDescription(GuidTag);
+
+        internal static readonly SimpleTypeDescription Uri = new SimpleTypeDescription(UriTag);
+
         [ProtoMember(1)]
-        internal int Type { get; private set; }
+        internal int Tag { get; private set; }
 
         private SimpleTypeDescription() { }
 
         private SimpleTypeDescription(int tag)
         {
-            Type = tag;
+            Tag = tag;
         }
 
         internal override Type GetPocoType(TypeDescription existing = null)
         {
-            switch (Type)
+            switch (Tag)
             {
                 case LongTag: return typeof(long);
                 case ULongTag: return typeof(ulong);
@@ -75,7 +86,14 @@ namespace PublicBroadcasting.Impl
                 case StringTag: return typeof(string);
                 case CharTag: return typeof(char);
 
-                default: throw new Exception("Unexpected Tag [" + Type + "]");
+                case DateTimeTag: return typeof(DateTime);
+                case TimeSpanTag: return typeof(TimeSpan);
+
+                case GuidTag: return typeof(Guid);
+
+                case UriTag: return typeof(Uri);
+
+                default: throw new Exception("Unexpected Tag [" + Tag + "]");
             }
         }
 

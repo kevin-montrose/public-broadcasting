@@ -96,6 +96,10 @@ namespace PublicBroadcasting.Impl
                 if (desc == SimpleTypeDescription.Char) return new POCOBuilder(x => Convert.ToChar(x));
                 if (desc == SimpleTypeDescription.String) return new POCOBuilder(x => Convert.ToString(x));
                 if (desc == SimpleTypeDescription.Bool) return new POCOBuilder(x => Convert.ToBoolean(x));
+                if (desc == SimpleTypeDescription.DateTime) return new POCOBuilder(x => Convert.ToDateTime(x));
+                if (desc == SimpleTypeDescription.TimeSpan) return new POCOBuilder(x => (TimeSpan)x);
+                if (desc == SimpleTypeDescription.Guid) return new POCOBuilder(x => (Guid)x);
+                if (desc == SimpleTypeDescription.Uri) return new POCOBuilder(x => (Uri)x);
 
                 throw new Exception("Shouldn't be possible, found " + desc);
             }

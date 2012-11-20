@@ -44,6 +44,13 @@ namespace PublicBroadcasting.Impl
             if (t == typeof(double)) return SimpleTypeDescription.Double;
             if (t == typeof(float)) return SimpleTypeDescription.Float;
 
+            if (t == typeof(DateTime)) return SimpleTypeDescription.DateTime;
+            if (t == typeof(TimeSpan)) return SimpleTypeDescription.TimeSpan;
+
+            if (t == typeof(Guid)) return SimpleTypeDescription.Guid;
+
+            if (t == typeof(Uri)) return SimpleTypeDescription.Uri;
+
             if (Nullable.GetUnderlyingType(t) != null)
             {
                 var nullT = t;
