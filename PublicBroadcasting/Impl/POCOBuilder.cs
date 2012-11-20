@@ -135,7 +135,18 @@ namespace PublicBroadcasting.Impl
 
                     foreach (var member in asClass.Members)
                     {
-                        var fromVal = from[x, member.Key];
+                        var getter = t.GetMember(member.Key, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).Where(f => f is FieldInfo || f is PropertyInfo).Single();
+
+                        object fromVal;
+
+                        if (getter is FieldInfo)
+                        {
+                            fromVal = ((FieldInfo)getter).GetValue(x);
+                        }
+                        else
+                        {
+                            fromVal = ((PropertyInfo)getter).GetValue(x);
+                        }
 
                         if (fromVal == null) continue;
 
