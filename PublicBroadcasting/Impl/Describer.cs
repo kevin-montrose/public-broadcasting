@@ -142,7 +142,7 @@ namespace PublicBroadcasting.Impl
                 classMembers[fieldName] = (TypeDescription)fieldDesc.Invoke(null, new object[0]);
             }
 
-            var retType = typeof(ClassTypeDescription<,>).MakeGenericType(t, describerType.MakeGenericType(typeof(object)));
+            var retType = typeof(ClassTypeDescription<,>).MakeGenericType(t, describerType.MakeGenericType(t));
             var retSingle = retType.GetField("Singleton");
 
             var ret = (TypeDescription)retSingle.GetValue(null);

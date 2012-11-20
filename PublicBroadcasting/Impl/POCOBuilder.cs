@@ -102,8 +102,8 @@ namespace PublicBroadcasting.Impl
 
             var asClass = (ClassTypeDescription)desc;
 
-            var from = TypeAccessor.Create(t);
-            var to = TypeAccessor.Create(pocoType);
+            var from = TypeAccessor.Create(t, true);
+            var to = TypeAccessor.Create(pocoType, true);
 
             var newPoco = pocoType.GetConstructor(EmptyTypes);
 

@@ -55,5 +55,39 @@ namespace Tests
             Assert.IsNull(prop.Bar);
             Assert.IsNull(prop.Next);
         }
+
+        [TestMethod]
+        public void All()
+        {
+            var obj = new A { Foo = "Hello", Bar = "World", Next = new A { Foo = "Buzz" } };
+            byte[] bytes;
+            bytes = Serializer.Serialize(obj, IncludedMembers.Fields, IncludedVisibility.Public);
+            bytes = Serializer.Serialize(obj, IncludedMembers.Properties, IncludedVisibility.Public);
+            bytes = Serializer.Serialize(obj, IncludedMembers.Properties | IncludedMembers.Fields, IncludedVisibility.Public);
+            
+            bytes = Serializer.Serialize(obj, IncludedMembers.Fields, IncludedVisibility.Public | IncludedVisibility.Internal);
+            bytes = Serializer.Serialize(obj, IncludedMembers.Properties, IncludedVisibility.Public | IncludedVisibility.Protected);
+            bytes = Serializer.Serialize(obj, IncludedMembers.Properties | IncludedMembers.Fields, IncludedVisibility.Public | IncludedVisibility.Private);
+
+            bytes = Serializer.Serialize(obj, IncludedMembers.Fields, IncludedVisibility.Public | IncludedVisibility.Internal | IncludedVisibility.Protected);
+            bytes = Serializer.Serialize(obj, IncludedMembers.Properties, IncludedVisibility.Public | IncludedVisibility.Protected | IncludedVisibility.Private);
+
+            bytes = Serializer.Serialize(obj, IncludedMembers.Fields, IncludedVisibility.Protected);
+            bytes = Serializer.Serialize(obj, IncludedMembers.Properties, IncludedVisibility.Protected);
+            bytes = Serializer.Serialize(obj, IncludedMembers.Properties | IncludedMembers.Fields, IncludedVisibility.Protected);
+
+            bytes = Serializer.Serialize(obj, IncludedMembers.Fields, IncludedVisibility.Protected | IncludedVisibility.Private);
+            bytes = Serializer.Serialize(obj, IncludedMembers.Properties, IncludedVisibility.Protected | IncludedVisibility.Internal);
+
+            bytes = Serializer.Serialize(obj, IncludedMembers.Properties, IncludedVisibility.Protected | IncludedVisibility.Internal | IncludedVisibility.Private);
+
+            bytes = Serializer.Serialize(obj, IncludedMembers.Fields, IncludedVisibility.Internal);
+            bytes = Serializer.Serialize(obj, IncludedMembers.Properties, IncludedVisibility.Internal);
+            bytes = Serializer.Serialize(obj, IncludedMembers.Properties | IncludedMembers.Fields, IncludedVisibility.Internal);
+
+            bytes = Serializer.Serialize(obj, IncludedMembers.Fields, IncludedVisibility.Internal | IncludedVisibility.Private);
+
+            bytes = Serializer.Serialize(obj, IncludedMembers.Fields, IncludedVisibility.Private);
+        }
     }
 }

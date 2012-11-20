@@ -52,6 +52,9 @@
     <Compile Include="Impl\Config.AllInternal.cs">
       <DependentUpon>Config.cs</DependentUpon>
     </Compile>
+    <Compile Include="Impl\Config.AllInternalPrivate.cs">
+      <DependentUpon>Config.cs</DependentUpon>
+    </Compile>
     <Compile Include="Impl\Config.AllPrivate.cs">
       <DependentUpon>Config.cs</DependentUpon>
     </Compile>
@@ -61,7 +64,9 @@
     <Compile Include="Impl\Config.AllProtectedInternal.cs">
       <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Config.AllProtectedInternalPrivate.cs" />
+    <Compile Include="Impl\Config.AllProtectedInternalPrivate.cs">
+      <DependentUpon>Config.cs</DependentUpon>
+    </Compile>
     <Compile Include="Impl\Config.AllProtectedPrivate.cs">
       <DependentUpon>Config.cs</DependentUpon>
     </Compile>
@@ -93,6 +98,9 @@
     <Compile Include="Impl\Config.FieldsInternal.cs">
       <DependentUpon>Config.cs</DependentUpon>
     </Compile>
+    <Compile Include="Impl\Config.FieldsInternalPrivate.cs">
+      <DependentUpon>Config.cs</DependentUpon>
+    </Compile>
     <Compile Include="Impl\Config.FieldsPrivate.cs">
       <DependentUpon>Config.cs</DependentUpon>
     </Compile>
@@ -102,14 +110,21 @@
     <Compile Include="Impl\Config.FieldsProtectedInternal.cs">
       <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Config.FieldsProtectedInternalPrivate.cs" />
+    <Compile Include="Impl\Config.FieldsProtectedInternalPrivate.cs">
+      <DependentUpon>Config.cs</DependentUpon>
+    </Compile>
     <Compile Include="Impl\Config.FieldsProtectedPrivate.cs">
+      <DependentUpon>Config.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Impl\Config.PropertiesInternalPrivate.cs">
       <DependentUpon>Config.cs</DependentUpon>
     </Compile>
     <Compile Include="Impl\Config.PropertiesProtectedInternal.cs">
       <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="Impl\Config.PropertiesProtectedInternalPrivate.cs" />
+    <Compile Include="Impl\Config.PropertiesProtectedInternalPrivate.cs">
+      <DependentUpon>Config.cs</DependentUpon>
+    </Compile>
     <Compile Include="Impl\Config.PropertiesProtectedPrivate.cs">
       <DependentUpon>Config.cs</DependentUpon>
     </Compile>
