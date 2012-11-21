@@ -138,26 +138,44 @@ namespace Benchmark
 
         private static void ProtoBufNet<T>(T obj)
         {
+            T copy;
             using (var mem = new MemoryStream())
             {
                 ProtoBuf.Serializer.Serialize(mem, obj);
+
+                mem.Seek(0, SeekOrigin.Begin);
+                copy = ProtoBuf.Serializer.Deserialize<T>(mem);
             }
+
+            if (!copy.Equals(obj)) throw new Exception();
         }
 
         private static void PB<T>(T obj)
         {
+            T copy;
             using (var mem = new MemoryStream())
             {
                 PublicBroadcasting.Serializer.Serialize(mem, obj);
+
+                mem.Seek(0, SeekOrigin.Begin);
+                copy = PublicBroadcasting.Deserializer.Deserialize<T>(mem);
             }
+
+            if (!copy.Equals(obj)) throw new Exception();
         }
 
         private static void MessagePack<T>(T obj, MsgPack.Serialization.MessagePackSerializer<T> serializer)
         {
+            T copy;
             using (var mem = new MemoryStream())
             {
                 serializer.Pack(mem, obj);
+
+                mem.Seek(0, SeekOrigin.Begin);
+                copy = serializer.Unpack(mem);
             }
+
+            if (!copy.Equals(obj)) throw new Exception();
         }
 
         static void Main(string[] args)
@@ -198,13 +216,15 @@ namespace Benchmark
 
             using (new Timer("PublicBroadcasting"))
             {
-                for (var i = 0; i < 1000; i++)
+                for (var i = 0; i < 10000; i++)
                 {
                     PB(fields);
                 }
             }
 
+#if DEBUG
             Console.ReadKey();
+#endif
         }
     }
 }

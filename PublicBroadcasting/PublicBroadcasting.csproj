@@ -211,11 +211,12 @@
     <Compile Include="Impl\ExtensionMethods.cs" />
     <Compile Include="Impl\Flattener.cs" />
     <Compile Include="Impl\POCOBuilder.cs" />
-    <Compile Include="Impl\POCOMapper.cs" />
+    <Compile Include="POCOMapper.cs" />
     <Compile Include="Impl\TypeReflectionCache.cs" />
-    <Compile Include="Options.cs" />
+    <Compile Include="Impl\Options.cs" />
     <Compile Include="Serializer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Impl\TypeDescriptionComparer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

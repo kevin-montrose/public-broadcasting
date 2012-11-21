@@ -10,6 +10,8 @@ namespace PublicBroadcasting
 {
     public class Deserializer
     {
+        private static readonly Dictionary<TypeDescription, Type> TypeCache = new Dictionary<TypeDescription, Type>(new TypeDescriptionComparer());
+
         public static T Deserialize<T>(byte[] bytes)
         {
             using (var mem = new MemoryStream(bytes))
@@ -20,10 +22,8 @@ namespace PublicBroadcasting
 
         public static T Deserialize<T>(Stream stream)
         {
-            TypeDescription desc;
-            var raw = DeserializeCore(stream, out desc);
-
-            var type = desc.GetPocoType(desc);
+            Type type;
+            var raw = DeserializeCore(stream, out type);
 
             var mapGetter = typeof(POCOMapper<,>).MakeGenericType(type, typeof(T)).GetMethod("Get");
 
@@ -42,19 +42,28 @@ namespace PublicBroadcasting
 
         public static dynamic Deserialize(Stream stream)
         {
-            TypeDescription ignored;
+            Type ignored;
             return DeserializeCore(stream, out ignored);
         }
 
-        private static object DeserializeCore(Stream stream, out TypeDescription effectDesc)
+        private static object DeserializeCore(Stream stream, out Type type)
         {
             var untyped = ProtoBuf.Serializer.Deserialize<Envelope>(stream);
 
-            effectDesc = untyped.Description;
+            var effectDesc = untyped.Description;
 
-            effectDesc.Seal(effectDesc);
+            // TODO: Find a way to kill this lock
+            lock (TypeCache)
+            {
+                if (!TypeCache.TryGetValue(effectDesc, out type))
+                {
+                    effectDesc.Seal(effectDesc);
 
-            var type = effectDesc.GetPocoType(effectDesc);
+                    type = effectDesc.GetPocoType(effectDesc);
+
+                    TypeCache[effectDesc] = type;
+                }
+            }
 
             using (var mem = new MemoryStream(untyped.Payload))
             {
