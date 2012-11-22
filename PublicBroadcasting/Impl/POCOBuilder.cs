@@ -59,11 +59,7 @@ namespace PublicBroadcasting.Impl
 
         private static POCOBuilder Build()
         {
-            const string SelfName = "GetMapper";
-
-            var t = typeof(From);
             var desc = (TypeDescription)typeof(Describer).GetMethod("GetForUse").Invoke(null, new object[] { false });
-            var pocoType = desc.GetPocoType();
 
             if (desc is ListTypeDescription)
             {
@@ -104,7 +100,16 @@ namespace PublicBroadcasting.Impl
                 throw new Exception("Shouldn't be possible, found " + desc);
             }
 
+            return GetClassMapper(desc);
+        }
+
+        private static POCOBuilder GetClassMapper(TypeDescription desc)
+        {
+            var t = typeof(From);
+
             var asClass = (ClassTypeDescription)desc;
+
+            var pocoType = desc.GetPocoType();
 
             var from = TypeAccessor.Create(t, true);
             var to = TypeAccessor.Create(pocoType, true);
@@ -124,7 +129,7 @@ namespace PublicBroadcasting.Impl
 
                         var descType = typeof(Describer).GetGenericTypeDefinition().MakeGenericType(type);
 
-                        var self = typeof(POCOBuilder<,>).MakeGenericType(type, descType).GetMethod(SelfName);
+                        var self = typeof(POCOBuilder<,>).MakeGenericType(type, descType).GetMethod("GetMapper");
 
                         return (POCOBuilder)self.Invoke(null, new object[0]);
                     }
