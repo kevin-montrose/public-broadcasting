@@ -62,6 +62,35 @@ namespace Tests
             Assert.IsTrue(bytes.SequenceEqual(Serializer.Serialize(new SingleSS { Foo = "Bar", Bar = 123 })));
         }
 
+        class HasNull
+        {
+            public int? Foo { get; set; }
+        }
+
+        class NoNull
+        {
+            public int Foo { get; set; }
+        }
+
+        [TestMethod]
+        public void NullableConversions()
+        {
+            var b1 = Serializer.Serialize(new HasNull { Foo = 123 });
+            var b2 = Serializer.Serialize(new HasNull());
+            var b3 = Serializer.Serialize(new NoNull { Foo = 456 });
+            var b4 = Serializer.Serialize(new NoNull());
+
+            var nn1 = Deserializer.Deserialize<NoNull>(b1);
+            var nn2 = Deserializer.Deserialize<NoNull>(b2);
+            var hn1 = Deserializer.Deserialize<HasNull>(b3);
+            var hn2 = Deserializer.Deserialize<HasNull>(b4);
+
+            Assert.AreEqual(123, nn1.Foo);
+            Assert.AreEqual(0, nn2.Foo);
+            Assert.AreEqual(456, hn1.Foo.Value);
+            Assert.AreEqual(0, hn2.Foo.Value);
+        }
+
         struct S
         {
             public struct Blah

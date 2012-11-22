@@ -476,6 +476,45 @@ namespace PublicBroadcasting.Impl
             var tFrom = typeof(From);
             var tTo = typeof(To);
 
+            var fIsNullable = Nullable.GetUnderlyingType(tFrom) != null;
+            var tIsNullable = Nullable.GetUnderlyingType(tTo) != null;
+
+            if (fIsNullable && !tIsNullable)
+            {
+                var fNonNull = Nullable.GetUnderlyingType(tFrom);
+
+                var nullMapper = typeof(POCOMapper<,>).MakeGenericType(fNonNull, tTo);
+                var nullFunc = (POCOMapper)nullMapper.GetMethod("Get").Invoke(null, new object[0]);
+
+                return
+                    new POCOMapper(
+                        from =>
+                        {
+                            var @default = from != null ? from : Activator.CreateInstance(fNonNull);
+
+                            return nullFunc.GetMapper()(@default);
+                        }
+                    );
+            }
+
+            if (!fIsNullable && tIsNullable)
+            {
+                var tNonNull = Nullable.GetUnderlyingType(tTo);
+
+                var nonNullMapper = typeof(POCOMapper<,>).MakeGenericType(tFrom, tNonNull);
+                var nonNullFunc = (POCOMapper)nonNullMapper.GetMethod("Get").Invoke(null, new object[0]);
+
+                return
+                    new POCOMapper(
+                        from =>
+                        {
+                            var ret = nonNullFunc.GetMapper()(from);
+
+                            return (To)ret;
+                        }
+                    );
+            }
+
             if ((tFrom.IsGenericType && tFrom.GetGenericTypeDefinition() == typeof(IDictionary<,>)) ||
                tFrom.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>)))
             {
