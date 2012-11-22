@@ -150,6 +150,24 @@ namespace Benchmark
             if (!copy.Equals(obj)) throw new Exception();
         }
 
+        private static T ProtoBufNetD<T>(byte[] bytes)
+        {
+            using (var mem = new MemoryStream(bytes))
+            {
+                return ProtoBuf.Serializer.Deserialize<T>(mem);
+            }
+        }
+
+        private static byte[] ProtoBufNetS<T>(T obj)
+        {
+            using (var mem = new MemoryStream())
+            {
+                ProtoBuf.Serializer.Serialize(mem, obj);
+
+                return mem.ToArray();
+            }
+        }
+
         private static void PB<T>(T obj)
         {
             T copy;
@@ -162,6 +180,24 @@ namespace Benchmark
             }
 
             if (!copy.Equals(obj)) throw new Exception();
+        }
+
+        private static byte[] PBS<T>(T obj)
+        {
+            using (var mem = new MemoryStream())
+            {
+                PublicBroadcasting.Serializer.Serialize(mem, obj);
+
+                return mem.ToArray();
+            }
+        }
+
+        private static T PBD<T>(byte[] bytes)
+        {
+            using (var mem = new MemoryStream(bytes))
+            {
+                return PublicBroadcasting.Deserializer.Deserialize<T>(mem);
+            }
         }
 
         private static void MessagePack<T>(T obj, MsgPack.Serialization.MessagePackSerializer<T> serializer)
@@ -178,6 +214,24 @@ namespace Benchmark
             if (!copy.Equals(obj)) throw new Exception();
         }
 
+        private static byte[] MessagePackS<T>(T obj, MsgPack.Serialization.MessagePackSerializer<T> serializer)
+        {
+            using (var mem = new MemoryStream())
+            {
+                serializer.Pack(mem, obj);
+
+                return mem.ToArray();
+            }
+        }
+
+        private static T MessagePackD<T>(MsgPack.Serialization.MessagePackSerializer<T> serializer, byte[] bytes)
+        {
+            using (var mem = new MemoryStream(bytes))
+            {
+                return serializer.Unpack(mem);
+            }
+        }
+
         static void Main(string[] args)
         {
             var fields = BuildFieldsPoco(0);
@@ -188,6 +242,9 @@ namespace Benchmark
             ProtoBufNet(fields);
             PB(fields);
             MessagePack(fields, mpSerializer);
+
+            Console.WriteLine("Both");
+            Console.WriteLine("====");
 
             GC.Collect();
             GC.WaitForFullGCComplete(-1);
@@ -219,6 +276,84 @@ namespace Benchmark
                 for (var i = 0; i < 10000; i++)
                 {
                     PB(fields);
+                }
+            }
+
+            Console.WriteLine("Serialization");
+            Console.WriteLine("=============");
+
+            GC.Collect();
+            GC.WaitForFullGCComplete(-1);
+
+            using (new Timer("ProtoBuf"))
+            {
+                for (var i = 0; i < 10000; i++)
+                {
+                    ProtoBufNetS(fields);
+                }
+            }
+
+            GC.Collect();
+            GC.WaitForFullGCComplete(-1);
+
+            using (new Timer("MessagePack"))
+            {
+                for (var i = 0; i < 10000; i++)
+                {
+                    MessagePackS(fields, mpSerializer);
+                }
+            }
+
+            GC.Collect();
+            GC.WaitForFullGCComplete(-1);
+
+            using (new Timer("PublicBroadcasting"))
+            {
+                for (var i = 0; i < 10000; i++)
+                {
+                    PBS(fields);
+                }
+            }
+
+            Console.WriteLine("Deserialization");
+            Console.WriteLine("=============");
+
+            byte[] protoBs, msgPackBs, PBBs;
+
+            protoBs = ProtoBufNetS(fields);
+            msgPackBs = MessagePackS(fields, mpSerializer);
+            PBBs = PBS(fields);
+
+            GC.Collect();
+            GC.WaitForFullGCComplete(-1);
+
+            using (new Timer("ProtoBuf"))
+            {
+                for (var i = 0; i < 10000; i++)
+                {
+                    ProtoBufNetD<FieldsPoco>(protoBs);
+                }
+            }
+
+            GC.Collect();
+            GC.WaitForFullGCComplete(-1);
+
+            using (new Timer("MessagePack"))
+            {
+                for (var i = 0; i < 10000; i++)
+                {
+                    MessagePackD(mpSerializer, msgPackBs);
+                }
+            }
+
+            GC.Collect();
+            GC.WaitForFullGCComplete(-1);
+
+            using (new Timer("PublicBroadcasting"))
+            {
+                for (var i = 0; i < 10000; i++)
+                {
+                    PBD<FieldsPoco>(PBBs);
                 }
             }
 
