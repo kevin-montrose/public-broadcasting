@@ -211,7 +211,7 @@
     <Compile Include="Impl\ExtensionMethods.cs" />
     <Compile Include="Impl\Flattener.cs" />
     <Compile Include="Impl\POCOBuilder.cs" />
-    <Compile Include="POCOMapper.cs" />
+    <Compile Include="Impl\POCOMapper.cs" />
     <Compile Include="Impl\TypeReflectionCache.cs" />
     <Compile Include="Impl\Options.cs" />
     <Compile Include="Serializer.cs" />
