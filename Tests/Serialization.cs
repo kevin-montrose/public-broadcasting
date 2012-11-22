@@ -12,6 +12,56 @@ namespace Tests
     [TestClass]
     public class Serialization
     {
+        class SingleC
+        {
+            public string Foo { get; set; }
+            public int Bar { get; set; }
+        }
+
+        struct SingleS
+        {
+            public string Foo { get; set; }
+            public int Bar { get; set; }
+        }
+
+        class SingleCC
+        {
+            public string Foo;
+            public int Bar;
+        }
+
+        struct SingleSS
+        {
+            public string Foo;
+            public int Bar;
+        }
+
+        [TestMethod]
+        public void ILConversion()
+        {
+            var bytes = Serializer.Serialize(new SingleC { Foo = "Bar", Bar = 123 });
+            var c = Deserializer.Deserialize<SingleC>(bytes);
+            var s = Deserializer.Deserialize<SingleS>(bytes);
+            var cc = Deserializer.Deserialize<SingleCC>(bytes);
+            var ss = Deserializer.Deserialize<SingleSS>(bytes);
+
+            Assert.AreEqual("Bar", c.Foo);
+            Assert.AreEqual(123, c.Bar);
+
+            Assert.AreEqual("Bar", s.Foo);
+            Assert.AreEqual(123, s.Bar);
+
+            Assert.AreEqual("Bar", cc.Foo);
+            Assert.AreEqual(123, cc.Bar);
+
+            Assert.AreEqual("Bar", ss.Foo);
+            Assert.AreEqual(123, ss.Bar);
+
+            Assert.IsTrue(bytes.SequenceEqual(Serializer.Serialize(new SingleS { Foo = "Bar", Bar = 123 })));
+            Assert.IsTrue(bytes.SequenceEqual(Serializer.Serialize(new SingleCC { Foo = "Bar", Bar = 123 })));
+            Assert.IsTrue(bytes.SequenceEqual(Serializer.Serialize(new SingleSS { Foo = "Bar", Bar = 123 })));
+        }
+
         struct S
         {
             public struct Blah
