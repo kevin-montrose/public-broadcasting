@@ -75,6 +75,9 @@ namespace PublicBroadcasting.Impl
                     {
                         if (dictX == null) return null;
 
+                        var keyFunc = keyMap.GetMapper();
+                        var valFunc = valMap.GetMapper();
+
                         var ret = (IDictionary)newDictCons.Invoke(new object[0]);
 
                         var asDict = (IDictionary)dictX;
@@ -84,10 +87,10 @@ namespace PublicBroadcasting.Impl
                         while (e.MoveNext())
                         {
                             var key = e.Current;
-                            var mKey = keyMap.GetMapper()(key);
+                            var mKey = keyFunc(key);
 
                             var val = asDict[key];
-                            var mVal = valMap.GetMapper()(val);
+                            var mVal = valFunc(val);
 
                             ret.Add(mKey, mVal);
                         }
@@ -133,13 +136,15 @@ namespace PublicBroadcasting.Impl
                     {
                         if (listX == null) return null;
 
+                        var func = map.GetMapper();
+
                         var ret = (IList)newListCons.Invoke(new object[0]);
 
                         var asEnum = (IEnumerable)listX;
 
                         foreach (var o in asEnum)
                         {
-                            var mapped = map.GetMapper()(o);
+                            var mapped = func(o);
 
                             ret.Add(mapped);
                         }
@@ -203,7 +208,7 @@ namespace PublicBroadcasting.Impl
                 x =>
                 {
                     if (x == null) return null;
-
+                    
                     var ret = allocT();
 
                     foreach (var mem in members)
