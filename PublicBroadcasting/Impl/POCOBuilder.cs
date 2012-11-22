@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -90,7 +91,7 @@ namespace PublicBroadcasting.Impl
                 if (desc == SimpleTypeDescription.Float) return new POCOBuilder(x => Convert.ToSingle(x));
                 if (desc == SimpleTypeDescription.Decimal) return new POCOBuilder(x => Convert.ToDecimal(x));
                 if (desc == SimpleTypeDescription.Char) return new POCOBuilder(x => Convert.ToChar(x));
-                if (desc == SimpleTypeDescription.String) return new POCOBuilder(x => Convert.ToString(x));
+                if (desc == SimpleTypeDescription.String) return new POCOBuilder(x => (string)x);
                 if (desc == SimpleTypeDescription.Bool) return new POCOBuilder(x => Convert.ToBoolean(x));
                 if (desc == SimpleTypeDescription.DateTime) return new POCOBuilder(x => Convert.ToDateTime(x));
                 if (desc == SimpleTypeDescription.TimeSpan) return new POCOBuilder(x => (TimeSpan)x);
@@ -103,15 +104,221 @@ namespace PublicBroadcasting.Impl
             return GetClassMapper(desc);
         }
 
+        private static Func<object, object> Lookup(Dictionary<string, POCOBuilder> lookup, string term)
+        {
+            var ret = lookup[term];
+
+            return ret.GetMapper();
+        }
+
+        private static Func<From, Dictionary<string, POCOBuilder>, object> BuildRefRefTypeMapper(Dictionary<string, POCOBuilder> members, Type tTo)
+        {
+            var tFrom = typeof(From);
+
+            var cons = tTo.GetConstructor(new Type[0]);
+            if (cons == null) throw new Exception("No parameterless constructor found for " + tTo.FullName);
+
+            var lookup = typeof(POCOBuilder<From, Describer>).GetMethod("Lookup", BindingFlags.Static | BindingFlags.NonPublic);
+
+            var invoke = typeof(Func<object, object>).GetMethod("Invoke");
+
+            var dynMethod = new DynamicMethod("POCOBuilder" + Guid.NewGuid().ToString().Replace("-", ""), typeof(object), new[] { tFrom, typeof(Dictionary<string, POCOBuilder>) }, restrictedSkipVisibility: true);
+            var il = dynMethod.GetILGenerator();
+            var retLoc = il.DeclareLocal(tTo);
+
+            il.Emit(OpCodes.Newobj, cons);                      // [ret]
+            il.Emit(OpCodes.Stloc, retLoc);                     // ----
+
+            foreach (var mem in members)
+            {
+                il.Emit(OpCodes.Ldloc, retLoc);                 // [ret]
+
+                il.Emit(OpCodes.Ldarg_1);                       // [members] [ret]
+                il.Emit(OpCodes.Ldstr, mem.Key);                // [memKey] [members] [ret]
+                il.Emit(OpCodes.Call, lookup);                  // [Func<object, object>] [ret]
+
+                il.Emit(OpCodes.Ldarg_0);                       // [from] [Func<object, object>] [ret]
+
+                var fromMember = tFrom.GetMember(mem.Key, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).Where(m => m is FieldInfo || m is PropertyInfo).Single();
+
+                if (fromMember is PropertyInfo)
+                {
+                    var fromProp = (PropertyInfo)fromMember;
+                    il.Emit(OpCodes.Callvirt, fromProp.GetMethod);  // [fromVal] [Func<object, object>] [ret]
+
+                    if (fromProp.PropertyType.IsValueType)
+                    {
+                        il.Emit(OpCodes.Box, fromProp.PropertyType);// [fromVal] [Func<object, object>] [ret]
+                    }
+
+                    il.Emit(OpCodes.Call, invoke);                  // [toVal (as object)] [ret]
+                }
+                else
+                {
+                    var fromField = (FieldInfo)fromMember;
+                    il.Emit(OpCodes.Ldfld, fromField);              // [fromVal] [Func<object, object>] [ret]
+
+                    if (fromField.FieldType.IsValueType)
+                    {
+                        il.Emit(OpCodes.Box, fromField.FieldType);  // [fromVal] [Func<object, object>] [ret]
+                    }
+
+                    il.Emit(OpCodes.Call, invoke);                  // [toVal (as object)] [ret]
+                }
+
+                var toMember = tTo.GetProperty(mem.Key);
+
+                if (toMember.PropertyType.IsValueType)
+                {
+                    il.Emit(OpCodes.Unbox_Any, toMember.PropertyType);// [toVal] [ret]
+                }
+                else
+                {
+                    il.Emit(OpCodes.Castclass, toMember.PropertyType);    // [toVal] [ret]
+                }
+
+                il.Emit(OpCodes.Callvirt, toMember.SetMethod);        // ----
+            }
+
+            il.Emit(OpCodes.Ldloc, retLoc);
+            il.Emit(OpCodes.Ret);
+
+            var func = (Func<From, Dictionary<string, POCOBuilder>, object>)dynMethod.CreateDelegate(typeof(Func<From, Dictionary<string, POCOBuilder>, object>));
+
+            return func;
+        }
+
+        private static Func<From, Dictionary<string, POCOBuilder>, object> BuildValueRefTypeMapper(Dictionary<string, POCOBuilder> members, Type tTo)
+        {
+            var tFrom = typeof(From);
+
+            var cons = tTo.GetConstructor(new Type[0]);
+            if (cons == null) throw new Exception("No parameterless constructor found for " + tTo.FullName);
+
+            var lookup = typeof(POCOBuilder<From, Describer>).GetMethod("Lookup", BindingFlags.Static | BindingFlags.NonPublic);
+
+            var invoke = typeof(Func<object, object>).GetMethod("Invoke");
+
+            var dynMethod = new DynamicMethod("POCOBuilder" + Guid.NewGuid().ToString().Replace("-", ""), typeof(object), new[] { tFrom, typeof(Dictionary<string, POCOBuilder>) }, restrictedSkipVisibility: true);
+            var il = dynMethod.GetILGenerator();
+            var retLoc = il.DeclareLocal(tTo);
+
+            il.Emit(OpCodes.Newobj, cons);                      // [ret]
+            il.Emit(OpCodes.Stloc, retLoc);                     // ----
+
+            foreach (var mem in members)
+            {
+                il.Emit(OpCodes.Ldloc, retLoc);                 // [ret]
+
+                il.Emit(OpCodes.Ldarg_1);                       // [members] [ret]
+                il.Emit(OpCodes.Ldstr, mem.Key);                // [memKey] [members] [ret]
+                il.Emit(OpCodes.Call, lookup);                  // [Func<object, object>] [ret]
+
+                il.Emit(OpCodes.Ldarga, 0);                       // [from] [Func<object, object>] [ret]
+
+                var fromMember = tFrom.GetMember(mem.Key, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).Where(m => m is FieldInfo || m is PropertyInfo).Single();
+
+                if (fromMember is PropertyInfo)
+                {
+                    var fromProp = (PropertyInfo)fromMember;
+                    il.Emit(OpCodes.Call, fromProp.GetMethod);  // [fromVal] [Func<object, object>] [ret]
+
+                    if (fromProp.PropertyType.IsValueType)
+                    {
+                        il.Emit(OpCodes.Box, fromProp.PropertyType);// [fromVal] [Func<object, object>] [ret]
+                    }
+
+                    il.Emit(OpCodes.Call, invoke);                  // [toVal (as object)] [ret]
+                }
+                else
+                {
+                    var fromField = (FieldInfo)fromMember;
+                    il.Emit(OpCodes.Ldfld, fromField);              // [fromVal] [Func<object, object>] [ret]
+
+                    if (fromField.FieldType.IsValueType)
+                    {
+                        il.Emit(OpCodes.Box, fromField.FieldType);  // [fromVal] [Func<object, object>] [ret]
+                    }
+
+                    il.Emit(OpCodes.Call, invoke);                  // [toVal (as object)] [ret]
+                }
+
+                var toMember = tTo.GetProperty(mem.Key);
+
+                if (toMember.PropertyType.IsValueType)
+                {
+                    il.Emit(OpCodes.Unbox_Any, toMember.PropertyType);// [toVal] [ret]
+                }
+                else
+                {
+                    il.Emit(OpCodes.Castclass, toMember.PropertyType);    // [toVal] [ret]
+                }
+
+                il.Emit(OpCodes.Callvirt, toMember.SetMethod);        // ----
+            }
+
+            il.Emit(OpCodes.Ldloc, retLoc);
+            il.Emit(OpCodes.Ret);
+
+            var func = (Func<From, Dictionary<string, POCOBuilder>, object>)dynMethod.CreateDelegate(typeof(Func<From, Dictionary<string, POCOBuilder>, object>));
+
+            return func;
+        }
+
         private static POCOBuilder GetClassMapper(TypeDescription desc)
         {
-            var t = typeof(From);
+            var tFrom = typeof(From);
 
             var asClass = (ClassTypeDescription)desc;
-
             var pocoType = desc.GetPocoType();
+            
+            if(pocoType.IsValueType)
+            {
+                throw new Exception("POCO Type should never be a ValueType!");
+            }
 
-            var from = TypeAccessor.Create(t, true);
+            Dictionary<string, POCOBuilder> members = null;
+
+            members =
+                asClass.Members.ToDictionary(
+                    kv => kv.Key,
+                    kv =>
+                    {
+                        var member = tFrom.GetMember(kv.Key, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)[0];
+
+                        var type = member is FieldInfo ? (member as FieldInfo).FieldType : (member as PropertyInfo).PropertyType;
+
+                        var descType = typeof(Describer).GetGenericTypeDefinition().MakeGenericType(type);
+
+                        var self = typeof(POCOBuilder<,>).MakeGenericType(type, descType).GetMethod("GetMapper");
+
+                        return (POCOBuilder)self.Invoke(null, new object[0]);
+                    }
+                );
+
+            Func<From, Dictionary<string, POCOBuilder>, object> func;
+            if (!tFrom.IsValueType)
+            {
+                func = BuildRefRefTypeMapper(members, pocoType);
+            }
+            else
+            {
+                func = BuildValueRefTypeMapper(members, pocoType);
+            }
+
+            return
+                new POCOBuilder(
+                    from =>
+                    {
+                        if (from == null) return null;
+
+                        var asFrom = (From)from;
+
+                        return func(asFrom, members);
+                    }
+                );
+
+            /*var from = TypeAccessor.Create(t, true);
             var to = TypeAccessor.Create(pocoType, true);
 
             var newPoco = pocoType.GetConstructor(EmptyTypes);
@@ -167,7 +374,7 @@ namespace PublicBroadcasting.Impl
                     return ret;
                 };
 
-            return new POCOBuilder(mapFuncRet);
+            return new POCOBuilder(mapFuncRet);*/
         }
 
         private static POCOBuilder GetListMapper()

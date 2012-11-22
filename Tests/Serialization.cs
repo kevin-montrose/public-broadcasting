@@ -394,7 +394,9 @@ namespace Tests
         [TestMethod]
         public void Nullable()
         {
-            var bytes = Serializer.Serialize(new NullObj { Bar = 123, Back = new NullObj { Foo = 456, Buzz = "World", Back = new NullObj { Fizz = 222 } } });
+            var obj = new NullObj { Bar = 123, Back = new NullObj { Foo = 456, Buzz = "World", Back = new NullObj { Fizz = 222 } } };
+
+            var bytes = Serializer.Serialize(obj);
             var n = Deserializer.Deserialize<NullObj>(bytes);
 
             Assert.IsNotNull(n);
