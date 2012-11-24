@@ -138,7 +138,14 @@ namespace PublicBroadcasting.Impl
             }
             else
             {
-                toListType = typeof(To).GetGenericArguments()[0];
+                var toList = typeof(To);
+
+                if (!(toList.IsGenericType && toList.GetGenericTypeDefinition() == typeof(IList<>)))
+                {
+                    toList = toList.GetInterfaces().Single(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>));
+                }
+
+                toListType = toList.GetGenericArguments()[0];
             }
 
             if (typeof(From).IsArray)
@@ -147,14 +154,29 @@ namespace PublicBroadcasting.Impl
             }
             else
             {
-                fromListType = typeof(From).GetGenericArguments()[0];
+                var fromList = typeof(From);
+
+                if (!(fromList.IsGenericType && fromList.GetGenericTypeDefinition() == typeof(IList<>)))
+                {
+                    fromList = fromList.GetInterfaces().Single(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>));
+                }
+
+                fromListType = fromList.GetGenericArguments()[0];
             }
 
             var mapper = typeof(POCOMapper<,>).MakeGenericType(fromListType, toListType).GetMethod("Get");
             var map = (POCOMapper)mapper.Invoke(null, new object[0]);
 
-            var newListType = typeof(List<>).MakeGenericType(toListType);
+            var newListType = typeof(To);
+
+            if (newListType.IsInterface || toToArray)
+            {
+                newListType = typeof(List<>).MakeGenericType(toListType);
+            }
+
             var newListCons = newListType.GetConstructor(new Type[0]);
+
+            if (newListCons == null) throw new Exception(newListType.FullName + " has no parameterless constructor");
 
             return
                 new POCOMapper(
@@ -558,7 +580,7 @@ namespace PublicBroadcasting.Impl
                 if (!((tTo.IsGenericType && tTo.GetGenericTypeDefinition() == typeof(IList<>)) ||
                     tTo.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>))))
                 {
-                    throw new Exception(tTo.FullName + " is not a valid deserialization, expected a list");
+                    throw new Exception(tTo.FullName + " is not a valid deserialization target, expected an IList<T>");
                 }
 
                 return GetListMapper();

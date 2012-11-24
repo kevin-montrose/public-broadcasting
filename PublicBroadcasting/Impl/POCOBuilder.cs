@@ -386,7 +386,14 @@ namespace PublicBroadcasting.Impl
                 fromListType = typeof(From).GetElementType();
             }else
             {
-                fromListType = typeof(From).GetGenericArguments()[0];
+                var list = typeof(From);
+
+                if (!(list.IsGenericType && list.GetGenericTypeDefinition() == typeof(IList<>)))
+                {
+                    list = list.GetInterfaces().Single(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>));
+                }
+
+                fromListType = list.GetGenericArguments()[0];
             }
 
             var descType = typeof(Describer).GetGenericTypeDefinition().MakeGenericType(fromListType);

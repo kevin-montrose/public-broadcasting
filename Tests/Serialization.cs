@@ -155,6 +155,59 @@ namespace Tests
             Assert.AreEqual("123", d8[1]);
         }
 
+        class ConstList : List<string> { }
+        class OneList<T> : List<T> { }
+
+        [TestMethod]
+        public void ListConversion()
+        {
+            var b1 = Serializer.Serialize(new List<string> { "foo", "bar" });
+            var d1 = Deserializer.Deserialize<List<string>>(b1);
+            var d2 = Deserializer.Deserialize<IList<string>>(b1);
+            var d3 = Deserializer.Deserialize<ConstList>(b1);
+            var d4 = Deserializer.Deserialize<OneList<string>>(b1);
+
+            var b2 = Serializer.Serialize(new ConstList { "123" });
+            var b3 = Serializer.Serialize(new OneList<string> { "123" });
+
+            var d5 = Deserializer.Deserialize<List<string>>(b2);
+            var d6 = Deserializer.Deserialize<List<string>>(b3);
+
+            try
+            {
+                Deserializer.Deserialize<System.Collections.IList>(b1);
+                Assert.Fail("Shouldn't be able to deserialize to a non-generic IList");
+            }
+            catch (Exception e)
+            {
+                while (e.InnerException != null) e = e.InnerException;
+
+                Assert.IsTrue(e.Message.EndsWith(" is not a valid deserialization target, expected an IList<T>"));
+            }
+
+            Assert.AreEqual(2, d1.Count);
+            Assert.AreEqual("foo", d1[0]);
+            Assert.AreEqual("bar", d1[1]);
+
+            Assert.AreEqual(2, d2.Count);
+            Assert.AreEqual("foo", d2[0]);
+            Assert.AreEqual("bar", d2[1]);
+
+            Assert.AreEqual(2, d3.Count);
+            Assert.AreEqual("foo", d3[0]);
+            Assert.AreEqual("bar", d3[1]);
+
+            Assert.AreEqual(2, d4.Count);
+            Assert.AreEqual("foo", d4[0]);
+            Assert.AreEqual("bar", d4[1]);
+
+            Assert.AreEqual(1, d5.Count);
+            Assert.AreEqual("123", d5[0]);
+
+            Assert.AreEqual(1, d6.Count);
+            Assert.AreEqual("123", d6[0]);
+        }
+
         struct S
         {
             public struct Blah
