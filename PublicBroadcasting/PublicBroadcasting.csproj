@@ -159,6 +159,7 @@
     <Compile Include="Impl\Config.FieldsPublicProtectedPrivate.cs">
       <DependentUpon>Config.cs</DependentUpon>
     </Compile>
+    <Compile Include="Impl\Describer.EnumTypeDescription.cs" />
     <Compile Include="Impl\Describer.ListTypeDescription.cs">
       <DependentUpon>Describer.cs</DependentUpon>
     </Compile>

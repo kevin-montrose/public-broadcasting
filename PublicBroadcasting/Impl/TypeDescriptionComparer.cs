@@ -78,6 +78,16 @@ namespace PublicBroadcasting.Impl
                 return ((BackReferenceTypeDescription)x).ClassId == ((BackReferenceTypeDescription)y).ClassId;
             }
 
+            if (x is EnumTypeDescription)
+            {
+                if (!(y is EnumTypeDescription)) return false;
+
+                return
+                    ((EnumTypeDescription)x).Values.OrderBy(o => o).SequenceEqual(
+                        ((EnumTypeDescription)y).Values.OrderBy(o => o)
+                    );
+            }
+
             if (x is PromisedTypeDescription || y is PromisedTypeDescription) throw new Exception("Promises don't have equality");
             if (x is NoTypeDescription || y is NoTypeDescription) throw new Exception("NoTypes don't have equality");
 
@@ -137,6 +147,18 @@ namespace PublicBroadcasting.Impl
             {
                 return
                     (asBack.ClassId + 104) * -1;
+            }
+
+            var asEnum = x as EnumTypeDescription;
+            if (asEnum != null)
+            {
+                var ret = 0;
+                foreach (var val in asEnum.Values)
+                {
+                    ret ^= val.GetHashCode();
+                }
+
+                return ret;
             }
 
             if (x is PromisedTypeDescription) throw new Exception("Promises don't have equality");

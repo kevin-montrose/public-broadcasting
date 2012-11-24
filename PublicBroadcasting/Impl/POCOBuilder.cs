@@ -71,6 +71,11 @@ namespace PublicBroadcasting.Impl
                 return GetDictionaryMapper();
             }
 
+            if (desc is EnumTypeDescription)
+            {
+                return new POCOBuilder(x => x != null ? x.ToString() : null);
+            }
+
             if (desc is NullableTypeDescription)
             {
                 return new POCOBuilder(x => x);

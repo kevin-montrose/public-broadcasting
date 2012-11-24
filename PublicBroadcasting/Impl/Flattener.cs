@@ -21,6 +21,7 @@ namespace PublicBroadcasting.Impl
 
                 if (top is SimpleTypeDescription) continue;
                 if (top is BackReferenceTypeDescription) continue;
+                if (top is EnumTypeDescription) continue;
 
                 var asNullable = top as NullableTypeDescription;
                 if (asNullable != null)

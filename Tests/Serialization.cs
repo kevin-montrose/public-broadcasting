@@ -36,6 +36,37 @@ namespace Tests
             public int Bar;
         }
 
+        enum En
+        {
+            Default = 0,
+            Foo = 1,
+            Bar = 2
+        }
+
+        class WithEnum
+        {
+            public En A { get; set; }
+            public En? B { get; set; }
+        }
+
+        [TestMethod]
+        public void Enums()
+        {
+            var bytes = Serializer.Serialize(new List<WithEnum> { new WithEnum { A = En.Foo }, new WithEnum { B = En.Bar }, new WithEnum { A = En.Bar, B = En.Default } });
+            var wel = Deserializer.Deserialize<List<WithEnum>>(bytes);
+
+            Assert.AreEqual(3, wel.Count);
+            
+            Assert.AreEqual(En.Foo, wel[0].A);
+            Assert.IsNull(wel[0].B);
+
+            Assert.AreEqual(En.Default, wel[1].A);
+            Assert.AreEqual(En.Bar, wel[1].B);
+
+            Assert.AreEqual(En.Bar, wel[2].A);
+            Assert.AreEqual(En.Default, wel[2].B);
+        }
+
         [TestMethod]
         public void Widen()
         {

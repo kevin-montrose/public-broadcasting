@@ -14,7 +14,8 @@ namespace PublicBroadcasting.Impl
     [ProtoInclude(6, typeof(DictionaryTypeDescription))]
     [ProtoInclude(7, typeof(NullableTypeDescription))]
     [ProtoInclude(8, typeof(BackReferenceTypeDescription))]
-    [ProtoInclude(9, typeof(NoTypeDescription))]
+    [ProtoInclude(9, typeof(EnumTypeDescription))]
+    [ProtoInclude(10, typeof(NoTypeDescription))]
     internal abstract class TypeDescription
     {
         internal abstract Type GetPocoType(TypeDescription existingDescription = null);

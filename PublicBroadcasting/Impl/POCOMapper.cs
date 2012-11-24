@@ -741,31 +741,57 @@ namespace PublicBroadcasting.Impl
 
         private static POCOMapper GetMapper()
         {
-            if (typeof(From) == typeof(To))
+            var tFrom = typeof(From);
+            var tTo = typeof(To);
+
+            if (tFrom == tTo)
             {
                 return new POCOMapper(x => (To)x);
             }
 
-            if (typeof(From).IsValueType && typeof(To).IsValueType)
+            if (tFrom.IsEnum)
+            {
+                throw new Exception("From should never be an enum, found " + tFrom.FullName);
+            }
+
+            if (tTo.IsEnum)
+            {
+                return 
+                    new POCOMapper(
+                        x =>
+                        {
+                            if (x == null)
+                            {
+                                var @default = Enum.ToObject(tTo, 0);
+                                return (To)@default;
+                            }
+
+                            var asStr = x.ToString();
+
+                            var enumRet = Enum.Parse(tTo, asStr, ignoreCase: true);
+
+                            return (To)enumRet;
+                        }
+                    );
+            }
+
+            if (tFrom.IsValueType && tTo.IsValueType)
             {
                 Func<object, object> widenRet;
-                if (Widens(typeof(From), typeof(To), out widenRet))
+                if (Widens(tFrom, tTo, out widenRet))
                 {
-                    if (widenRet == null) throw new Exception("No widening mapper for " + typeof(From).FullName + " to " + typeof(To).FullName);
+                    if (widenRet == null) throw new Exception("No widening mapper for " + tFrom.FullName + " to " + tTo.FullName);
 
                     return new POCOMapper(widenRet);
                 }
                 else
                 {
-                    if (IsPrimitive(typeof(From)) && IsPrimitive(typeof(To)))
+                    if (IsPrimitive(tFrom) && IsPrimitive(tTo))
                     {
-                        throw new Exception("Illegal narrowing conversion from " + typeof(From).FullName + " to " + typeof(To).FullName);
+                        throw new Exception("Illegal narrowing conversion from " + tFrom.FullName + " to " + tTo.FullName);
                     }
                 }
             }
-
-            var tFrom = typeof(From);
-            var tTo = typeof(To);
 
             var fIsNullable = Nullable.GetUnderlyingType(tFrom) != null;
             var tIsNullable = Nullable.GetUnderlyingType(tTo) != null;
@@ -794,6 +820,22 @@ namespace PublicBroadcasting.Impl
 
                 var nonNullMapper = typeof(POCOMapper<,>).MakeGenericType(tFrom, tNonNull);
                 var nonNullFunc = (POCOMapper)nonNullMapper.GetMethod("Get").Invoke(null, new object[0]);
+
+                // Since we map enums to strings, we need some extra magic when dealing with nullable enums
+                if (tNonNull.IsEnum)
+                {
+                    return
+                        new POCOMapper(
+                            from =>
+                            {
+                                if (from == null) return null;
+
+                                var ret = nonNullFunc.GetMapper()(from);
+
+                                return (To)ret;
+                            }
+                        );
+                }
 
                 return
                     new POCOMapper(
