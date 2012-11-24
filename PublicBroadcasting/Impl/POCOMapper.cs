@@ -513,11 +513,255 @@ namespace PublicBroadcasting.Impl
             return new POCOMapper(retFunc);
         }
 
+        private static bool Widens(Type from, Type to, out Func<object, object> map)
+        {
+            if (!IsPrimitive(from) || !IsPrimitive(to) || from == to)
+            {
+                map = null;
+                return false;
+            }
+
+            // Everything *but* SByte
+            if(from == typeof(byte))
+            {
+                map = null;
+
+                if (to == typeof(sbyte))
+                {
+                    return false;
+                }
+
+                if (to == typeof(short)) map = x => (short)((byte)x);
+                if (to == typeof(ushort)) map = x => (ushort)((byte)x);
+                if (to == typeof(int)) map = x => (int)((byte)x);
+                if (to == typeof(uint)) map = x => (uint)((byte)x);
+                if (to == typeof(long)) map = x => (long)((byte)x);
+                if (to == typeof(ulong)) map = x => (ulong)((byte)x);
+                if (to == typeof(float)) map = x => (float)((byte)x);
+                if (to == typeof(double)) map = x => (double)((byte)x);
+                if (to == typeof(decimal)) map = x => (decimal)((byte)x);
+
+                return true;
+            }
+            
+            // Short, Integer, Long, Decimal, Single, Double
+            if(from == typeof(sbyte))
+            {
+                map = null;
+
+                if (to == typeof(byte) || IsUnsigned(to))
+                {
+                    return false;
+                }
+
+                if (to == typeof(short)) map = x => (short)((sbyte)x);
+                if (to == typeof(int)) map = x => (int)((sbyte)x);
+                if (to == typeof(long)) map = x => (long)((sbyte)x);
+                if (to == typeof(float)) map = x => (float)((sbyte)x);
+                if (to == typeof(double)) map = x => (double)((sbyte)x);
+                if (to == typeof(decimal)) map = x => (decimal)((sbyte)x);
+
+                return true;
+            }
+
+            // Integer, Long, Decimal, Single, Double
+            if(from == typeof(short))
+            {
+                map = null;
+
+                if (to == typeof(sbyte) || IsUnsigned(to))
+                {
+                    return false;
+                }
+
+                if (to == typeof(int)) map = x => (int)((short)x);
+                if (to == typeof(long)) map = x => (long)((short)x);
+                if (to == typeof(float)) map = x => (float)((short)x);
+                if (to == typeof(double)) map = x => (double)((short)x);
+                if (to == typeof(decimal)) map = x => (decimal)((short)x);
+
+                return true;
+            }
+
+            // Integer, UInteger, Long, ULong, Decimal, Single, Double
+            if(from == typeof(ushort))
+            {
+                map = null;
+
+                if (to == typeof(byte) || to == typeof(sbyte) || to == typeof(short))
+                {
+                    return false;
+                }
+
+                if (to == typeof(int)) map = x => (int)((ushort)x);
+                if (to == typeof(uint)) map = x => (uint)((ushort)x);
+                if (to == typeof(long)) map = x => (long)((ushort)x);
+                if (to == typeof(ulong)) map = x => (ulong)((ushort)x);
+                if (to == typeof(float)) map = x => (float)((ushort)x);
+                if (to == typeof(double)) map = x => (double)((ushort)x);
+                if (to == typeof(decimal)) map = x => (decimal)((ushort)x);
+
+                return true;
+            }
+
+            // Long, Decimal, Single, Double
+            if(from == typeof(int))
+            {
+                map = null;
+
+                if (to == typeof(sbyte) || to == typeof(short) || IsUnsigned(to))
+                {
+                    return false;
+                }
+
+                if (to == typeof(long)) map = x => (long)((int)x);
+                if (to == typeof(float)) map = x => (float)((int)x);
+                if (to == typeof(double)) map = x => (double)((int)x);
+                if (to == typeof(decimal)) map = x => (decimal)((int)x);
+
+                return true;
+            }
+
+            // Long, ULong, Decimal, Single, Double
+            if(from == typeof(uint))
+            {
+                map = null;
+
+                if (to == typeof(byte) || to == typeof(sbyte) || to == typeof(short) || to == typeof(ushort) || to == typeof(int))
+                {
+                    return false;
+                }
+
+                if (to == typeof(long)) map = x => (long)((uint)x);
+                if (to == typeof(ulong)) map = x => (ulong)((uint)x);
+                if (to == typeof(float)) map = x => (float)((uint)x);
+                if (to == typeof(double)) map = x => (double)((uint)x);
+                if (to == typeof(decimal)) map = x => (decimal)((uint)x);
+
+                return true;
+            }
+
+            // Decimal, Single, Double
+            if(from == typeof(long))
+            {
+                map = null;
+
+                if (to == typeof(sbyte) || to == typeof(short) || to == typeof(int) || IsUnsigned(to))
+                {
+                    return false;
+                }
+
+                if (to == typeof(float)) map = x => (float)((long)x);
+                if (to == typeof(double)) map = x => (double)((long)x);
+                if (to == typeof(decimal)) map = x => (decimal)((long)x);
+
+                return true;
+            }
+
+            // Decimal, Single, Double
+            if (from == typeof(ulong))
+            {
+                map = null;
+
+                if (to == typeof(byte) || to == typeof(sbyte) || to == typeof(short) || to == typeof(ushort) || to == typeof(int) || to == typeof(uint) || to == typeof(long))
+                {
+                    return false;
+                }
+
+                if (to == typeof(float)) map = x => (float)((ulong)x);
+                if (to == typeof(double)) map = x => (double)((ulong)x);
+                if (to == typeof(decimal)) map = x => (decimal)((ulong)x);
+
+                return true;
+            }
+
+            // Single, Double
+            if(from == typeof(decimal))
+            {
+                map = null;
+
+                if (to != typeof(float) && to != typeof(double))
+                {
+                    return false;
+                }
+
+                if (to == typeof(float)) map = x => (float)((decimal)x);
+                if (to == typeof(double)) map = x => (double)((decimal)x);
+
+                return true;
+            }
+
+            // Double
+            if(from == typeof(float))
+            {
+                map = null;
+
+                if (to != typeof(double))
+                {
+                    return false;
+                }
+
+                map = x => (double)((float)x);
+
+                return true;
+            }
+
+            if (from == typeof(double))
+            {
+                map = null;
+
+                return false;
+            }
+
+            throw new Exception("Shouldn't be possible, found "+from.FullName+" to "+to.FullName);
+        }
+
+        private static readonly HashSet<Type> PrimitiveTypes = 
+            new HashSet<Type> 
+            { 
+                typeof(byte), typeof(sbyte), 
+                typeof(short), typeof(ushort),
+                typeof(int), typeof(uint),
+                typeof(long), typeof(ulong),
+                typeof(float), typeof(double), typeof(decimal)
+            };
+        private static bool IsPrimitive(Type t)
+        {
+            return PrimitiveTypes.Contains(t);
+        }
+
+        private static bool IsUnsigned(Type t)
+        {
+            return
+                t == typeof(byte) ||
+                t == typeof(ushort) ||
+                t == typeof(uint) ||
+                t == typeof(ulong);
+        }
+
         private static POCOMapper GetMapper()
         {
             if (typeof(From) == typeof(To))
             {
                 return new POCOMapper(x => (To)x);
+            }
+
+            if (typeof(From).IsValueType && typeof(To).IsValueType)
+            {
+                Func<object, object> widenRet;
+                if (Widens(typeof(From), typeof(To), out widenRet))
+                {
+                    if (widenRet == null) throw new Exception("No widening mapper for " + typeof(From).FullName + " to " + typeof(To).FullName);
+
+                    return new POCOMapper(widenRet);
+                }
+                else
+                {
+                    if (IsPrimitive(typeof(From)) && IsPrimitive(typeof(To)))
+                    {
+                        throw new Exception("Illegal narrowing conversion from " + typeof(From).FullName + " to " + typeof(To).FullName);
+                    }
+                }
             }
 
             var tFrom = typeof(From);
