@@ -55,11 +55,24 @@ namespace PublicBroadcasting.Impl
 
         private static POCOMapper GetDictionaryMapper()
         {
-            var toKeyType = typeof(To).GetGenericArguments()[0];
-            var toValType = typeof(To).GetGenericArguments()[1];
+            var toDict = typeof(To);
+            var fromDict = typeof(From);
 
-            var fromKeyType = typeof(From).GetGenericArguments()[0];
-            var fromValType = typeof(From).GetGenericArguments()[1];
+            if (!(toDict.IsGenericType && toDict.GetGenericTypeDefinition() == typeof(IDictionary<,>)))
+            {
+                toDict = toDict.GetInterfaces().Single(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>));
+            }
+
+            if(!(fromDict.IsGenericType && fromDict.GetGenericTypeDefinition() == typeof(IDictionary<,>)))
+            {
+                fromDict = fromDict.GetInterfaces().Single(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>));
+            }
+            
+            var toKeyType = toDict.GetGenericArguments()[0];
+            var toValType = toDict.GetGenericArguments()[1];
+
+            var fromKeyType = fromDict.GetGenericArguments()[0];
+            var fromValType = fromDict.GetGenericArguments()[1];
 
             var keyMapper = typeof(POCOMapper<,>).MakeGenericType(fromKeyType, toKeyType).GetMethod("Get");
             var keyMap = (POCOMapper)keyMapper.Invoke(null, new object[0]);
@@ -67,8 +80,20 @@ namespace PublicBroadcasting.Impl
             var valMapper = typeof(POCOMapper<,>).MakeGenericType(fromValType, toValType).GetMethod("Get");
             var valMap = (POCOMapper)valMapper.Invoke(null, new object[0]);
 
-            var newDictType = typeof(Dictionary<,>).MakeGenericType(toKeyType, toValType);
+            //var newDictType = typeof(Dictionary<,>).MakeGenericType(toKeyType, toValType);
+            var newDictType = typeof(To);
+
+            if (newDictType.IsInterface)
+            {
+                newDictType = typeof(Dictionary<,>).MakeGenericType(toKeyType, toValType);
+            }
+
             var newDictCons = newDictType.GetConstructor(new Type[0]);
+
+            if (newDictCons == null)
+            {
+                throw new Exception(typeof(To).FullName + " doesn't have a parameterless constructor");
+            }
 
             return
                 new POCOMapper(
@@ -521,7 +546,7 @@ namespace PublicBroadcasting.Impl
                 if (!((tTo.IsGenericType && tTo.GetGenericTypeDefinition() == typeof(IDictionary<,>)) ||
                     tTo.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>))))
                 {
-                    throw new Exception(tTo.FullName + " is not a valid deserialization, expected a dictionary");
+                    throw new Exception(tTo.FullName + " is not a valid deserialization target, expected an IDictionary<Key, Value>");
                 }
 
                 return GetDictionaryMapper();

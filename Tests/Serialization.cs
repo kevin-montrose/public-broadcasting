@@ -91,6 +91,70 @@ namespace Tests
             Assert.AreEqual(0, hn2.Foo.Value);
         }
 
+        class ConstDict : Dictionary<int, string> { }
+        class OneDict<Key> : Dictionary<Key, string> { }
+        class TwoDict<Key, Value> : Dictionary<Key, Value> { }
+
+        [TestMethod]
+        public void DictionaryConversion()
+        {
+            var b1 = Serializer.Serialize(new Dictionary<int, string> { { 1, "foo" }, { 2, "bar" } });
+            var d1 = Deserializer.Deserialize<Dictionary<int, string>>(b1);
+            var d2 = Deserializer.Deserialize<IDictionary<int, string>>(b1);
+            var d3 = Deserializer.Deserialize<ConstDict>(b1);
+            var d4 = Deserializer.Deserialize<OneDict<int>>(b1);
+            var d5 = Deserializer.Deserialize<TwoDict<int, string>>(b1);
+
+            var b2 = Serializer.Serialize(new ConstDict { { 1, "123" } });
+            var b3 = Serializer.Serialize(new OneDict<int> { { 1, "123" } });
+            var b4 = Serializer.Serialize(new TwoDict<int, string> { { 1, "123" } });
+
+            var d6 = Deserializer.Deserialize<Dictionary<int, string>>(b2);
+            var d7 = Deserializer.Deserialize<Dictionary<int, string>>(b3);
+            var d8 = Deserializer.Deserialize<Dictionary<int, string>>(b4);
+
+            try
+            {
+                Deserializer.Deserialize<System.Collections.IDictionary>(b1);
+                Assert.Fail("Shouldn't be able to deserialize to a non-generic IDictionary");
+            }
+            catch (Exception e)
+            {
+                while (e.InnerException != null) e = e.InnerException;
+
+                Assert.IsTrue(e.Message.EndsWith(" is not a valid deserialization target, expected an IDictionary<Key, Value>"));
+            }
+
+            Assert.AreEqual(2, d1.Count);
+            Assert.AreEqual("foo", d1[1]);
+            Assert.AreEqual("bar", d1[2]);
+
+            Assert.AreEqual(2, d2.Count);
+            Assert.AreEqual("foo", d2[1]);
+            Assert.AreEqual("bar", d2[2]);
+
+            Assert.AreEqual(2, d3.Count);
+            Assert.AreEqual("foo", d3[1]);
+            Assert.AreEqual("bar", d3[2]);
+
+            Assert.AreEqual(2, d4.Count);
+            Assert.AreEqual("foo", d4[1]);
+            Assert.AreEqual("bar", d4[2]);
+
+            Assert.AreEqual(2, d5.Count);
+            Assert.AreEqual("foo", d5[1]);
+            Assert.AreEqual("bar", d5[2]);
+
+            Assert.AreEqual(1, d6.Count);
+            Assert.AreEqual("123", d6[1]);
+
+            Assert.AreEqual(1, d7.Count);
+            Assert.AreEqual("123", d7[1]);
+
+            Assert.AreEqual(1, d8.Count);
+            Assert.AreEqual("123", d8[1]);
+        }
+
         struct S
         {
             public struct Blah

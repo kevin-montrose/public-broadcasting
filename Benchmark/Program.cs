@@ -357,6 +357,11 @@ namespace Benchmark
                 }
             }
 
+            Console.WriteLine();
+            Console.WriteLine("ProtoBuf: " + protoBs.Length + " bytes");
+            Console.WriteLine("MessagePack: " + msgPackBs.Length + " bytes");
+            Console.WriteLine("PublicBroadcasting: " + PBBs.Length + " bytes");
+
 #if DEBUG
             Console.ReadKey();
 #endif

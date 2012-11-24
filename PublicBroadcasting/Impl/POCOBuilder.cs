@@ -422,7 +422,14 @@ namespace PublicBroadcasting.Impl
 
         public static POCOBuilder GetDictionaryMapper()
         {
-            var genArgs = typeof(From).GetGenericArguments();
+            var dict = typeof(From);
+
+            if (!(dict.IsGenericType && dict.GetGenericTypeDefinition() == typeof(IDictionary<,>)))
+            {
+                dict = dict.GetInterfaces().Single(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>));
+            }
+
+            var genArgs = dict.GetGenericArguments();
 
             var keyType = genArgs[0];
             var valType = genArgs[1];
