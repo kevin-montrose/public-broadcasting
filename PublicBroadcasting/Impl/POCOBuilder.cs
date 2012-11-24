@@ -73,7 +73,19 @@ namespace PublicBroadcasting.Impl
 
             if (desc is EnumTypeDescription)
             {
-                return new POCOBuilder(x => x != null ? x.ToString() : null);
+                var vals = ((EnumTypeDescription)desc).Values;
+
+                return 
+                    new POCOBuilder(
+                        x =>
+                        {
+                            if (x == null) return -1;
+
+                            var ix = vals.IndexOf(x.ToString());
+
+                            return ix;
+                        }
+                    );
             }
 
             if (desc is NullableTypeDescription)

@@ -98,7 +98,7 @@ namespace Tests
 
             var backRef = asClass.Members["Next"] as BackReferenceTypeDescription;
             Assert.IsNotNull(backRef);
-            Assert.AreEqual(asClass.Id, backRef.ClassId);
+            Assert.AreEqual(asClass.Id, backRef.Id);
         }
     }
 }

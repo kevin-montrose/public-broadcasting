@@ -19,7 +19,7 @@ namespace PublicBroadcasting.Impl
         static ClassTypeDescription()
         {
             AppDomain domain = Thread.GetDomain();
-            AssemblyName asmName = new AssemblyName("PublicBroadcastingDynamicAssembly");
+            AssemblyName asmName = new AssemblyName("PublicBroadcastingDynamicClassAssembly");
             AssemblyBuilder asmBuilder = domain.DefineDynamicAssembly(asmName, AssemblyBuilderAccess.Run);
 
             ModuleBuilder = asmBuilder.DefineDynamicModule(asmName.Name);

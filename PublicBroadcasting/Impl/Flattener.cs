@@ -10,7 +10,8 @@ namespace PublicBroadcasting.Impl
     {
         public static void Flatten(TypeDescription root, Func<int> nextId)
         {
-            var seen = new HashSet<ClassTypeDescription>();
+            var seenClasses = new HashSet<ClassTypeDescription>();
+            var seenEnums = new HashSet<EnumTypeDescription>();
 
             var toCheck = new Stack<TypeDescription>();
             toCheck.Push(root);
@@ -21,12 +22,11 @@ namespace PublicBroadcasting.Impl
 
                 if (top is SimpleTypeDescription) continue;
                 if (top is BackReferenceTypeDescription) continue;
-                if (top is EnumTypeDescription) continue;
 
                 var asNullable = top as NullableTypeDescription;
                 if (asNullable != null)
                 {
-                    if (seen.Contains(asNullable.InnerType))
+                    if (seenClasses.Contains(asNullable.InnerType))
                     {
                         var id = ((ClassTypeDescription)asNullable.InnerType).Id != 0 ? ((ClassTypeDescription)asNullable.InnerType).Id : nextId();
                         ((ClassTypeDescription)asNullable.InnerType).Id = id;
@@ -43,7 +43,7 @@ namespace PublicBroadcasting.Impl
                 var asDict = top as DictionaryTypeDescription;
                 if (asDict != null)
                 {
-                    if (seen.Contains(asDict.KeyType))
+                    if (seenClasses.Contains(asDict.KeyType))
                     {
                         var id = ((ClassTypeDescription)asDict.KeyType).Id != 0 ? ((ClassTypeDescription)asDict.KeyType).Id : nextId();
                         ((ClassTypeDescription)asDict.KeyType).Id = id;
@@ -54,7 +54,7 @@ namespace PublicBroadcasting.Impl
                         toCheck.Push(asDict.KeyType);
                     }
 
-                    if (seen.Contains(asDict.ValueType))
+                    if (seenClasses.Contains(asDict.ValueType))
                     {
                         var id = ((ClassTypeDescription)asDict.ValueType).Id != 0 ? ((ClassTypeDescription)asDict.ValueType).Id : nextId();
                         ((ClassTypeDescription)asDict.ValueType).Id = id;
@@ -71,7 +71,7 @@ namespace PublicBroadcasting.Impl
                 var asList = top as ListTypeDescription;
                 if (asList != null)
                 {
-                    if (seen.Contains(asList.Contains))
+                    if (seenClasses.Contains(asList.Contains))
                     {
                         var id = ((ClassTypeDescription)asList.Contains).Id != 0 ? ((ClassTypeDescription)asList.Contains).Id : nextId();
                         ((ClassTypeDescription)asList.Contains).Id = id;
@@ -88,28 +88,50 @@ namespace PublicBroadcasting.Impl
                 var asClass = top as ClassTypeDescription;
                 if (asClass != null)
                 {
-                    if (seen.Contains(asClass))
+                    if (seenClasses.Contains(asClass))
                     {
                         continue;
                     }
 
-                    seen.Add(asClass);
+                    seenClasses.Add(asClass);
 
                     foreach (var key in asClass.Members.Keys.ToList())
                     {
                         var val = asClass.Members[key];
 
-                        if (seen.Contains(val))
+                        if (seenClasses.Contains(val))
                         {
                             var id = ((ClassTypeDescription)val).Id != 0 ? ((ClassTypeDescription)val).Id : nextId();
                             ((ClassTypeDescription)val).Id = id;
                             asClass.Members[key] = new BackReferenceTypeDescription(id);
+
+                            continue;
                         }
-                        else
+
+                        if (seenEnums.Contains(val))
                         {
-                            toCheck.Push(val);
+                            var id = ((EnumTypeDescription)val).Id != 0 ? ((EnumTypeDescription)val).Id : nextId();
+                            ((EnumTypeDescription)val).Id = id;
+                            asClass.Members[key] = new BackReferenceTypeDescription(id);
+
+                            continue;
                         }
+
+                        toCheck.Push(val);
                     }
+
+                    continue;
+                }
+
+                var asEnum = top as EnumTypeDescription;
+                if (asEnum != null)
+                {
+                    if (seenEnums.Contains(asEnum))
+                    {
+                        continue;
+                    }
+
+                    seenEnums.Add(asEnum);
 
                     continue;
                 }

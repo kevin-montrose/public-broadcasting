@@ -51,7 +51,12 @@ namespace PublicBroadcasting.Impl
 
             if (t == typeof(Uri)) return SimpleTypeDescription.Uri;
 
-            if (t.IsEnum) return new EnumTypeDescription(t);
+            if (t.IsEnum)
+            {
+                var single = typeof(EnumTypeDescription<>).MakeGenericType(t).GetField("Singleton");
+
+                return (EnumTypeDescription)single.GetValue(null);
+            }
 
             if (Nullable.GetUnderlyingType(t) != null)
             {
@@ -60,7 +65,12 @@ namespace PublicBroadcasting.Impl
                 var valType = nullT.GetGenericArguments()[0];
 
                 // We're effectively hoisting this into a string, and a nullable string is illegal so destroy the null-ing
-                if (valType.IsEnum) return new EnumTypeDescription(valType);
+                if (valType.IsEnum)
+                {
+                    var single = typeof(EnumTypeDescription<>).MakeGenericType(valType).GetField("Singleton");
+
+                    return (EnumTypeDescription)single.GetValue(null);
+                }
 
                 var nullPromiseType = typeof(PromisedTypeDescription<,>).MakeGenericType(nullT, describerType.MakeGenericType(nullT));
                 var nullPromiseSingle = nullPromiseType.GetField("Singleton");

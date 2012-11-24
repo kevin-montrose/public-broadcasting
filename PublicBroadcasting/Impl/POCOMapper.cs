@@ -744,6 +744,9 @@ namespace PublicBroadcasting.Impl
             var tFrom = typeof(From);
             var tTo = typeof(To);
 
+            var fIsNullable = Nullable.GetUnderlyingType(tFrom) != null;
+            var tIsNullable = Nullable.GetUnderlyingType(tTo) != null;
+
             if (tFrom == tTo)
             {
                 return new POCOMapper(x => (To)x);
@@ -751,28 +754,38 @@ namespace PublicBroadcasting.Impl
 
             if (tFrom.IsEnum)
             {
-                throw new Exception("From should never be an enum, found " + tFrom.FullName);
-            }
-
-            if (tTo.IsEnum)
-            {
-                return 
-                    new POCOMapper(
-                        x =>
-                        {
-                            if (x == null)
+                if (tTo == typeof(string))
+                {
+                    return
+                        new POCOMapper(
+                            x =>
                             {
-                                var @default = Enum.ToObject(tTo, 0);
-                                return (To)@default;
+                                return x.ToString();
                             }
+                        );
+                }
 
-                            var asStr = x.ToString();
+                if (tTo.IsEnum)
+                {
+                    return
+                        new POCOMapper(
+                            x =>
+                            {
+                                if (x == null || ((int)x) == -1) return null;
 
-                            var enumRet = Enum.Parse(tTo, asStr, ignoreCase: true);
+                                var asStr = x.ToString();
 
-                            return (To)enumRet;
-                        }
-                    );
+                                var enumRet = Enum.Parse(tTo, asStr, ignoreCase: true);
+
+                                return (To)enumRet;
+                            }
+                        );
+                }
+
+                if (!tIsNullable)
+                {
+                    throw new Exception("Enumerations can be mapped to strings or other enumerations, found " + tTo.FullName);
+                }
             }
 
             if (tFrom.IsValueType && tTo.IsValueType)
@@ -792,9 +805,6 @@ namespace PublicBroadcasting.Impl
                     }
                 }
             }
-
-            var fIsNullable = Nullable.GetUnderlyingType(tFrom) != null;
-            var tIsNullable = Nullable.GetUnderlyingType(tTo) != null;
 
             if (fIsNullable && !tIsNullable)
             {
@@ -821,7 +831,7 @@ namespace PublicBroadcasting.Impl
                 var nonNullMapper = typeof(POCOMapper<,>).MakeGenericType(tFrom, tNonNull);
                 var nonNullFunc = (POCOMapper)nonNullMapper.GetMethod("Get").Invoke(null, new object[0]);
 
-                // Since we map enums to strings, we need some extra magic when dealing with nullable enums
+                // Since we map enums to ints, we need some extra magic when dealing with nullable enums
                 if (tNonNull.IsEnum)
                 {
                     return

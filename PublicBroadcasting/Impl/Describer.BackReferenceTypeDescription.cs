@@ -11,13 +11,13 @@ namespace PublicBroadcasting.Impl
     internal class BackReferenceTypeDescription : TypeDescription
     {
         [ProtoMember(1)]
-        public int ClassId { get; set; }
+        public int Id { get; set; }
 
         private BackReferenceTypeDescription() { }
 
         internal BackReferenceTypeDescription(int id)
         {
-            ClassId = id;
+            Id = id;
         }
 
         internal override Type GetPocoType(TypeDescription existingDescription = null)
@@ -32,6 +32,12 @@ namespace PublicBroadcasting.Impl
                 var top = stack.Pop();
 
                 if (top is SimpleTypeDescription) continue;
+
+                if (top is NullableTypeDescription)
+                {
+                    stack.Push(((NullableTypeDescription)top).InnerType);
+                    continue;
+                }
 
                 if (top is ListTypeDescription)
                 {
@@ -53,7 +59,7 @@ namespace PublicBroadcasting.Impl
                 {
                     var asClass = (ClassTypeDescription)top;
 
-                    if (asClass.Id == ClassId) return asClass.GetPocoType(existingDescription);
+                    if (asClass.Id == Id) return asClass.GetPocoType(existingDescription);
 
                     foreach (var member in asClass.Members)
                     {
@@ -63,13 +69,19 @@ namespace PublicBroadcasting.Impl
                     continue;
                 }
 
-                if (top is NoTypeDescription)
+                if (top is EnumTypeDescription)
                 {
-                    throw new Exception("How did this even happen?");
+                    var asEnum = (EnumTypeDescription)top;
+
+                    if (asEnum.Id == Id) return asEnum.GetPocoType(existingDescription);
+
+                    continue;
                 }
+
+                throw new Exception("Shouldn't be possible");
             }
 
-            throw new Exception("Couldn't find reference to ClassId = " + ClassId);
+            throw new Exception("Couldn't find reference to ClassId = " + Id);
         }
 
         internal override TypeDescription DePromise(out Action afterPromise)
@@ -86,7 +98,7 @@ namespace PublicBroadcasting.Impl
                 return backRefLookup[this];
             }
 
-            var ret = new BackReferenceTypeDescription(ClassId);
+            var ret = new BackReferenceTypeDescription(Id);
 
             backRefLookup[this] = ret;
 

@@ -75,7 +75,7 @@ namespace PublicBroadcasting.Impl
             {
                 if (!(y is BackReferenceTypeDescription)) return false;
 
-                return ((BackReferenceTypeDescription)x).ClassId == ((BackReferenceTypeDescription)y).ClassId;
+                return ((BackReferenceTypeDescription)x).Id == ((BackReferenceTypeDescription)y).Id;
             }
 
             if (x is EnumTypeDescription)
@@ -83,8 +83,8 @@ namespace PublicBroadcasting.Impl
                 if (!(y is EnumTypeDescription)) return false;
 
                 return
-                    ((EnumTypeDescription)x).Values.OrderBy(o => o).SequenceEqual(
-                        ((EnumTypeDescription)y).Values.OrderBy(o => o)
+                    ((EnumTypeDescription)x).Values.SequenceEqual(
+                        ((EnumTypeDescription)y).Values
                     );
             }
 
@@ -146,7 +146,7 @@ namespace PublicBroadcasting.Impl
             if (asBack != null)
             {
                 return
-                    (asBack.ClassId + 104) * -1;
+                    (asBack.Id + 104) * -1;
             }
 
             var asEnum = x as EnumTypeDescription;
