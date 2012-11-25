@@ -37,5 +37,23 @@ namespace Tests
                 Assert.AreEqual(i + 1, dynAnon.D[i]);
             }
         }
+
+        [TestMethod]
+        public void Indexer()
+        {
+            var bytes = Serializer.Serialize(new { A = "Foo", B = 123, C = (int?)2, C2 = (int?)null, D = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 } });
+            var dyn = Deserializer.Deserialize(bytes);
+
+            Assert.AreEqual("Foo", dyn["A"]);
+            Assert.AreEqual(123, dyn["B"]);
+            Assert.AreEqual(2, dyn["C"]);
+            Assert.AreEqual(null, dyn["C2"]);
+            Assert.AreEqual(10, dyn["D"].Count);
+
+            for (var i = 0; i < 10; i++)
+            {
+                Assert.AreEqual(i + 1, dyn["D"][i]);
+            }
+        }
     }
 }

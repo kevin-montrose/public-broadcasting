@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Dynamic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -11,6 +12,24 @@ using System.Threading.Tasks;
 
 namespace PublicBroadcasting.Impl
 {
+    public class ProbeClass
+    {
+        public static void Probe(string str)
+        {
+            Console.WriteLine(str);
+        }
+
+        public static bool Validate(object[] objs)
+        {
+            return objs.Length == 1 && (objs[0] is string);
+        }
+
+        public static bool TwoStrEqs(string s1, string s2)
+        {
+            return s1.Equals(s2);
+        }
+    }
+
     [ProtoContract]
     internal class ClassTypeDescription : TypeDescription
     {
@@ -55,7 +74,9 @@ namespace PublicBroadcasting.Impl
             var protoMemberAttr = typeof(ProtoMemberAttribute).GetConstructor(new[] { typeof(int) });
             var protoContractAttr = typeof(ProtoContractAttribute).GetConstructor(new Type[0]);
 
-            TypeBuilder = ModuleBuilder.DefineType(name, TypeAttributes.Public);
+            var propGetters = new Dictionary<string, MethodInfo>();
+
+            TypeBuilder = ModuleBuilder.DefineType(name, TypeAttributes.Public, typeof(DynamicObject));
             var ix = 1;
             foreach (var kv in Members)
             {
@@ -88,11 +109,81 @@ namespace PublicBroadcasting.Impl
                 prop.SetGetMethod(getPropMthdBldr);
                 prop.SetSetMethod(setPropMthdBldr);
 
+                propGetters[kv.Key] = getPropMthdBldr;
+
                 ix++;
             }
 
             var contractAttrBuilder = new CustomAttributeBuilder(protoContractAttr, new object[0]);
             TypeBuilder.SetCustomAttribute(contractAttrBuilder);
+
+            var probe = typeof(ProbeClass).GetMethod("Probe");
+            var validate = typeof(ProbeClass).GetMethod("Validate");
+            var eq = typeof(ProbeClass).GetMethod("TwoStrEqs");
+
+            var tryGetIndex = TypeBuilder.DefineMethod("TryGetIndex", MethodAttributes.Public | MethodAttributes.Virtual, typeof(bool), new[] { typeof(GetIndexBinder), typeof(object[]), Type.GetType("System.Object&") });
+            var il = tryGetIndex.GetILGenerator();
+
+            il.Emit(OpCodes.Ldarg_2);       // object[]
+
+            il.Emit(OpCodes.Call, validate);// bool
+
+            var valid = il.DefineLabel();
+            il.Emit(OpCodes.Brtrue_S, valid);
+
+            il.Emit(OpCodes.Ldarg_3);       // (out object)
+            il.Emit(OpCodes.Ldnull);        // null (out object);
+            il.Emit(OpCodes.Stind_Ref);     // ----
+
+            il.Emit(OpCodes.Ldc_I4_0);      // 0
+            il.Emit(OpCodes.Ret);
+
+            il.MarkLabel(valid);
+
+            il.Emit(OpCodes.Ldarg_3);       // (out object)
+
+            il.Emit(OpCodes.Ldarg_2);       // object[] (out object)
+            il.Emit(OpCodes.Ldc_I4_0);      // 0 object[] (out object)
+            il.Emit(OpCodes.Ldelem_Ref);    // key (out object)
+
+            Label next;
+            var done = il.DefineLabel();
+            foreach (var mem in Members)
+            {
+                next = il.DefineLabel();
+
+                var memKey = mem.Key;
+                var prop = propGetters[memKey];
+
+                il.Emit(OpCodes.Dup);               // key key (out object)
+                il.Emit(OpCodes.Ldstr, memKey);     // memKey key key (out object)
+                il.Emit(OpCodes.Call, eq);          // bool key (out object)
+                il.Emit(OpCodes.Brfalse_S, next);   // key (out object)
+
+                il.Emit(OpCodes.Pop);               // (out object)
+                il.Emit(OpCodes.Ldarg_0);           // this (out object)
+                il.Emit(OpCodes.Callvirt, prop);    // ret (out object);
+
+                if (prop.ReturnType.IsValueType)
+                {
+                    il.Emit(OpCodes.Box, prop.ReturnType);  // ret (out object);
+                }
+
+                il.Emit(OpCodes.Br, done);          // ret (out object);
+
+                il.MarkLabel(next);                 // key (out object);
+            }
+
+            il.Emit(OpCodes.Pop);           // (out object)
+            il.Emit(OpCodes.Ldnull);        // null (out object)
+
+            il.MarkLabel(done);             // ret (out object);
+
+            il.Emit(OpCodes.Stind_Ref);     // ----
+            il.Emit(OpCodes.Ldc_I4_1);      // 1
+            il.Emit(OpCodes.Ret);           // ----
+
+            TypeBuilder.DefineMethodOverride(tryGetIndex, typeof(DynamicObject).GetMethod("TryGetIndex"));
 
             PocoType = TypeBuilder.CreateType();
         }

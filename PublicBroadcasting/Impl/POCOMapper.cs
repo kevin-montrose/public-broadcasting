@@ -80,7 +80,6 @@ namespace PublicBroadcasting.Impl
             var valMapper = typeof(POCOMapper<,>).MakeGenericType(fromValType, toValType).GetMethod("Get");
             var valMap = (POCOMapper)valMapper.Invoke(null, new object[0]);
 
-            //var newDictType = typeof(Dictionary<,>).MakeGenericType(toKeyType, toValType);
             var newDictType = typeof(To);
 
             if (newDictType.IsInterface)
