@@ -806,6 +806,46 @@ namespace PublicBroadcasting.Impl
                 }
             }
 
+            if (fIsNullable && tIsNullable)
+            {
+                var fNonNull = Nullable.GetUnderlyingType(tFrom);
+                var tNonNull = Nullable.GetUnderlyingType(tTo);
+
+                var nonNullMapper = typeof(POCOMapper<,>).MakeGenericType(fNonNull, tNonNull);
+                var nonNullFunc = (POCOMapper)nonNullMapper.GetMethod("Get").Invoke(null, new object[0]);
+
+                if (!tNonNull.IsEnum)
+                {
+                    return
+                        new POCOMapper(
+                            from =>
+                            {
+                                if (from == null) return null;
+
+                                var ret = nonNullFunc.GetMapper()(from);
+
+                                return ret;
+                            }
+                        );
+                }
+                else
+                {
+                    return
+                        new POCOMapper(
+                            from =>
+                            {
+                                if (from == null) return null;
+
+                                var ret = nonNullFunc.GetMapper()(from);
+
+                                var asTo = (To)ret;
+
+                                return asTo;
+                            }
+                        );
+                }
+            }
+
             if (fIsNullable && !tIsNullable)
             {
                 var fNonNull = Nullable.GetUnderlyingType(tFrom);

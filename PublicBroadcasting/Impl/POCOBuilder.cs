@@ -79,18 +79,37 @@ namespace PublicBroadcasting.Impl
                     new POCOBuilder(
                         x =>
                         {
-                            if (x == null) return -1;
-
-                            var ix = vals.IndexOf(x.ToString());
-
-                            return ix;
+                            return x != null ? x.ToString() : null;
                         }
                     );
             }
 
             if (desc is NullableTypeDescription)
             {
-                return new POCOBuilder(x => x);
+                var inner = ((NullableTypeDescription)desc).InnerType;
+                var innerType = inner.GetPocoType();
+
+                var innerDescType = typeof(Describer).GetGenericTypeDefinition().MakeGenericType(innerType);
+
+                var mapper = (POCOBuilder)typeof(POCOBuilder<,>).MakeGenericType(innerType, innerDescType).GetMethod("GetMapper").Invoke(null, new object[0]);
+
+                return new POCOBuilder(
+                    from =>
+                    {
+                        if (from == null) return null;
+
+                        var asFrom = (From)from;
+
+                        var mapped = mapper.GetMapper()(asFrom);
+
+                        if (innerType.IsEnum)
+                        {
+                            mapped = ParseEnumNonGeneric(mapped, innerType);
+                        }
+                        
+                        return mapped;
+                    }
+                );
             }
 
             if (desc is SimpleTypeDescription)
@@ -127,6 +146,24 @@ namespace PublicBroadcasting.Impl
             return ret.GetMapper();
         }
 
+        private static object ParseEnumNonGeneric(object o, Type @enum)
+        {
+            var asStr = (string)o;
+
+            var ret = Enum.Parse(@enum, asStr);
+
+            return ret;
+        }
+
+        private static T ParseEnum<T>(object o) where T : struct
+        {
+            var asStr = (string)o;
+
+            var ret = Enum.Parse(typeof(T), asStr);
+
+            return (T)ret;
+        }
+
         private static Func<From, Dictionary<string, POCOBuilder>, object> BuildRefRefTypeMapper(Dictionary<string, POCOBuilder> members, Type tTo)
         {
             var tFrom = typeof(From);
@@ -135,7 +172,7 @@ namespace PublicBroadcasting.Impl
             if (cons == null) throw new Exception("No parameterless constructor found for " + tTo.FullName);
 
             var lookup = typeof(POCOBuilder<From, Describer>).GetMethod("Lookup", BindingFlags.Static | BindingFlags.NonPublic);
-
+            var parseEnum = typeof(POCOBuilder<From, Describer>).GetMethod("ParseEnum", BindingFlags.Static | BindingFlags.NonPublic);
             var invoke = typeof(Func<object, object>).GetMethod("Invoke");
 
             var dynMethod = new DynamicMethod("POCOBuilder" + Guid.NewGuid().ToString().Replace("-", ""), typeof(object), new[] { tFrom, typeof(Dictionary<string, POCOBuilder>) }, restrictedSkipVisibility: true);
@@ -186,7 +223,15 @@ namespace PublicBroadcasting.Impl
 
                 if (toMember.PropertyType.IsValueType)
                 {
-                    il.Emit(OpCodes.Unbox_Any, toMember.PropertyType);// [toVal] [ret]
+                    if (!toMember.PropertyType.IsEnum)
+                    {
+                        il.Emit(OpCodes.Unbox_Any, toMember.PropertyType);// [toVal] [ret]
+                    }
+                    else
+                    {
+                        var parse = parseEnum.MakeGenericMethod(toMember.PropertyType);
+                        il.Emit(OpCodes.Call, parse);                       // [toVal as object] [ret]
+                    }
                 }
                 else
                 {
@@ -212,7 +257,7 @@ namespace PublicBroadcasting.Impl
             if (cons == null) throw new Exception("No parameterless constructor found for " + tTo.FullName);
 
             var lookup = typeof(POCOBuilder<From, Describer>).GetMethod("Lookup", BindingFlags.Static | BindingFlags.NonPublic);
-
+            var parseEnum = typeof(POCOBuilder<From, Describer>).GetMethod("ParseEnum", BindingFlags.Static | BindingFlags.NonPublic);
             var invoke = typeof(Func<object, object>).GetMethod("Invoke");
 
             var dynMethod = new DynamicMethod("POCOBuilder" + Guid.NewGuid().ToString().Replace("-", ""), typeof(object), new[] { tFrom, typeof(Dictionary<string, POCOBuilder>) }, restrictedSkipVisibility: true);
@@ -263,7 +308,15 @@ namespace PublicBroadcasting.Impl
 
                 if (toMember.PropertyType.IsValueType)
                 {
-                    il.Emit(OpCodes.Unbox_Any, toMember.PropertyType);// [toVal] [ret]
+                    if (!toMember.PropertyType.IsEnum)
+                    {
+                        il.Emit(OpCodes.Unbox_Any, toMember.PropertyType);// [toVal] [ret]
+                    }
+                    else
+                    {
+                        var parse = parseEnum.MakeGenericMethod(toMember.PropertyType);
+                        il.Emit(OpCodes.Call, parse);                       // [toVal as object] [ret]
+                    }
                 }
                 else
                 {
@@ -333,64 +386,6 @@ namespace PublicBroadcasting.Impl
                         return func(asFrom, members);
                     }
                 );
-
-            /*var from = TypeAccessor.Create(t, true);
-            var to = TypeAccessor.Create(pocoType, true);
-
-            var newPoco = pocoType.GetConstructor(EmptyTypes);
-
-            Dictionary<string, POCOBuilder> propMaps = null;
-
-            propMaps =
-                asClass.Members.ToDictionary(
-                    kv => kv.Key,
-                    kv =>
-                    {
-                        var member = t.GetMember(kv.Key, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)[0];
-
-                        var type = member is FieldInfo ? (member as FieldInfo).FieldType : (member as PropertyInfo).PropertyType;
-
-                        var descType = typeof(Describer).GetGenericTypeDefinition().MakeGenericType(type);
-
-                        var self = typeof(POCOBuilder<,>).MakeGenericType(type, descType).GetMethod("GetMapper");
-
-                        return (POCOBuilder)self.Invoke(null, new object[0]);
-                    }
-                );
-
-            Func<object, object> mapFuncRet =
-                x =>
-                {
-                    if (x == null) return null;
-
-                    var ret = newPoco.Invoke(EmptyObjects);
-
-                    foreach (var member in asClass.Members)
-                    {
-                        var getter = t.GetMember(member.Key, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).Where(f => f is FieldInfo || f is PropertyInfo).Single();
-
-                        object fromVal;
-
-                        if (getter is FieldInfo)
-                        {
-                            fromVal = ((FieldInfo)getter).GetValue(x);
-                        }
-                        else
-                        {
-                            fromVal = ((PropertyInfo)getter).GetValue(x);
-                        }
-
-                        if (fromVal == null) continue;
-
-                        var toVal = propMaps[member.Key].GetMapper()(fromVal);
-
-                        to[ret, member.Key] = toVal;
-                    }
-
-                    return ret;
-                };
-
-            return new POCOBuilder(mapFuncRet);*/
         }
 
         private static POCOBuilder GetListMapper()

@@ -11,6 +11,7 @@ namespace PublicBroadcasting.Impl
         public static void Flatten(TypeDescription root, Func<int> nextId)
         {
             var seenClasses = new HashSet<ClassTypeDescription>();
+            var finishedClasses = new HashSet<ClassTypeDescription>();
             var seenEnums = new HashSet<EnumTypeDescription>();
 
             var toCheck = new Stack<TypeDescription>();
@@ -31,11 +32,20 @@ namespace PublicBroadcasting.Impl
                         var id = ((ClassTypeDescription)asNullable.InnerType).Id != 0 ? ((ClassTypeDescription)asNullable.InnerType).Id : nextId();
                         ((ClassTypeDescription)asNullable.InnerType).Id = id;
                         asNullable.InnerType = new BackReferenceTypeDescription(id);
+
+                        continue;
                     }
-                    else
+
+                    if (seenEnums.Contains(asNullable.InnerType))
                     {
-                        toCheck.Push(asNullable.InnerType);
+                        var id = ((EnumTypeDescription)asNullable.InnerType).Id != 0 ? ((EnumTypeDescription)asNullable.InnerType).Id : nextId();
+                        ((EnumTypeDescription)asNullable.InnerType).Id = id;
+                        asNullable.InnerType = new BackReferenceTypeDescription(id);
+
+                        continue;
                     }
+
+                    toCheck.Push(asNullable.InnerType);
 
                     continue;
                 }
@@ -88,7 +98,7 @@ namespace PublicBroadcasting.Impl
                 var asClass = top as ClassTypeDescription;
                 if (asClass != null)
                 {
-                    if (seenClasses.Contains(asClass))
+                    if (finishedClasses.Contains(asClass))
                     {
                         continue;
                     }
@@ -117,7 +127,19 @@ namespace PublicBroadcasting.Impl
                             continue;
                         }
 
+                        if(val is ClassTypeDescription)
+                        {
+                            seenClasses.Add((ClassTypeDescription)val);
+                        }
+
+                        if (val is EnumTypeDescription)
+                        {
+                            seenEnums.Add((EnumTypeDescription)val);
+                        }
+
                         toCheck.Push(val);
+
+                        finishedClasses.Add(asClass);
                     }
 
                     continue;

@@ -32,6 +32,7 @@ namespace PublicBroadcasting.Impl
                 var top = stack.Pop();
 
                 if (top is SimpleTypeDescription) continue;
+                if (top is BackReferenceTypeDescription) continue;
 
                 if (top is NullableTypeDescription)
                 {

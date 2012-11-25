@@ -51,26 +51,11 @@ namespace PublicBroadcasting.Impl
 
             if (t == typeof(Uri)) return SimpleTypeDescription.Uri;
 
-            if (t.IsEnum)
-            {
-                var single = typeof(EnumTypeDescription<>).MakeGenericType(t).GetField("Singleton");
-
-                return (EnumTypeDescription)single.GetValue(null);
-            }
-
             if (Nullable.GetUnderlyingType(t) != null)
             {
                 var nullT = t;
 
                 var valType = nullT.GetGenericArguments()[0];
-
-                // We're effectively hoisting this into a string, and a nullable string is illegal so destroy the null-ing
-                if (valType.IsEnum)
-                {
-                    var single = typeof(EnumTypeDescription<>).MakeGenericType(valType).GetField("Singleton");
-
-                    return (EnumTypeDescription)single.GetValue(null);
-                }
 
                 var nullPromiseType = typeof(PromisedTypeDescription<,>).MakeGenericType(nullT, describerType.MakeGenericType(nullT));
                 var nullPromiseSingle = nullPromiseType.GetField("Singleton");
@@ -84,6 +69,13 @@ namespace PublicBroadcasting.Impl
                 nullPromise.Fulfil(nullRet);
 
                 return nullRet;
+            }
+
+            if (t.IsEnum)
+            {
+                var single = typeof(EnumTypeDescription<>).MakeGenericType(t).GetField("Singleton");
+
+                return (EnumTypeDescription)single.GetValue(null);
             }
 
             if ((t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IDictionary<,>)) ||
@@ -141,33 +133,6 @@ namespace PublicBroadcasting.Impl
                 listPromise.Fulfil(listRet);
 
                 return listRet;
-            }
-
-            var get = (typeof(TypeReflectionCache<>).MakeGenericType(t)).GetMethod("Get");
-
-            var cutdown = (CutdownType)get.Invoke(null, new object[] { membersMask, visibilityMask });
-
-            var classMembers = new Dictionary<string, TypeDescription>(cutdown.Properties.Count + cutdown.Fields.Count);
-
-            foreach (var prop in cutdown.Properties)
-            {
-                var propName = prop.Name;
-
-                var propType = prop.PropertyType;
-
-                var propDesc = describerType.MakeGenericType(propType).GetMethod("Get");
-
-                classMembers[propName] = (TypeDescription)propDesc.Invoke(null, new object[0]);
-            }
-
-            foreach (var field in cutdown.Fields)
-            {
-                var fieldName = field.Name;
-                var fieldType = field.FieldType;
-
-                var fieldDesc = describerType.MakeGenericType(fieldType).GetMethod("Get");
-
-                classMembers[fieldName] = (TypeDescription)fieldDesc.Invoke(null, new object[0]);
             }
 
             var retType = typeof(ClassTypeDescription<,>).MakeGenericType(t, describerType.MakeGenericType(t));

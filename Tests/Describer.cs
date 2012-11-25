@@ -100,5 +100,49 @@ namespace Tests
             Assert.IsNotNull(backRef);
             Assert.AreEqual(asClass.Id, backRef.Id);
         }
+
+        enum E
+        {
+            A,
+            B
+        }
+
+        class MultiEnum
+        {
+            public class Sub
+            {
+                public MultiEnum Outer;
+                public E? Buzz;
+            }
+
+            public E Foo;
+            public E Bar;
+            public Sub Fizz;
+        }
+
+        [TestMethod]
+        public void MultiUseEnums()
+        {
+            var c = AllPublicDescriber<MultiEnum>.GetForUse(true);
+            Assert.AreEqual(typeof(ClassTypeDescription), c.GetType());
+
+            var asClass = (ClassTypeDescription)c;
+            Assert.AreEqual(3, asClass.Members.Count);
+            Assert.AreEqual(typeof(EnumTypeDescription), asClass.Members["Foo"].GetType());
+            Assert.AreEqual(typeof(BackReferenceTypeDescription), asClass.Members["Bar"].GetType());
+            Assert.AreEqual(typeof(ClassTypeDescription), asClass.Members["Fizz"].GetType());
+
+            var sub = (ClassTypeDescription)asClass.Members["Fizz"];
+            var bar = (BackReferenceTypeDescription)asClass.Members["Bar"];
+
+            Assert.AreEqual(2, sub.Members.Count);
+            Assert.AreEqual(typeof(BackReferenceTypeDescription), sub.Members["Outer"].GetType());
+            Assert.AreEqual(typeof(NullableTypeDescription), sub.Members["Buzz"].GetType());
+
+            var buzz = (NullableTypeDescription)sub.Members["Buzz"];
+            Assert.AreEqual(typeof(BackReferenceTypeDescription), buzz.InnerType.GetType());
+
+            var buzzInner = (BackReferenceTypeDescription)buzz.InnerType;
+        }
     }
 }

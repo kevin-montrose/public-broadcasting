@@ -98,6 +98,11 @@ namespace PublicBroadcasting.Impl
 
         internal override Type GetPocoType(TypeDescription existingDescription = null)
         {
+            if (EnumType == null)
+            {
+                Seal(existingDescription);
+            }
+
             return EnumType;
         }
 
