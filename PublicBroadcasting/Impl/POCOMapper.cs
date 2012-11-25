@@ -752,6 +752,42 @@ namespace PublicBroadcasting.Impl
                 return new POCOMapper(x => (To)x);
             }
 
+            if (tFrom == typeof(string))
+            {
+                if (tTo.IsEnum)
+                {
+                    return
+                        new POCOMapper(
+                            x =>
+                            {
+                                if (x == null)
+                                {
+                                    return Activator.CreateInstance(tTo);
+                                }
+
+                                return Enum.Parse(tTo, x.ToString());
+                            }
+                        );
+                }
+
+                if (tIsNullable)
+                {
+                    var tNonNull = Nullable.GetUnderlyingType(tTo);
+                    if (tNonNull.IsEnum)
+                    {
+                        return
+                            new POCOMapper(
+                                x =>
+                                {
+                                    if (x == null) return null;
+
+                                    return Enum.Parse(tNonNull, x.ToString());
+                                }
+                            );
+                    }
+                }
+            }
+
             if (tFrom.IsEnum)
             {
                 if (tTo == typeof(string))

@@ -70,35 +70,62 @@ namespace Tests
         }
 
         [TestMethod]
+        public void EnumStrings()
+        {
+            var bytes = Serializer.Serialize(new List<EnumStr> { new EnumStr { A = "Foo" }, new EnumStr { B = "Bar" }, new EnumStr { A = "Bar", B = "Default" } });
+            var wel = Deserializer.Deserialize<List<WithEnum>>(bytes);
+            var cross = Deserializer.Deserialize<List<CrossEnum>>(bytes);
+
+            Assert.AreEqual(3, wel.Count);
+
+            Assert.AreEqual(En.Foo, wel[0].A);
+            Assert.IsNull(wel[0].B);
+
+            Assert.AreEqual(En.Default, wel[1].A);
+            Assert.AreEqual(En.Bar, wel[1].B);
+
+            Assert.AreEqual(En.Bar, wel[2].A);
+            Assert.AreEqual(En.Default, wel[2].B);
+
+            Assert.AreEqual(3, cross.Count);
+            Assert.AreEqual(En2.Foo, cross[0].A);
+            Assert.AreEqual(En2.Foo, cross[0].B);   // different defaults in En & En2, so null maps to different value
+
+            Assert.AreEqual(En2.Foo, cross[1].A);
+            Assert.AreEqual(En2.Bar, cross[1].B);
+
+            Assert.AreEqual(En2.Bar, cross[2].A);
+            Assert.AreEqual(En2.Default, cross[2].B);
+        }
+
+        [TestMethod]
         public void Enums()
         {
             var bytes = Serializer.Serialize(new List<WithEnum> { new WithEnum { A = En.Foo }, new WithEnum { B = En.Bar }, new WithEnum { A = En.Bar, B = En.Default } });
-            var wel1 = Deserializer.Deserialize<List<WithEnum>>(bytes);
-            var cross1 = Deserializer.Deserialize<List<CrossEnum>>(bytes);
+            var wel = Deserializer.Deserialize<List<WithEnum>>(bytes);
+            var cross = Deserializer.Deserialize<List<CrossEnum>>(bytes);
             var str = Deserializer.Deserialize<List<EnumStr>>(bytes);
-            var wel2 = Deserializer.Deserialize<List<WithEnum>>(Serializer.Serialize(str));
-            //var cross2 = Deserializer.Deserialize<List<CrossEnum>>(Serializer.Serialize(str));
 
-            Assert.AreEqual(3, wel1.Count);
+            Assert.AreEqual(3, wel.Count);
 
-            Assert.AreEqual(En.Foo, wel1[0].A);
-            Assert.IsNull(wel1[0].B);
+            Assert.AreEqual(En.Foo, wel[0].A);
+            Assert.IsNull(wel[0].B);
 
-            Assert.AreEqual(En.Default, wel1[1].A);
-            Assert.AreEqual(En.Bar, wel1[1].B);
+            Assert.AreEqual(En.Default, wel[1].A);
+            Assert.AreEqual(En.Bar, wel[1].B);
 
-            Assert.AreEqual(En.Bar, wel1[2].A);
-            Assert.AreEqual(En.Default, wel1[2].B);
+            Assert.AreEqual(En.Bar, wel[2].A);
+            Assert.AreEqual(En.Default, wel[2].B);
 
-            Assert.AreEqual(3, cross1.Count);
-            Assert.AreEqual(En2.Foo, cross1[0].A);
-            Assert.AreEqual(En2.Foo, cross1[0].B);   // different defaults in En & En2, so null maps to different value
+            Assert.AreEqual(3, cross.Count);
+            Assert.AreEqual(En2.Foo, cross[0].A);
+            Assert.AreEqual(En2.Foo, cross[0].B);   // different defaults in En & En2, so null maps to different value
 
-            Assert.AreEqual(En2.Default, cross1[1].A);
-            Assert.AreEqual(En2.Bar, cross1[1].B);
+            Assert.AreEqual(En2.Default, cross[1].A);
+            Assert.AreEqual(En2.Bar, cross[1].B);
 
-            Assert.AreEqual(En2.Bar, cross1[2].A);
-            Assert.AreEqual(En2.Default, cross1[2].B);
+            Assert.AreEqual(En2.Bar, cross[2].A);
+            Assert.AreEqual(En2.Default, cross[2].B);
 
             Assert.AreEqual(3, str.Count);
             Assert.AreEqual("Foo", str[0].A);
@@ -109,17 +136,6 @@ namespace Tests
 
             Assert.AreEqual("Bar", str[2].A);
             Assert.AreEqual("Default", str[2].B);
-
-            Assert.AreEqual(3, wel2.Count);
-
-            Assert.AreEqual(En.Foo, wel2[0].A);
-            Assert.IsNull(wel2[0].B);
-
-            Assert.AreEqual(En.Default, wel2[1].A);
-            Assert.AreEqual(En.Bar, wel2[1].B);
-
-            Assert.AreEqual(En.Bar, wel2[2].A);
-            Assert.AreEqual(En.Default, wel2[2].B);
         }
 
         [TestMethod]
