@@ -43,10 +43,24 @@ namespace Tests
             Bar = 2
         }
 
+        enum En2
+        {
+            Foo = 0,
+            Default,
+            Bar,
+            Extra
+        }
+
         class WithEnum
         {
             public En A { get; set; }
             public En? B { get; set; }
+        }
+
+        class CrossEnum
+        {
+            public En2 A { get; set; }
+            public En2 B { get; set; }
         }
 
         [TestMethod]
@@ -54,6 +68,7 @@ namespace Tests
         {
             var bytes = Serializer.Serialize(new List<WithEnum> { new WithEnum { A = En.Foo }, new WithEnum { B = En.Bar }, new WithEnum { A = En.Bar, B = En.Default } });
             var wel = Deserializer.Deserialize<List<WithEnum>>(bytes);
+            var cross = Deserializer.Deserialize<List<CrossEnum>>(bytes);
 
             Assert.AreEqual(3, wel.Count);
             
@@ -65,6 +80,16 @@ namespace Tests
 
             Assert.AreEqual(En.Bar, wel[2].A);
             Assert.AreEqual(En.Default, wel[2].B);
+
+            Assert.AreEqual(3, cross.Count);
+            Assert.AreEqual(En2.Foo, cross[0].A);
+            Assert.AreEqual(En2.Foo, cross[0].B);   // different defaults in En & En2, so null maps to different value
+
+            Assert.AreEqual(En2.Default, cross[1].A);
+            Assert.AreEqual(En2.Bar, cross[1].B);
+
+            Assert.AreEqual(En2.Bar, cross[2].A);
+            Assert.AreEqual(En2.Default, cross[2].B);
         }
 
         [TestMethod]

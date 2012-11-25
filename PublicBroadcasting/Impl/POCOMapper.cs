@@ -857,9 +857,12 @@ namespace PublicBroadcasting.Impl
                     new POCOMapper(
                         from =>
                         {
-                            var @default = from != null ? from : Activator.CreateInstance(fNonNull);
+                            if (from == null)
+                            {
+                                return Activator.CreateInstance(tTo);
+                            }
 
-                            return nullFunc.GetMapper()(@default);
+                            return nullFunc.GetMapper()(from);
                         }
                     );
             }
