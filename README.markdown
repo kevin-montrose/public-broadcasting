@@ -105,7 +105,7 @@ the default value of target non-nullable enumerations.
 
 ###Dynamism
 
-While types are necessary when serializing (though they will usually be inferred), they can be emitted when deserializing which results in a 
+While types are necessary when serializing (though they will usually be inferred), they can be omitted when deserializing which results in a 
 `dynamic` value being returned.
 
 In addition to the expected "properties" being exposed on classes, a string indexer is also provided.
