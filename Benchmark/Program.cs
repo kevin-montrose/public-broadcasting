@@ -120,11 +120,11 @@ namespace Benchmark
                 new FieldsPoco
                 {
                     A = rand.Next<int>(),
-                    B = rand.Next<uint>(),
+                    //B = rand.Next<uint>(),    // Json.Net doesn't deal with unsigned very well
                     C = rand.Next<long>(),
-                    D = rand.Next<ulong>(),
+                    //D = rand.Next<ulong>(),   // Json.Net doesn't deal with unsigned very well
                     E = rand.Next<short>(),
-                    F = rand.Next<ushort>(),
+                    //F = rand.Next<ushort>(),  // Json.Net doesn't deal with unsigned very well
                     G = rand.Next<byte>(),
                     H = rand.Next<sbyte>(),
                     I = rand.Next<char>(),
@@ -134,6 +134,25 @@ namespace Benchmark
                     M = rand.NextDictionary<short, byte>(10),
                     N = rand.Next() % 2 == 0 ? null : BuildFieldsPoco(seed + 1)
                 };
+        }
+
+        private static void Json<T>(T obj)
+        {
+            T copy;
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(obj);
+            copy = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(json);
+
+            if (!copy.Equals(obj)) throw new Exception();
+        }
+
+        private static T JsonD<T>(string json)
+        {
+            return Newtonsoft.Json.JsonConvert.DeserializeObject<T>(json);
+        }
+
+        private static string JsonS<T>(T obj)
+        {
+            return Newtonsoft.Json.JsonConvert.SerializeObject(obj);
         }
 
         private static void ProtoBufNet<T>(T obj)
@@ -247,12 +266,27 @@ namespace Benchmark
             var mpSerializer = MsgPack.Serialization.MessagePackSerializer.Create<FieldsPoco>();
 
             // warmup
-            ProtoBufNet(fields);
-            PB(fields);
-            MessagePack(fields, mpSerializer);
+            for (var i = 0; i < 100; i++)
+            {
+                Json(fields);
+                ProtoBufNet(fields);
+                PB(fields);
+                MessagePack(fields, mpSerializer);
+            }
 
             Console.WriteLine("Both");
             Console.WriteLine("====");
+
+            GC.Collect();
+            GC.WaitForFullGCComplete(-1);
+
+            using (new Timer("Json"))
+            {
+                for (var i = 0; i < 10000; i++)
+                {
+                    Json(fields);
+                }
+            }
 
             GC.Collect();
             GC.WaitForFullGCComplete(-1);
@@ -293,6 +327,17 @@ namespace Benchmark
             GC.Collect();
             GC.WaitForFullGCComplete(-1);
 
+            using (new Timer("Json"))
+            {
+                for (var i = 0; i < 10000; i++)
+                {
+                    JsonS(fields);
+                }
+            }
+
+            GC.Collect();
+            GC.WaitForFullGCComplete(-1);
+
             using (new Timer("ProtoBuf"))
             {
                 for (var i = 0; i < 10000; i++)
@@ -327,10 +372,23 @@ namespace Benchmark
             Console.WriteLine("===============");
 
             byte[] protoBs, msgPackBs, PBBs;
+            string jsonBs;
 
+            jsonBs = JsonS(fields);
             protoBs = ProtoBufNetS(fields);
             msgPackBs = MessagePackS(fields, mpSerializer);
             PBBs = PBS(fields);
+
+            GC.Collect();
+            GC.WaitForFullGCComplete(-1);
+
+            using (new Timer("Json"))
+            {
+                for (var i = 0; i < 10000; i++)
+                {
+                    JsonD<FieldsPoco>(jsonBs);
+                }
+            }
 
             GC.Collect();
             GC.WaitForFullGCComplete(-1);
@@ -379,6 +437,7 @@ namespace Benchmark
             Console.WriteLine();
             Console.WriteLine("Size");
             Console.WriteLine("====");
+            Console.WriteLine("Json: " + Encoding.UTF8.GetBytes(jsonBs).Length + " bytes");
             Console.WriteLine("ProtoBuf: " + protoBs.Length + " bytes");
             Console.WriteLine("MessagePack: " + msgPackBs.Length + " bytes");
             Console.WriteLine("PublicBroadcasting: " + PBBs.Length + " bytes");
