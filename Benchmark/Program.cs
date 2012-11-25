@@ -200,6 +200,14 @@ namespace Benchmark
             }
         }
 
+        private static dynamic PBDD(byte[] bytes)
+        {
+            using (var mem = new MemoryStream(bytes))
+            {
+                return PublicBroadcasting.Deserializer.Deserialize(mem);
+            }
+        }
+
         private static void MessagePack<T>(T obj, MsgPack.Serialization.MessagePackSerializer<T> serializer)
         {
             T copy;
@@ -316,7 +324,7 @@ namespace Benchmark
             }
 
             Console.WriteLine("Deserialization");
-            Console.WriteLine("=============");
+            Console.WriteLine("===============");
 
             byte[] protoBs, msgPackBs, PBBs;
 
@@ -349,7 +357,7 @@ namespace Benchmark
             GC.Collect();
             GC.WaitForFullGCComplete(-1);
 
-            using (new Timer("PublicBroadcasting"))
+            using (new Timer("PublicBroadcastingStatic"))
             {
                 for (var i = 0; i < 10000; i++)
                 {
@@ -357,7 +365,17 @@ namespace Benchmark
                 }
             }
 
+            using (new Timer("PublicBroadcastingDynamic"))
+            {
+                for (var i = 0; i < 10000; i++)
+                {
+                    PBDD(PBBs);
+                }
+            }
+
             Console.WriteLine();
+            Console.WriteLine("Size");
+            Console.WriteLine("====");
             Console.WriteLine("ProtoBuf: " + protoBs.Length + " bytes");
             Console.WriteLine("MessagePack: " + msgPackBs.Length + " bytes");
             Console.WriteLine("PublicBroadcasting: " + PBBs.Length + " bytes");
