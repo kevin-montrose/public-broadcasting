@@ -2,11 +2,11 @@
 
 A self-describing wrapper around [protobuf-net](http://code.google.com/p/protobuf-net/).
 
-#Work In Progress, use at own risk!
+#Work In Progress, Use At Own Risk!
 
-Public Broadcasting sacrifices *some* of the compactness of [Protocol Buffers](http://en.wikipedia.org/wiki/Protocol_Buffers) and some
+Public Broadcasting sacrifices *some* of the compactness of [Protocol Buffers](http://en.wikipedia.org/wiki/Protocol_Buffers) and *some*
 of the performance of [protobuf-net](http://code.google.com/p/protobuf-net/) to avoid the hassle of .proto files or manually adding
-attributes to your types.  Addition and removal of members are handled gracefully, avoiding versioning headaches.
+attributes to your types.  Addition and removal of members is handled gracefully, avoiding versioning headaches.
 
 ###Structurally Typed
 
@@ -56,13 +56,13 @@ Like protobuf-net, Public Broadcasting is aware of the following types and seria
   - TimeSpan
   - GUID
   - URI
-  - IList<T>
-  - IDictionary<TKey, TValue>
+  - IList&lt;T&gt;
+  - IDictionary&lt;TKey, TValue&gt;
 
 ###Collections
 
-Public Broadcasting can serialize any collections which implement IList<T> or IDictionary<TKey, TValue>, including one-dimensional arrays.
-No type information beyond "is a list" or "is a dictionary" is encoded, meaning that any implementation of IList<T> or IDictionary<TKey, TValue>
+Public Broadcasting can serialize any collections which implement IList&lt;T&gt; or IDictionary&lt;TKey, TValue&gt;, including one-dimensional arrays.
+No type information beyond "is a list" or "is a dictionary" is encoded, meaning that any implementation of IList&lt;T&gt; or IDictionary&lt;TKey, TValue&gt;
 is a legal deserialization target.
 
 In other words, the following is legal:
@@ -76,25 +76,25 @@ var iList = Serializer.Deserialize<IList<string>>(lBytes);
 var myList = Serializer.Deserialize<MyListImpl<string>>(lBytes);
 ```
 
-The only constraint on implementations of IList<T> and IDictionary<TKey, TValue> is that they must have a zero parameter constructor.
+The only constraint on implementations of IList&lt;T&gt; and IDictionary&lt;TKey, TValue&gt; is that they must have a zero parameter constructor.
 
 ###Type Conversions
 
 All widening conversions between numeric types are legal.  This means that conversions such as `byte -> int` during deserialization are legal,
 but `sbyte -> uint` and `uint -> int` are not.
 
-Public Broadcasting will ignores the distinction between user-defined ValueTypes and ReferenceTypes, conversion between any combination of them
+Public Broadcasting will ignore the distinction between user-defined ValueTypes and ReferenceTypes, conversion between any combination of them
 is legal.
 
 ###Enumerations
 
-Enumerations are stored as their string equivalents, underlying types (`int`, `byte`, etc.) and values are discarded during serialization.
+Enumerations are encoded as their string equivalents, underlying types (`int`, `byte`, etc.) and values are discarded during serialization.
 Both strings and other enumeration types are legal targets for deserialization, and while a different enumeration type **must** contain the
 actual value being deserialized it need not include all possible values.
 
 ###Nullable Types
 
-Nullable types freely convert to their non-nullable equivalent, null being replaced with the default value.
+Nullable types freely convert to their non-nullable equivalents, null being replaced with default values.
 
 Therefore:  
 ```
@@ -138,3 +138,5 @@ At time of writing, Public Broadcasting is typically within an order of magnitud
 than static deserialization, due to skipping a fair number of allocations and type mappings.
 
 As with extreme compactness, a need for extreme speed would be best served by directly using protobuf-net.
+
+#Reminder, Work In Progress!  Use At Your Own Risk, Because It Could All Break Tomorrow!
