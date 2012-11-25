@@ -365,6 +365,9 @@ namespace Benchmark
                 }
             }
 
+            GC.Collect();
+            GC.WaitForFullGCComplete(-1);
+
             using (new Timer("PublicBroadcastingDynamic"))
             {
                 for (var i = 0; i < 10000; i++)
