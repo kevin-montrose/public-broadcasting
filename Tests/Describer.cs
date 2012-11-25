@@ -106,7 +106,7 @@ namespace Tests
             A,
             B
         }
-
+        #pragma warning disable 0649
         class MultiEnum
         {
             public class Sub
@@ -119,6 +119,7 @@ namespace Tests
             public E Bar;
             public Sub Fizz;
         }
+        #pragma warning restore 0649
 
         [TestMethod]
         public void MultiUseEnums()
