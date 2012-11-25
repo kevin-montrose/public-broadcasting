@@ -63,12 +63,19 @@ namespace Tests
             public En2 B { get; set; }
         }
 
+        class EnumStr
+        {
+            public string A { get; set; }
+            public string B { get; set; }
+        }
+
         [TestMethod]
         public void Enums()
         {
             var bytes = Serializer.Serialize(new List<WithEnum> { new WithEnum { A = En.Foo }, new WithEnum { B = En.Bar }, new WithEnum { A = En.Bar, B = En.Default } });
             var wel = Deserializer.Deserialize<List<WithEnum>>(bytes);
             var cross = Deserializer.Deserialize<List<CrossEnum>>(bytes);
+            var str = Deserializer.Deserialize<List<EnumStr>>(bytes);
 
             Assert.AreEqual(3, wel.Count);
             
@@ -90,6 +97,16 @@ namespace Tests
 
             Assert.AreEqual(En2.Bar, cross[2].A);
             Assert.AreEqual(En2.Default, cross[2].B);
+
+            Assert.AreEqual(3, str.Count);
+            Assert.AreEqual("Foo", str[0].A);
+            Assert.IsNull(str[0].B);
+
+            Assert.AreEqual("Default", str[1].A);
+            Assert.AreEqual("Bar", str[1].B);
+
+            Assert.AreEqual("Bar", str[2].A);
+            Assert.AreEqual("Default", str[2].B);
         }
 
         [TestMethod]

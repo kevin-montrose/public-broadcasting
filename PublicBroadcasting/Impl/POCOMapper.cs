@@ -853,13 +853,29 @@ namespace PublicBroadcasting.Impl
                 var nullMapper = typeof(POCOMapper<,>).MakeGenericType(fNonNull, tTo);
                 var nullFunc = (POCOMapper)nullMapper.GetMethod("Get").Invoke(null, new object[0]);
 
+                if (tTo.IsValueType)
+                {
+                    return
+                        new POCOMapper(
+                            from =>
+                            {
+                                if (from == null)
+                                {
+                                    return Activator.CreateInstance(tTo);
+                                }
+
+                                return nullFunc.GetMapper()(from);
+                            }
+                        );
+                }
+
                 return
                     new POCOMapper(
                         from =>
                         {
                             if (from == null)
                             {
-                                return Activator.CreateInstance(tTo);
+                                return null;
                             }
 
                             return nullFunc.GetMapper()(from);
