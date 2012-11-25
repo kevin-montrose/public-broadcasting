@@ -15,7 +15,7 @@ namespace Tests
         public void Dictionaries()
         {
             var bytes = Serializer.Serialize(new Dictionary<string, int>() { { "Hello", 1 }, { "World", 2 } });
-            dynamic dynDict = Deserializer.Deserialize(bytes);
+            dynamic dynDict = Serializer.Deserialize(bytes);
 
             Assert.AreEqual(2, dynDict.Count);
             Assert.AreEqual(1, dynDict["Hello"]);
@@ -26,7 +26,7 @@ namespace Tests
         public void Anon()
         {
             var bytes = Serializer.Serialize(new { A = "Foo", B = "Bar", C = "Bazz", D = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 } });
-            dynamic dynAnon = Deserializer.Deserialize(bytes);
+            dynamic dynAnon = Serializer.Deserialize(bytes);
 
             Assert.AreEqual("Foo", dynAnon.A);
             Assert.AreEqual("Bar", dynAnon.B);
@@ -42,7 +42,7 @@ namespace Tests
         public void Indexer()
         {
             var bytes = Serializer.Serialize(new { A = "Foo", B = 123, C = (int?)2, C2 = (int?)null, D = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 } });
-            var dyn = Deserializer.Deserialize(bytes);
+            var dyn = Serializer.Deserialize(bytes);
 
             Assert.AreEqual("Foo", dyn["A"]);
             Assert.AreEqual(123, dyn["B"]);

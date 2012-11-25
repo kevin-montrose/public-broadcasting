@@ -73,8 +73,8 @@ namespace Tests
         public void EnumStrings()
         {
             var bytes = Serializer.Serialize(new List<EnumStr> { new EnumStr { A = "Foo" }, new EnumStr { B = "Bar" }, new EnumStr { A = "Bar", B = "Default" } });
-            var wel = Deserializer.Deserialize<List<WithEnum>>(bytes);
-            var cross = Deserializer.Deserialize<List<CrossEnum>>(bytes);
+            var wel = Serializer.Deserialize<List<WithEnum>>(bytes);
+            var cross = Serializer.Deserialize<List<CrossEnum>>(bytes);
 
             Assert.AreEqual(3, wel.Count);
 
@@ -102,9 +102,9 @@ namespace Tests
         public void Enums()
         {
             var bytes = Serializer.Serialize(new List<WithEnum> { new WithEnum { A = En.Foo }, new WithEnum { B = En.Bar }, new WithEnum { A = En.Bar, B = En.Default } });
-            var wel = Deserializer.Deserialize<List<WithEnum>>(bytes);
-            var cross = Deserializer.Deserialize<List<CrossEnum>>(bytes);
-            var str = Deserializer.Deserialize<List<EnumStr>>(bytes);
+            var wel = Serializer.Deserialize<List<WithEnum>>(bytes);
+            var cross = Serializer.Deserialize<List<CrossEnum>>(bytes);
+            var str = Serializer.Deserialize<List<EnumStr>>(bytes);
 
             Assert.AreEqual(3, wel.Count);
 
@@ -145,96 +145,96 @@ namespace Tests
 
             var b = Serializer.Serialize((byte)123);
 
-            Assert.AreEqual(123, Deserializer.Deserialize<short>(b));
-            Assert.AreEqual((ushort)123, Deserializer.Deserialize<ushort>(b));
-            Assert.AreEqual(123, Deserializer.Deserialize<int>(b));
-            Assert.AreEqual((uint)123, Deserializer.Deserialize<uint>(b));
-            Assert.AreEqual(123, Deserializer.Deserialize<long>(b));
-            Assert.AreEqual((ulong)123, Deserializer.Deserialize<ulong>(b));
-            Assert.AreEqual(123.0f, Deserializer.Deserialize<float>(b));
-            Assert.AreEqual(123.0, Deserializer.Deserialize<double>(b));
-            Assert.AreEqual((decimal)123.0, Deserializer.Deserialize<decimal>(b));
+            Assert.AreEqual(123, Serializer.Deserialize<short>(b));
+            Assert.AreEqual((ushort)123, Serializer.Deserialize<ushort>(b));
+            Assert.AreEqual(123, Serializer.Deserialize<int>(b));
+            Assert.AreEqual((uint)123, Serializer.Deserialize<uint>(b));
+            Assert.AreEqual(123, Serializer.Deserialize<long>(b));
+            Assert.AreEqual((ulong)123, Serializer.Deserialize<ulong>(b));
+            Assert.AreEqual(123.0f, Serializer.Deserialize<float>(b));
+            Assert.AreEqual(123.0, Serializer.Deserialize<double>(b));
+            Assert.AreEqual((decimal)123.0, Serializer.Deserialize<decimal>(b));
 
             // SByte -> Short, Integer, Long, Decimal, Single, Double
 
             var sb = Serializer.Serialize((sbyte)123);
 
-            Assert.AreEqual((short)123, Deserializer.Deserialize<short>(sb));
-            Assert.AreEqual((int)123, Deserializer.Deserialize<int>(sb));
-            Assert.AreEqual((long)123, Deserializer.Deserialize<long>(sb));
-            Assert.AreEqual((float)123, Deserializer.Deserialize<float>(sb));
-            Assert.AreEqual((double)123, Deserializer.Deserialize<double>(sb));
-            Assert.AreEqual((decimal)123, Deserializer.Deserialize<decimal>(sb));
+            Assert.AreEqual((short)123, Serializer.Deserialize<short>(sb));
+            Assert.AreEqual((int)123, Serializer.Deserialize<int>(sb));
+            Assert.AreEqual((long)123, Serializer.Deserialize<long>(sb));
+            Assert.AreEqual((float)123, Serializer.Deserialize<float>(sb));
+            Assert.AreEqual((double)123, Serializer.Deserialize<double>(sb));
+            Assert.AreEqual((decimal)123, Serializer.Deserialize<decimal>(sb));
 
             // Short -> Integer, Long, Decimal, Single, Double
 
             var s = Serializer.Serialize((short)123);
 
-            Assert.AreEqual((int)123, Deserializer.Deserialize<int>(s));
-            Assert.AreEqual((long)123, Deserializer.Deserialize<long>(s));
-            Assert.AreEqual((float)123, Deserializer.Deserialize<float>(s));
-            Assert.AreEqual((double)123, Deserializer.Deserialize<double>(s));
-            Assert.AreEqual((decimal)123, Deserializer.Deserialize<decimal>(s));
+            Assert.AreEqual((int)123, Serializer.Deserialize<int>(s));
+            Assert.AreEqual((long)123, Serializer.Deserialize<long>(s));
+            Assert.AreEqual((float)123, Serializer.Deserialize<float>(s));
+            Assert.AreEqual((double)123, Serializer.Deserialize<double>(s));
+            Assert.AreEqual((decimal)123, Serializer.Deserialize<decimal>(s));
 
             // UShort -> Integer, UInteger, Long, ULong, Decimal, Single, Double
 
             var us = Serializer.Serialize((ushort)123);
 
-            Assert.AreEqual((int)123, Deserializer.Deserialize<int>(us));
-            Assert.AreEqual((uint)123, Deserializer.Deserialize<uint>(us));
-            Assert.AreEqual((long)123, Deserializer.Deserialize<long>(us));
-            Assert.AreEqual((ulong)123, Deserializer.Deserialize<ulong>(us));
-            Assert.AreEqual((float)123, Deserializer.Deserialize<float>(us));
-            Assert.AreEqual((double)123, Deserializer.Deserialize<double>(us));
-            Assert.AreEqual((decimal)123, Deserializer.Deserialize<decimal>(us));
+            Assert.AreEqual((int)123, Serializer.Deserialize<int>(us));
+            Assert.AreEqual((uint)123, Serializer.Deserialize<uint>(us));
+            Assert.AreEqual((long)123, Serializer.Deserialize<long>(us));
+            Assert.AreEqual((ulong)123, Serializer.Deserialize<ulong>(us));
+            Assert.AreEqual((float)123, Serializer.Deserialize<float>(us));
+            Assert.AreEqual((double)123, Serializer.Deserialize<double>(us));
+            Assert.AreEqual((decimal)123, Serializer.Deserialize<decimal>(us));
 
             // Integer -> Long, Decimal, Single, Double
 
             var i = Serializer.Serialize((int)123);
 
-            Assert.AreEqual((long)123, Deserializer.Deserialize<long>(i));
-            Assert.AreEqual((float)123, Deserializer.Deserialize<float>(i));
-            Assert.AreEqual((double)123, Deserializer.Deserialize<double>(i));
-            Assert.AreEqual((decimal)123, Deserializer.Deserialize<decimal>(i));
+            Assert.AreEqual((long)123, Serializer.Deserialize<long>(i));
+            Assert.AreEqual((float)123, Serializer.Deserialize<float>(i));
+            Assert.AreEqual((double)123, Serializer.Deserialize<double>(i));
+            Assert.AreEqual((decimal)123, Serializer.Deserialize<decimal>(i));
 
             // UInteger -> Long, ULong, Decimal, Single, Double
 
             var ui = Serializer.Serialize((uint)123);
 
-            Assert.AreEqual((long)123, Deserializer.Deserialize<long>(ui));
-            Assert.AreEqual((ulong)123, Deserializer.Deserialize<ulong>(ui));
-            Assert.AreEqual((float)123, Deserializer.Deserialize<float>(ui));
-            Assert.AreEqual((double)123, Deserializer.Deserialize<double>(ui));
-            Assert.AreEqual((decimal)123, Deserializer.Deserialize<decimal>(ui));
+            Assert.AreEqual((long)123, Serializer.Deserialize<long>(ui));
+            Assert.AreEqual((ulong)123, Serializer.Deserialize<ulong>(ui));
+            Assert.AreEqual((float)123, Serializer.Deserialize<float>(ui));
+            Assert.AreEqual((double)123, Serializer.Deserialize<double>(ui));
+            Assert.AreEqual((decimal)123, Serializer.Deserialize<decimal>(ui));
 
             // Long -> Decimal, Single, Double
 
             var l = Serializer.Serialize((long)123);
 
-            Assert.AreEqual((float)123, Deserializer.Deserialize<float>(l));
-            Assert.AreEqual((double)123, Deserializer.Deserialize<double>(l));
-            Assert.AreEqual((decimal)123, Deserializer.Deserialize<decimal>(l));
+            Assert.AreEqual((float)123, Serializer.Deserialize<float>(l));
+            Assert.AreEqual((double)123, Serializer.Deserialize<double>(l));
+            Assert.AreEqual((decimal)123, Serializer.Deserialize<decimal>(l));
 
             // ULong -> Decimal, Single, Double
 
             var ul = Serializer.Serialize((ulong)123);
 
-            Assert.AreEqual((float)123, Deserializer.Deserialize<float>(ul));
-            Assert.AreEqual((double)123, Deserializer.Deserialize<double>(ul));
-            Assert.AreEqual((decimal)123, Deserializer.Deserialize<decimal>(ul));
+            Assert.AreEqual((float)123, Serializer.Deserialize<float>(ul));
+            Assert.AreEqual((double)123, Serializer.Deserialize<double>(ul));
+            Assert.AreEqual((decimal)123, Serializer.Deserialize<decimal>(ul));
 
             // Decimal -> Single, Double
 
             var m = Serializer.Serialize((decimal)123);
 
-            Assert.AreEqual((float)123, Deserializer.Deserialize<float>(m));
-            Assert.AreEqual((double)123, Deserializer.Deserialize<double>(m));
+            Assert.AreEqual((float)123, Serializer.Deserialize<float>(m));
+            Assert.AreEqual((double)123, Serializer.Deserialize<double>(m));
 
             // Single -> Double
 
             var f = Serializer.Serialize((float)123);
 
-            Assert.AreEqual((double)123, Deserializer.Deserialize<double>(f));
+            Assert.AreEqual((double)123, Serializer.Deserialize<double>(f));
         }
 
         [TestMethod]
@@ -268,84 +268,84 @@ namespace Tests
             var d = Serializer.Serialize((double)123);
             var m = Serializer.Serialize((decimal)123);
 
-            narrowThrows(() => Deserializer.Deserialize<byte>(sb));
-            narrowThrows(() => Deserializer.Deserialize<byte>(s));
-            narrowThrows(() => Deserializer.Deserialize<byte>(us));
-            narrowThrows(() => Deserializer.Deserialize<byte>(i));
-            narrowThrows(() => Deserializer.Deserialize<byte>(ui));
-            narrowThrows(() => Deserializer.Deserialize<byte>(l));
-            narrowThrows(() => Deserializer.Deserialize<byte>(ul));
-            narrowThrows(() => Deserializer.Deserialize<byte>(f));
-            narrowThrows(() => Deserializer.Deserialize<byte>(d));
-            narrowThrows(() => Deserializer.Deserialize<byte>(m));
+            narrowThrows(() => Serializer.Deserialize<byte>(sb));
+            narrowThrows(() => Serializer.Deserialize<byte>(s));
+            narrowThrows(() => Serializer.Deserialize<byte>(us));
+            narrowThrows(() => Serializer.Deserialize<byte>(i));
+            narrowThrows(() => Serializer.Deserialize<byte>(ui));
+            narrowThrows(() => Serializer.Deserialize<byte>(l));
+            narrowThrows(() => Serializer.Deserialize<byte>(ul));
+            narrowThrows(() => Serializer.Deserialize<byte>(f));
+            narrowThrows(() => Serializer.Deserialize<byte>(d));
+            narrowThrows(() => Serializer.Deserialize<byte>(m));
 
-            narrowThrows(() => Deserializer.Deserialize<sbyte>(b));
-            narrowThrows(() => Deserializer.Deserialize<sbyte>(s));
-            narrowThrows(() => Deserializer.Deserialize<sbyte>(us));
-            narrowThrows(() => Deserializer.Deserialize<sbyte>(i));
-            narrowThrows(() => Deserializer.Deserialize<sbyte>(ui));
-            narrowThrows(() => Deserializer.Deserialize<sbyte>(l));
-            narrowThrows(() => Deserializer.Deserialize<sbyte>(ul));
-            narrowThrows(() => Deserializer.Deserialize<sbyte>(f));
-            narrowThrows(() => Deserializer.Deserialize<sbyte>(d));
-            narrowThrows(() => Deserializer.Deserialize<sbyte>(m));
+            narrowThrows(() => Serializer.Deserialize<sbyte>(b));
+            narrowThrows(() => Serializer.Deserialize<sbyte>(s));
+            narrowThrows(() => Serializer.Deserialize<sbyte>(us));
+            narrowThrows(() => Serializer.Deserialize<sbyte>(i));
+            narrowThrows(() => Serializer.Deserialize<sbyte>(ui));
+            narrowThrows(() => Serializer.Deserialize<sbyte>(l));
+            narrowThrows(() => Serializer.Deserialize<sbyte>(ul));
+            narrowThrows(() => Serializer.Deserialize<sbyte>(f));
+            narrowThrows(() => Serializer.Deserialize<sbyte>(d));
+            narrowThrows(() => Serializer.Deserialize<sbyte>(m));
 
-            narrowThrows(() => Deserializer.Deserialize<short>(us));
-            narrowThrows(() => Deserializer.Deserialize<short>(i));
-            narrowThrows(() => Deserializer.Deserialize<short>(ui));
-            narrowThrows(() => Deserializer.Deserialize<short>(l));
-            narrowThrows(() => Deserializer.Deserialize<short>(ul));
-            narrowThrows(() => Deserializer.Deserialize<short>(f));
-            narrowThrows(() => Deserializer.Deserialize<short>(d));
-            narrowThrows(() => Deserializer.Deserialize<short>(m));
+            narrowThrows(() => Serializer.Deserialize<short>(us));
+            narrowThrows(() => Serializer.Deserialize<short>(i));
+            narrowThrows(() => Serializer.Deserialize<short>(ui));
+            narrowThrows(() => Serializer.Deserialize<short>(l));
+            narrowThrows(() => Serializer.Deserialize<short>(ul));
+            narrowThrows(() => Serializer.Deserialize<short>(f));
+            narrowThrows(() => Serializer.Deserialize<short>(d));
+            narrowThrows(() => Serializer.Deserialize<short>(m));
 
-            narrowThrows(() => Deserializer.Deserialize<ushort>(s));
-            narrowThrows(() => Deserializer.Deserialize<ushort>(i));
-            narrowThrows(() => Deserializer.Deserialize<ushort>(ui));
-            narrowThrows(() => Deserializer.Deserialize<ushort>(l));
-            narrowThrows(() => Deserializer.Deserialize<ushort>(ul));
-            narrowThrows(() => Deserializer.Deserialize<ushort>(f));
-            narrowThrows(() => Deserializer.Deserialize<ushort>(d));
-            narrowThrows(() => Deserializer.Deserialize<ushort>(m));
+            narrowThrows(() => Serializer.Deserialize<ushort>(s));
+            narrowThrows(() => Serializer.Deserialize<ushort>(i));
+            narrowThrows(() => Serializer.Deserialize<ushort>(ui));
+            narrowThrows(() => Serializer.Deserialize<ushort>(l));
+            narrowThrows(() => Serializer.Deserialize<ushort>(ul));
+            narrowThrows(() => Serializer.Deserialize<ushort>(f));
+            narrowThrows(() => Serializer.Deserialize<ushort>(d));
+            narrowThrows(() => Serializer.Deserialize<ushort>(m));
 
-            narrowThrows(() => Deserializer.Deserialize<int>(ui));
-            narrowThrows(() => Deserializer.Deserialize<int>(l));
-            narrowThrows(() => Deserializer.Deserialize<int>(ul));
-            narrowThrows(() => Deserializer.Deserialize<int>(f));
-            narrowThrows(() => Deserializer.Deserialize<int>(d));
-            narrowThrows(() => Deserializer.Deserialize<int>(m));
+            narrowThrows(() => Serializer.Deserialize<int>(ui));
+            narrowThrows(() => Serializer.Deserialize<int>(l));
+            narrowThrows(() => Serializer.Deserialize<int>(ul));
+            narrowThrows(() => Serializer.Deserialize<int>(f));
+            narrowThrows(() => Serializer.Deserialize<int>(d));
+            narrowThrows(() => Serializer.Deserialize<int>(m));
 
-            narrowThrows(() => Deserializer.Deserialize<uint>(i));
-            narrowThrows(() => Deserializer.Deserialize<uint>(l));
-            narrowThrows(() => Deserializer.Deserialize<uint>(ul));
-            narrowThrows(() => Deserializer.Deserialize<uint>(f));
-            narrowThrows(() => Deserializer.Deserialize<uint>(d));
-            narrowThrows(() => Deserializer.Deserialize<uint>(m));
+            narrowThrows(() => Serializer.Deserialize<uint>(i));
+            narrowThrows(() => Serializer.Deserialize<uint>(l));
+            narrowThrows(() => Serializer.Deserialize<uint>(ul));
+            narrowThrows(() => Serializer.Deserialize<uint>(f));
+            narrowThrows(() => Serializer.Deserialize<uint>(d));
+            narrowThrows(() => Serializer.Deserialize<uint>(m));
 
-            narrowThrows(() => Deserializer.Deserialize<long>(ul));
-            narrowThrows(() => Deserializer.Deserialize<long>(f));
-            narrowThrows(() => Deserializer.Deserialize<long>(d));
-            narrowThrows(() => Deserializer.Deserialize<long>(m));
+            narrowThrows(() => Serializer.Deserialize<long>(ul));
+            narrowThrows(() => Serializer.Deserialize<long>(f));
+            narrowThrows(() => Serializer.Deserialize<long>(d));
+            narrowThrows(() => Serializer.Deserialize<long>(m));
 
-            narrowThrows(() => Deserializer.Deserialize<ulong>(l));
-            narrowThrows(() => Deserializer.Deserialize<ulong>(f));
-            narrowThrows(() => Deserializer.Deserialize<ulong>(d));
-            narrowThrows(() => Deserializer.Deserialize<ulong>(m));
+            narrowThrows(() => Serializer.Deserialize<ulong>(l));
+            narrowThrows(() => Serializer.Deserialize<ulong>(f));
+            narrowThrows(() => Serializer.Deserialize<ulong>(d));
+            narrowThrows(() => Serializer.Deserialize<ulong>(m));
 
-            narrowThrows(() => Deserializer.Deserialize<decimal>(f));
-            narrowThrows(() => Deserializer.Deserialize<decimal>(d));
+            narrowThrows(() => Serializer.Deserialize<decimal>(f));
+            narrowThrows(() => Serializer.Deserialize<decimal>(d));
 
-            narrowThrows(() => Deserializer.Deserialize<float>(d));
+            narrowThrows(() => Serializer.Deserialize<float>(d));
         }
 
         [TestMethod]
         public void ILConversion()
         {
             var bytes = Serializer.Serialize(new SingleC { Foo = "Bar", Bar = 123 });
-            var c = Deserializer.Deserialize<SingleC>(bytes);
-            var s = Deserializer.Deserialize<SingleS>(bytes);
-            var cc = Deserializer.Deserialize<SingleCC>(bytes);
-            var ss = Deserializer.Deserialize<SingleSS>(bytes);
+            var c = Serializer.Deserialize<SingleC>(bytes);
+            var s = Serializer.Deserialize<SingleS>(bytes);
+            var cc = Serializer.Deserialize<SingleCC>(bytes);
+            var ss = Serializer.Deserialize<SingleSS>(bytes);
 
             Assert.AreEqual("Bar", c.Foo);
             Assert.AreEqual(123, c.Bar);
@@ -382,10 +382,10 @@ namespace Tests
             var b3 = Serializer.Serialize(new NoNull { Foo = 456 });
             var b4 = Serializer.Serialize(new NoNull());
 
-            var nn1 = Deserializer.Deserialize<NoNull>(b1);
-            var nn2 = Deserializer.Deserialize<NoNull>(b2);
-            var hn1 = Deserializer.Deserialize<HasNull>(b3);
-            var hn2 = Deserializer.Deserialize<HasNull>(b4);
+            var nn1 = Serializer.Deserialize<NoNull>(b1);
+            var nn2 = Serializer.Deserialize<NoNull>(b2);
+            var hn1 = Serializer.Deserialize<HasNull>(b3);
+            var hn2 = Serializer.Deserialize<HasNull>(b4);
 
             Assert.AreEqual(123, nn1.Foo);
             Assert.AreEqual(0, nn2.Foo);
@@ -401,23 +401,23 @@ namespace Tests
         public void DictionaryConversion()
         {
             var b1 = Serializer.Serialize(new Dictionary<int, string> { { 1, "foo" }, { 2, "bar" } });
-            var d1 = Deserializer.Deserialize<Dictionary<int, string>>(b1);
-            var d2 = Deserializer.Deserialize<IDictionary<int, string>>(b1);
-            var d3 = Deserializer.Deserialize<ConstDict>(b1);
-            var d4 = Deserializer.Deserialize<OneDict<int>>(b1);
-            var d5 = Deserializer.Deserialize<TwoDict<int, string>>(b1);
+            var d1 = Serializer.Deserialize<Dictionary<int, string>>(b1);
+            var d2 = Serializer.Deserialize<IDictionary<int, string>>(b1);
+            var d3 = Serializer.Deserialize<ConstDict>(b1);
+            var d4 = Serializer.Deserialize<OneDict<int>>(b1);
+            var d5 = Serializer.Deserialize<TwoDict<int, string>>(b1);
 
             var b2 = Serializer.Serialize(new ConstDict { { 1, "123" } });
             var b3 = Serializer.Serialize(new OneDict<int> { { 1, "123" } });
             var b4 = Serializer.Serialize(new TwoDict<int, string> { { 1, "123" } });
 
-            var d6 = Deserializer.Deserialize<Dictionary<int, string>>(b2);
-            var d7 = Deserializer.Deserialize<Dictionary<int, string>>(b3);
-            var d8 = Deserializer.Deserialize<Dictionary<int, string>>(b4);
+            var d6 = Serializer.Deserialize<Dictionary<int, string>>(b2);
+            var d7 = Serializer.Deserialize<Dictionary<int, string>>(b3);
+            var d8 = Serializer.Deserialize<Dictionary<int, string>>(b4);
 
             try
             {
-                Deserializer.Deserialize<System.Collections.IDictionary>(b1);
+                Serializer.Deserialize<System.Collections.IDictionary>(b1);
                 Assert.Fail("Shouldn't be able to deserialize to a non-generic IDictionary");
             }
             catch (Exception e)
@@ -464,20 +464,20 @@ namespace Tests
         public void ListConversion()
         {
             var b1 = Serializer.Serialize(new List<string> { "foo", "bar" });
-            var d1 = Deserializer.Deserialize<List<string>>(b1);
-            var d2 = Deserializer.Deserialize<IList<string>>(b1);
-            var d3 = Deserializer.Deserialize<ConstList>(b1);
-            var d4 = Deserializer.Deserialize<OneList<string>>(b1);
+            var d1 = Serializer.Deserialize<List<string>>(b1);
+            var d2 = Serializer.Deserialize<IList<string>>(b1);
+            var d3 = Serializer.Deserialize<ConstList>(b1);
+            var d4 = Serializer.Deserialize<OneList<string>>(b1);
 
             var b2 = Serializer.Serialize(new ConstList { "123" });
             var b3 = Serializer.Serialize(new OneList<string> { "123" });
 
-            var d5 = Deserializer.Deserialize<List<string>>(b2);
-            var d6 = Deserializer.Deserialize<List<string>>(b3);
+            var d5 = Serializer.Deserialize<List<string>>(b2);
+            var d6 = Serializer.Deserialize<List<string>>(b3);
 
             try
             {
-                Deserializer.Deserialize<System.Collections.IList>(b1);
+                Serializer.Deserialize<System.Collections.IList>(b1);
                 Assert.Fail("Shouldn't be able to deserialize to a non-generic IList");
             }
             catch (Exception e)
@@ -529,7 +529,7 @@ namespace Tests
         public void Structs()
         {
             var bytes = Serializer.Serialize(new S { Foo = 123, Bar = "Hello", Next = new S.Blah { Foo = 456, Bar = "World" } });
-            var s = Deserializer.Deserialize<S>(bytes);
+            var s = Serializer.Deserialize<S>(bytes);
 
             Assert.AreEqual(123, s.Foo);
             Assert.AreEqual("Hello", s.Bar);
@@ -542,15 +542,15 @@ namespace Tests
         public void Simple()
         {
             var bytes = Serializer.Serialize("Hello World");
-            var str = Deserializer.Deserialize<string>(bytes);
+            var str = Serializer.Deserialize<string>(bytes);
             Assert.AreEqual("Hello World", str);
 
             bytes = Serializer.Serialize(12345);
-            var ints = Deserializer.Deserialize<int>(bytes);
+            var ints = Serializer.Deserialize<int>(bytes);
             Assert.AreEqual(12345, ints);
 
             bytes = Serializer.Serialize(true);
-            var @bool = Deserializer.Deserialize<bool>(bytes);
+            var @bool = Serializer.Deserialize<bool>(bytes);
             Assert.IsTrue(@bool);
         }
 
@@ -560,7 +560,7 @@ namespace Tests
             var lastWeek = DateTime.UtcNow - TimeSpan.FromDays(7);
 
             var bytes = Serializer.Serialize(lastWeek);
-            var dt = Deserializer.Deserialize<DateTime>(bytes);
+            var dt = Serializer.Deserialize<DateTime>(bytes);
 
             Assert.AreEqual(lastWeek, dt);
         }
@@ -571,7 +571,7 @@ namespace Tests
             var uri = new Uri("http://www.example.com/test");
 
             var bytes = Serializer.Serialize(uri);
-            var u = Deserializer.Deserialize<Uri>(bytes);
+            var u = Serializer.Deserialize<Uri>(bytes);
 
             Assert.AreEqual(uri, u);
         }
@@ -582,7 +582,7 @@ namespace Tests
             var guid = Guid.NewGuid();
 
             var bytes = Serializer.Serialize(guid);
-            var g = Deserializer.Deserialize<Guid>(bytes);
+            var g = Serializer.Deserialize<Guid>(bytes);
 
             Assert.AreEqual(guid, g);
         }
@@ -593,7 +593,7 @@ namespace Tests
             var twoDays = TimeSpan.FromDays(2);
 
             var bytes = Serializer.Serialize(twoDays);
-            var ts = Deserializer.Deserialize<TimeSpan>(bytes);
+            var ts = Serializer.Deserialize<TimeSpan>(bytes);
 
             Assert.AreEqual(twoDays, ts);
         }
@@ -611,25 +611,25 @@ namespace Tests
 
         private static T AnonHack<T>(T temp, byte[] bytes)
         {
-            return Deserializer.Deserialize<T>(bytes);
+            return Serializer.Deserialize<T>(bytes);
         }
 
         [TestMethod]
         public void Class()
         {
             var bytes1 = Serializer.Serialize(new A { Foo = "Hello" });
-            var a1 = Deserializer.Deserialize<A>(bytes1);
+            var a1 = Serializer.Deserialize<A>(bytes1);
             Assert.AreEqual("Hello", a1.Foo);
 
-            var b1 = Deserializer.Deserialize<B>(bytes1);
+            var b1 = Serializer.Deserialize<B>(bytes1);
             Assert.AreEqual("Hello", b1.Foo);
             Assert.IsNull(b1.Bar);
 
             var bytes2 = Serializer.Serialize(new B { Foo = "Hello", Bar = "World" });
-            var a2 = Deserializer.Deserialize<A>(bytes2);
+            var a2 = Serializer.Deserialize<A>(bytes2);
             Assert.AreEqual("Hello", a2.Foo);
 
-            var b2 = Deserializer.Deserialize<B>(bytes2);
+            var b2 = Serializer.Deserialize<B>(bytes2);
             Assert.AreEqual("Hello", b2.Foo);
             Assert.AreEqual("World", b2.Bar);
         }
@@ -638,7 +638,7 @@ namespace Tests
         public void Lists()
         {
             var bytes1 = Serializer.Serialize(new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
-            var list1 = Deserializer.Deserialize<List<int>>(bytes1);
+            var list1 = Serializer.Deserialize<List<int>>(bytes1);
             Assert.AreEqual(10, list1.Count);
 
             for (var i = 0; i < 10; i++)
@@ -647,7 +647,7 @@ namespace Tests
             }
 
             var bytes2 = Serializer.Serialize(new List<A> { new A { Foo = "1" }, new A { Foo = "2" }, new A { Foo = "3" } });
-            var list2 = Deserializer.Deserialize<List<A>>(bytes2);
+            var list2 = Serializer.Deserialize<List<A>>(bytes2);
             Assert.AreEqual(3, list2.Count);
 
             for (var i = 0; i < 3; i++)
@@ -666,7 +666,7 @@ namespace Tests
         public void ClassesWithLists()
         {
             var bytes = Serializer.Serialize(new AList { Foo = "Hello", Bar = new List<int> { 1, 2, 3 } });
-            var alist = Deserializer.Deserialize<AList>(bytes);
+            var alist = Serializer.Deserialize<AList>(bytes);
             Assert.IsNotNull(alist);
             Assert.AreEqual("Hello", alist.Foo);
             Assert.IsNotNull(alist.Bar);
@@ -682,7 +682,7 @@ namespace Tests
         public void Dictionaries()
         {
             var bytes1 = Serializer.Serialize(new Dictionary<string, int> { {"1", 1}, {"2", 2}, {"3", 3 } });
-            var dicts1 = Deserializer.Deserialize<Dictionary<string, int>>(bytes1);
+            var dicts1 = Serializer.Deserialize<Dictionary<string, int>>(bytes1);
             Assert.AreEqual(3, dicts1.Count);
 
             for (var i = 1; i <= 3; i++)
@@ -691,7 +691,7 @@ namespace Tests
             }
 
             var bytes2 = Serializer.Serialize(new Dictionary<string, A> { { "1", new A { Foo = "2" } }, { "2", new A { Foo = "3" } }, { "3", new A { Foo = "4" } } });
-            var dicts2 = Deserializer.Deserialize<Dictionary<string, A>>(bytes2);
+            var dicts2 = Serializer.Deserialize<Dictionary<string, A>>(bytes2);
             Assert.AreEqual(3, dicts2.Count);
 
             for (var i = 1; i <= 3; i++)
@@ -710,7 +710,7 @@ namespace Tests
         public void ClassesWithDictionaries()
         {
             var bytes = Serializer.Serialize(new ADict { Foo = "Hello", Bar = new Dictionary<string, int> { { "1", 11 }, { "2", 22 } } });
-            var adict = Deserializer.Deserialize<ADict>(bytes);
+            var adict = Serializer.Deserialize<ADict>(bytes);
             Assert.IsNotNull(adict);
             Assert.AreEqual("Hello", adict.Foo);
             Assert.IsNotNull(adict.Bar);
@@ -731,7 +731,7 @@ namespace Tests
         public void CircularClass()
         {
             var bytes = Serializer.Serialize(new Circle { Text = "1", Next = new Circle { Text = "2", Next = new Circle { Text = "3" } } });
-            var circle = Deserializer.Deserialize<Circle>(bytes);
+            var circle = Serializer.Deserialize<Circle>(bytes);
             Assert.IsNotNull(circle);
             Assert.AreEqual("1", circle.Text);
             Assert.IsNotNull(circle.Next);
@@ -751,7 +751,7 @@ namespace Tests
         public void MoreDictionaries()
         {
             var bytes = Serializer.Serialize(new BDict { Bar = "Hello", Buzz = new Dictionary<string, A> { { "1", new A { Foo = "Bar" } } } });
-            var bdict = Deserializer.Deserialize<BDict>(bytes);
+            var bdict = Serializer.Deserialize<BDict>(bytes);
 
             Assert.AreEqual("Hello", bdict.Bar);
             Assert.AreEqual(1, bdict.Buzz.Count);
@@ -768,7 +768,7 @@ namespace Tests
         public void MoreLists()
         {
             var bytes = Serializer.Serialize(new BList { Bar = "Hello", Others = new List<BList> { new BList { Bar = "Foo" }, new BList { Bar = "Bizz", Others = new List<BList> { new BList { Bar = "Bazz" } } } } });
-            var blist = Deserializer.Deserialize<BList>(bytes);
+            var blist = Serializer.Deserialize<BList>(bytes);
 
             Assert.AreEqual(blist.Bar, "Hello");
             Assert.AreEqual(2, blist.Others.Count);
@@ -812,7 +812,7 @@ namespace Tests
             obj.SubObj = new Compl.Sub { Hello = "Thing" };
 
             var bytes = Serializer.Serialize(obj);
-            var de = Deserializer.Deserialize<Compl>(bytes);
+            var de = Serializer.Deserialize<Compl>(bytes);
 
             Assert.IsNotNull(de);
             Assert.AreEqual(obj.Foo, de.Foo);
@@ -845,7 +845,7 @@ namespace Tests
             var obj = new NullObj { Bar = 123, Back = new NullObj { Foo = 456, Buzz = "World", Back = new NullObj { Fizz = 222 } } };
 
             var bytes = Serializer.Serialize(obj);
-            var n = Deserializer.Deserialize<NullObj>(bytes);
+            var n = Serializer.Deserialize<NullObj>(bytes);
 
             Assert.IsNotNull(n);
             Assert.AreEqual(0, n.Foo);
@@ -865,7 +865,7 @@ namespace Tests
 
         private T DeserializeByExample<T>(T example, byte[] bytes)
         {
-            return Deserializer.Deserialize<T>(bytes);
+            return Serializer.Deserialize<T>(bytes);
         }
 
         [TestMethod]
@@ -896,8 +896,8 @@ namespace Tests
         public void Arrays()
         {
             var b1 = Serializer.Serialize(new Arr { Foo = "Hello World", Bar = new double[] { 1.0, 2.5, 3.75 } });
-            var a1 = Deserializer.Deserialize<Arr>(b1);
-            var n1 = Deserializer.Deserialize<NoArr>(b1);
+            var a1 = Serializer.Deserialize<Arr>(b1);
+            var n1 = Serializer.Deserialize<NoArr>(b1);
 
             Assert.AreEqual("Hello World", a1.Foo);
             Assert.AreEqual("Hello World", n1.Foo);
@@ -915,8 +915,8 @@ namespace Tests
             Assert.AreEqual(3.75, n1.Bar[2]);
 
             var b2 = Serializer.Serialize(new NoArr { Foo = "Fizz Buzz", Bar = new List<double> { 10, 9.25, 8.5, 7.75 } });
-            var a2 = Deserializer.Deserialize<Arr>(b2);
-            var n2 = Deserializer.Deserialize<NoArr>(b2);
+            var a2 = Serializer.Deserialize<Arr>(b2);
+            var n2 = Serializer.Deserialize<NoArr>(b2);
 
             Assert.AreEqual("Fizz Buzz", a2.Foo);
             Assert.AreEqual("Fizz Buzz", n2.Foo);

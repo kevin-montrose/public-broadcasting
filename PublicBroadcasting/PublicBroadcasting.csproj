@@ -45,7 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Deserializer.cs" />
+    <Compile Include="Impl\Deserializer.cs" />
     <Compile Include="Impl\Config.AllAll.cs">
       <DependentUpon>Config.cs</DependentUpon>
     </Compile>

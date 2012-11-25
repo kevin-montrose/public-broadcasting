@@ -52,6 +52,8 @@ namespace PublicBroadcasting
             Serialize(stream, obj, IncludedMembers.Properties | IncludedMembers.Fields, visibility);
         }
 
+        #region GetDescriptionAndBuilder
+
         private static void GetDescriptionAndBuilder<T>(IncludedMembers members, IncludedVisibility visibility, out TypeDescription description, out POCOBuilder builder)
         {
             if (visibility == IncludedVisibility.Public)
@@ -492,6 +494,8 @@ namespace PublicBroadcasting
             throw new ArgumentOutOfRangeException("visibility");
         }
 
+        #endregion
+
         public static void Serialize<T>(Stream stream, T obj, IncludedMembers members, IncludedVisibility visibility)
         {
             if (stream == null) throw new ArgumentNullException("stream");
@@ -507,6 +511,32 @@ namespace PublicBroadcasting
             var envelope = Envelope.Get(desc, payload);
 
             ProtoBuf.Serializer.Serialize(stream, envelope);
+        }
+
+        public static T Deserialize<T>(byte[] bytes)
+        {
+            using (var mem = new MemoryStream(bytes))
+            {
+                return Deserialize<T>(mem);
+            }
+        }
+
+        public static T Deserialize<T>(Stream stream)
+        {
+            return Deserializer.Deserialize<T>(stream);
+        }
+
+        public static dynamic Deserialize(byte[] bytes)
+        {
+            using (var mem = new MemoryStream(bytes))
+            {
+                return Deserialize(mem);
+            }
+        }
+
+        public static dynamic Deserialize(Stream stream)
+        {
+            return Deserializer.Deserialize(stream);
         }
     }
 }

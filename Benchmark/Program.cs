@@ -176,7 +176,7 @@ namespace Benchmark
                 PublicBroadcasting.Serializer.Serialize(mem, obj);
 
                 mem.Seek(0, SeekOrigin.Begin);
-                copy = PublicBroadcasting.Deserializer.Deserialize<T>(mem);
+                copy = PublicBroadcasting.Serializer.Deserialize<T>(mem);
             }
 
             if (!copy.Equals(obj)) throw new Exception();
@@ -196,7 +196,7 @@ namespace Benchmark
         {
             using (var mem = new MemoryStream(bytes))
             {
-                return PublicBroadcasting.Deserializer.Deserialize<T>(mem);
+                return PublicBroadcasting.Serializer.Deserialize<T>(mem);
             }
         }
 
@@ -204,7 +204,7 @@ namespace Benchmark
         {
             using (var mem = new MemoryStream(bytes))
             {
-                return PublicBroadcasting.Deserializer.Deserialize(mem);
+                return PublicBroadcasting.Serializer.Deserialize(mem);
             }
         }
 

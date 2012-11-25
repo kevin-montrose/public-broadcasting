@@ -25,8 +25,8 @@ namespace Tests
             var allBytes = Serializer.Serialize(new A { Foo = "Hello", Bar = "World", Next = new A { Foo = "Buzz" } });
             var fieldBytes = Serializer.Serialize(new A { Foo = "Hello", Bar = "World", Next = new A { Foo = "Buzz" } }, IncludedMembers.Fields);
 
-            var all = Deserializer.Deserialize<A>(allBytes);
-            var field = Deserializer.Deserialize<A>(fieldBytes);
+            var all = Serializer.Deserialize<A>(allBytes);
+            var field = Serializer.Deserialize<A>(fieldBytes);
 
             Assert.AreEqual("Hello", all.Foo);
             Assert.AreEqual("World", all.Bar);
@@ -44,8 +44,8 @@ namespace Tests
             var propBytes = Serializer.Serialize(new A { Foo = "Hello", Bar = "World", Next = new A { Foo = "Buzz" } }, IncludedMembers.Properties);
             var allBytes = Serializer.Serialize(new A { Foo = "Hello", Bar = "World", Next = new A { Foo = "Buzz" } });
 
-            var prop = Deserializer.Deserialize<A>(propBytes);
-            var all = Deserializer.Deserialize<A>(allBytes);
+            var prop = Serializer.Deserialize<A>(propBytes);
+            var all = Serializer.Deserialize<A>(allBytes);
 
             Assert.AreEqual("Hello", all.Foo);
             Assert.AreEqual("World", all.Bar);

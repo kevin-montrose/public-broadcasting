@@ -6,19 +6,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PublicBroadcasting
+namespace PublicBroadcasting.Impl
 {
     public class Deserializer
     {
         private static readonly Dictionary<TypeDescription, Type> TypeCache = new Dictionary<TypeDescription, Type>(new TypeDescriptionComparer());
-
-        public static T Deserialize<T>(byte[] bytes)
-        {
-            using (var mem = new MemoryStream(bytes))
-            {
-                return Deserialize<T>(mem);
-            }
-        }
 
         public static T Deserialize<T>(Stream stream)
         {
@@ -30,14 +22,6 @@ namespace PublicBroadcasting
             var arg = (POCOMapper)mapGetter.Invoke(null, new object[0]);
 
             return (T)arg.GetMapper()(raw);
-        }
-
-        public static dynamic Deserialize(byte[] bytes)
-        {
-            using (var mem = new MemoryStream(bytes))
-            {
-                return Deserialize(mem);
-            }
         }
 
         public static dynamic Deserialize(Stream stream)
