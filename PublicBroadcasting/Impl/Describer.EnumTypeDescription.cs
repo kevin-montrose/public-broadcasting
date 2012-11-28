@@ -45,33 +45,12 @@ namespace PublicBroadcasting.Impl
 
         private EnumTypeDescription(Type t)
         {
-            var vals = Enum.GetValues(t);
-
-            Values = new List<string>(vals.Length);
-            foreach (var v in vals)
-            {
-                Values.Add(v.ToString());
-            }
-
-            Values = Values.OrderBy(o => o, StringOrdinalComparer.Singleton).ToList();
-
-            
+            Values = Enum.GetNames(t).OrderBy(o => o, StringOrdinalComparer.Singleton).ToList();
         }
 
         internal static EnumTypeDescription Create(Type t)
         {
             return new EnumTypeDescription(t);
-        }
-
-        private string GetMissingName()
-        {
-            var ret = "<";
-            while (Values.Contains(ret))
-            {
-                ret += "<";
-            }
-
-            return ret;
         }
 
         private Type EnumType;
@@ -87,8 +66,6 @@ namespace PublicBroadcasting.Impl
             {
                 builder.DefineLiteral(Values[i], i);
             }
-
-            builder.DefineLiteral(GetMissingName(), -1);
 
             var contractAttrBuilder = new CustomAttributeBuilder(protoContractAttr, new object[0]);
             builder.SetCustomAttribute(contractAttrBuilder);
