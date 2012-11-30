@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -110,8 +111,135 @@ namespace Benchmark
         }
     }
 
+    [ProtoBuf.ProtoContract]
+    public class PropsPoco
+    {
+        [ProtoBuf.ProtoMember(1)]
+        public int A { get; set; }
+        [ProtoBuf.ProtoMember(2)]
+        public uint B { get; set; }
+        [ProtoBuf.ProtoMember(3)]
+        public long C { get; set; }
+        [ProtoBuf.ProtoMember(4)]
+        public ulong D { get; set; }
+        [ProtoBuf.ProtoMember(5)]
+        public short E { get; set; }
+        [ProtoBuf.ProtoMember(6)]
+        public ushort F { get; set; }
+        [ProtoBuf.ProtoMember(7)]
+        public byte G { get; set; }
+        [ProtoBuf.ProtoMember(8)]
+        public sbyte H { get; set; }
+        [ProtoBuf.ProtoMember(9)]
+        public char I { get; set; }
+        [ProtoBuf.ProtoMember(10)]
+        public string J { get; set; }
+        [ProtoBuf.ProtoMember(11)]
+        public int[] K { get; set; }
+        [ProtoBuf.ProtoMember(12)]
+        public List<long> L { get; set; }
+        [ProtoBuf.ProtoMember(13)]
+        public Dictionary<short, byte> M { get; set; }
+
+        [ProtoBuf.ProtoMember(14)]
+        public PropsPoco N { get; set; }
+
+        public override bool Equals(object obj)
+        {
+            var other = obj as PropsPoco;
+            if (other == null) return false;
+
+            if (A != other.A) return false;
+            if (B != other.B) return false;
+            if (C != other.C) return false;
+            if (D != other.D) return false;
+            if (E != other.E) return false;
+            if (F != other.F) return false;
+            if (G != other.G) return false;
+            if (H != other.H) return false;
+            if (I != other.I) return false;
+            if (J != other.J) return false;
+
+            if (K == null && other.K != null) return false;
+            if (K != null && other.K == null) return false;
+
+            if (K != null)
+            {
+                if (K.Length != other.K.Length) return false;
+
+                for (var i = 0; i < K.Length; i++)
+                {
+                    if (K[i] != other.K[i]) return false;
+                }
+            }
+
+            if (L == null && other.L != null) return false;
+            if (L != null && other.L == null) return false;
+
+            if (L != null)
+            {
+                if (L.Count != other.L.Count) return false;
+
+                for (var i = 0; i < L.Count; i++)
+                {
+                    if (L[i] != other.L[i]) return false;
+                }
+            }
+
+            if (M == null && other.M != null) return false;
+            if (M != null && other.M == null) return false;
+
+            if (M != null)
+            {
+                if (M.Count != other.M.Count) return false;
+
+                foreach (var kv in M)
+                {
+                    if (!other.M.ContainsKey(kv.Key)) return false;
+
+                    if (kv.Value != other.M[kv.Key]) return false;
+                }
+            }
+
+            if (N == null && other.N != null) return false;
+
+            if (N != null) return N.Equals(other.N);
+
+            return true;
+        }
+
+        public override int GetHashCode()
+        {
+            return 0;
+        }
+    }
+
     class Program
     {
+        private static PropsPoco BuildPropsPoco(int seed)
+        {
+            var rand = new Random(seed);
+
+            return
+                new PropsPoco
+                {
+                    A = rand.Next<int>(),
+                    //B = rand.Next<uint>(),    // Json.Net doesn't deal with unsigned very well
+                    C = rand.Next<long>(),
+                    //D = rand.Next<ulong>(),   // Json.Net doesn't deal with unsigned very well
+                    E = rand.Next<short>(),
+                    //F = rand.Next<ushort>(),  // Json.Net doesn't deal with unsigned very well
+                    G = rand.Next<byte>(),
+                    H = rand.Next<sbyte>(),
+                    I = rand.Next<char>(),
+                    J = rand.NextString(10),
+                    K = rand.NextArray<int>(10),
+                    L = rand.NextArray<long>(10).ToList(),
+                    M = rand.NextDictionary<short, byte>(10),
+                    N = rand.Next() % 2 == 0 ? null : BuildPropsPoco(seed + 1)
+                };
+        }
+
         private static FieldsPoco BuildFieldsPoco(int seed)
         {
             var rand = new Random(seed);
@@ -141,8 +269,6 @@ namespace Benchmark
             T copy;
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(obj);
             copy = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(json);
-
-            if (!copy.Equals(obj)) throw new Exception();
         }
 
         private static T JsonD<T>(string json)
@@ -165,8 +291,6 @@ namespace Benchmark
                 mem.Seek(0, SeekOrigin.Begin);
                 copy = ProtoBuf.Serializer.Deserialize<T>(mem);
             }
-
-            if (!copy.Equals(obj)) throw new Exception();
         }
 
         private static T ProtoBufNetD<T>(byte[] bytes)
@@ -197,8 +321,6 @@ namespace Benchmark
                 mem.Seek(0, SeekOrigin.Begin);
                 copy = PublicBroadcasting.Serializer.Deserialize<T>(mem);
             }
-
-            if (!copy.Equals(obj)) throw new Exception();
         }
 
         private static byte[] PBS<T>(T obj)
@@ -237,8 +359,6 @@ namespace Benchmark
                 mem.Seek(0, SeekOrigin.Begin);
                 copy = serializer.Unpack(mem);
             }
-
-            if (!copy.Equals(obj)) throw new Exception();
         }
 
         private static byte[] MessagePackS<T>(T obj, MsgPack.Serialization.MessagePackSerializer<T> serializer)
@@ -259,23 +379,31 @@ namespace Benchmark
             }
         }
 
-        static void Main(string[] args)
+        static void Time<T>(string title, Func<T> build)
         {
-            var fields = BuildFieldsPoco(0);
+            Console.WriteLine(title);
+            for (var i = 0; i < title.Length; i++)
+            {
+                Console.Write('=');
+            }
+            Console.WriteLine();
 
-            var mpSerializer = MsgPack.Serialization.MessagePackSerializer.Create<FieldsPoco>();
+            var obj = build();
+
+            var mpSerializer = MsgPack.Serialization.MessagePackSerializer.Create<T>();
 
             // warmup
             for (var i = 0; i < 100; i++)
             {
-                Json(fields);
-                ProtoBufNet(fields);
-                PB(fields);
-                MessagePack(fields, mpSerializer);
+                Json(obj);
+                ProtoBufNet(obj);
+                PB(obj);
+                MessagePack(obj, mpSerializer);
             }
 
+            Console.WriteLine();
             Console.WriteLine("Both");
-            Console.WriteLine("====");
+            Console.WriteLine("----");
 
             GC.Collect();
             GC.WaitForFullGCComplete(-1);
@@ -284,7 +412,7 @@ namespace Benchmark
             {
                 for (var i = 0; i < 10000; i++)
                 {
-                    Json(fields);
+                    Json(obj);
                 }
             }
 
@@ -295,7 +423,7 @@ namespace Benchmark
             {
                 for (var i = 0; i < 10000; i++)
                 {
-                    ProtoBufNet(fields);
+                    ProtoBufNet(obj);
                 }
             }
 
@@ -306,7 +434,7 @@ namespace Benchmark
             {
                 for (var i = 0; i < 10000; i++)
                 {
-                    MessagePack(fields, mpSerializer);
+                    MessagePack(obj, mpSerializer);
                 }
             }
 
@@ -317,12 +445,13 @@ namespace Benchmark
             {
                 for (var i = 0; i < 10000; i++)
                 {
-                    PB(fields);
+                    PB(obj);
                 }
             }
 
+            Console.WriteLine();
             Console.WriteLine("Serialization");
-            Console.WriteLine("=============");
+            Console.WriteLine("-------------");
 
             GC.Collect();
             GC.WaitForFullGCComplete(-1);
@@ -331,7 +460,7 @@ namespace Benchmark
             {
                 for (var i = 0; i < 10000; i++)
                 {
-                    JsonS(fields);
+                    JsonS(obj);
                 }
             }
 
@@ -342,7 +471,7 @@ namespace Benchmark
             {
                 for (var i = 0; i < 10000; i++)
                 {
-                    ProtoBufNetS(fields);
+                    ProtoBufNetS(obj);
                 }
             }
 
@@ -353,7 +482,7 @@ namespace Benchmark
             {
                 for (var i = 0; i < 10000; i++)
                 {
-                    MessagePackS(fields, mpSerializer);
+                    MessagePackS(obj, mpSerializer);
                 }
             }
 
@@ -364,20 +493,21 @@ namespace Benchmark
             {
                 for (var i = 0; i < 10000; i++)
                 {
-                    PBS(fields);
+                    PBS(obj);
                 }
             }
 
+            Console.WriteLine();
             Console.WriteLine("Deserialization");
-            Console.WriteLine("===============");
+            Console.WriteLine("---------------");
 
             byte[] protoBs, msgPackBs, PBBs;
             string jsonBs;
 
-            jsonBs = JsonS(fields);
-            protoBs = ProtoBufNetS(fields);
-            msgPackBs = MessagePackS(fields, mpSerializer);
-            PBBs = PBS(fields);
+            jsonBs = JsonS(obj);
+            protoBs = ProtoBufNetS(obj);
+            msgPackBs = MessagePackS(obj, mpSerializer);
+            PBBs = PBS(obj);
 
             GC.Collect();
             GC.WaitForFullGCComplete(-1);
@@ -386,7 +516,7 @@ namespace Benchmark
             {
                 for (var i = 0; i < 10000; i++)
                 {
-                    JsonD<FieldsPoco>(jsonBs);
+                    JsonD<T>(jsonBs);
                 }
             }
 
@@ -397,7 +527,7 @@ namespace Benchmark
             {
                 for (var i = 0; i < 10000; i++)
                 {
-                    ProtoBufNetD<FieldsPoco>(protoBs);
+                    ProtoBufNetD<T>(protoBs);
                 }
             }
 
@@ -419,7 +549,7 @@ namespace Benchmark
             {
                 for (var i = 0; i < 10000; i++)
                 {
-                    PBD<FieldsPoco>(PBBs);
+                    PBD<T>(PBBs);
                 }
             }
 
@@ -436,12 +566,42 @@ namespace Benchmark
 
             Console.WriteLine();
             Console.WriteLine("Size");
-            Console.WriteLine("====");
+            Console.WriteLine("----");
             Console.WriteLine("Json: " + Encoding.UTF8.GetBytes(jsonBs).Length + " bytes");
             Console.WriteLine("ProtoBuf: " + protoBs.Length + " bytes");
             Console.WriteLine("MessagePack: " + msgPackBs.Length + " bytes");
             Console.WriteLine("PublicBroadcasting: " + PBBs.Length + " bytes");
+            Console.WriteLine();
+        }
 
+        static void Main(string[] args)
+        {
+            Time("Fields POCO", () => BuildFieldsPoco(0));
+            Time("Props POCO", () => BuildPropsPoco(0));
+            Time("Fields List", 
+                () =>
+                {
+                    var ret = new List<FieldsPoco>();
+                    for (var i = 0; i < 100; i++)
+                    {
+                        ret.Add(BuildFieldsPoco(100 + i));
+                    }
+
+                    return ret;
+                }
+            );
+            Time("Props List",
+                () =>
+                {
+                    var ret = new List<PropsPoco>();
+                    for (var i = 0; i < 100; i++)
+                    {
+                        ret.Add(BuildPropsPoco(100 + i));
+                    }
+
+                    return ret;
+                }
+            );
 #if DEBUG
             Console.ReadKey();
 #endif
