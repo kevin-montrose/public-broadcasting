@@ -47,8 +47,6 @@ namespace PublicBroadcasting.Impl
 
         static POCOBuilder()
         {
-            Debug.WriteLine("POCOBuilder: " + typeof(From).FullName);
-
             PromisedBuilder = new PromisedPOCOBuilder();
 
             var builder = Build();
@@ -175,7 +173,10 @@ namespace PublicBroadcasting.Impl
             var parseEnum = typeof(POCOBuilder<From, Describer>).GetMethod("ParseEnum", BindingFlags.Static | BindingFlags.NonPublic);
             var invoke = typeof(Func<object, object>).GetMethod("Invoke");
 
-            var dynMethod = new DynamicMethod("POCOBuilder" + Guid.NewGuid().ToString().Replace("-", ""), typeof(object), new[] { tFrom, typeof(Dictionary<string, POCOBuilder>) }, restrictedSkipVisibility: true);
+            var name = "POCOBuilder_RefRef";
+            name += "_" + typeof(From).FullName + "_" + typeof(Describer).FullName;
+
+            var dynMethod = new DynamicMethod(name, typeof(object), new[] { tFrom, typeof(Dictionary<string, POCOBuilder>) }, restrictedSkipVisibility: true);
             var il = dynMethod.GetILGenerator();
             var retLoc = il.DeclareLocal(tTo);
 
@@ -260,7 +261,10 @@ namespace PublicBroadcasting.Impl
             var parseEnum = typeof(POCOBuilder<From, Describer>).GetMethod("ParseEnum", BindingFlags.Static | BindingFlags.NonPublic);
             var invoke = typeof(Func<object, object>).GetMethod("Invoke");
 
-            var dynMethod = new DynamicMethod("POCOBuilder" + Guid.NewGuid().ToString().Replace("-", ""), typeof(object), new[] { tFrom, typeof(Dictionary<string, POCOBuilder>) }, restrictedSkipVisibility: true);
+            var name = "POCOBuilder_ValueRef";
+            name += "_" + typeof(From).FullName + "_" + typeof(Describer).FullName;
+
+            var dynMethod = new DynamicMethod(name, typeof(object), new[] { tFrom, typeof(Dictionary<string, POCOBuilder>) }, restrictedSkipVisibility: true);
             var il = dynMethod.GetILGenerator();
             var retLoc = il.DeclareLocal(tTo);
 
@@ -413,17 +417,17 @@ namespace PublicBroadcasting.Impl
 
             ConstructorInfo cons = null;
 
-            Func<object, IList> newList =
-                example =>
+            Func<object, int, IList> newList =
+                (example, size) =>
                 {
                     if (cons != null)
                     {
-                        return (IList)cons.Invoke(EmptyObjects);
+                        return (IList)cons.Invoke(new object[] { size });
                     }
 
-                    cons = typeof(List<>).MakeGenericType(example.GetType()).GetConstructor(EmptyTypes);
+                    cons = typeof(List<>).MakeGenericType(example.GetType()).GetConstructor(new [] { typeof(int) });
 
-                    return (IList)cons.Invoke(EmptyObjects);
+                    return (IList)cons.Invoke(new object[] { size });
                 };
 
             return
@@ -439,7 +443,7 @@ namespace PublicBroadcasting.Impl
 
                         var first = itemMapper.GetMapper()(asList[0]);
 
-                        var ret = newList(first);
+                        var ret = newList(first, asList.Count);
 
                         ret.Add(first);
                         for (var i = 1; i < asList.Count; i++)
@@ -474,17 +478,17 @@ namespace PublicBroadcasting.Impl
             var valMapper = (POCOBuilder)(typeof(POCOBuilder<,>).MakeGenericType(valType, valDescType).GetMethod("GetMapper").Invoke(null, new object[0]));
 
             ConstructorInfo cons = null;
-            Func<object, object, IDictionary> newDict =
-                (exampleKey, exampleVal) =>
+            Func<object, object, int, IDictionary> newDict =
+                (exampleKey, exampleVal, size) =>
                 {
                     if (cons != null)
                     {
-                        return (IDictionary)cons.Invoke(EmptyObjects);
+                        return (IDictionary)cons.Invoke(new object[] { size });
                     }
 
-                    cons = typeof(Dictionary<,>).MakeGenericType(exampleKey.GetType(), exampleVal.GetType()).GetConstructor(EmptyTypes);
+                    cons = typeof(Dictionary<,>).MakeGenericType(exampleKey.GetType(), exampleVal.GetType()).GetConstructor(new[] { typeof(int) });
 
-                    return (IDictionary)cons.Invoke(EmptyObjects);
+                    return (IDictionary)cons.Invoke(new object[] { size });
                 };
 
             return
@@ -499,23 +503,25 @@ namespace PublicBroadcasting.Impl
                         var kMap = keyMapper.GetMapper();
                         var vMap = valMapper.GetMapper();
 
-                        var e = asDict.Keys.GetEnumerator();
+                        var e = asDict.GetEnumerator();
                         e.MoveNext();
 
-                        var firstKey = e.Current;
-                        var firstVal = asDict[firstKey];
+                        var entry = e.Entry;
+                        var firstKey = entry.Key;
+                        var firstVal = entry.Value;
 
                         var fkMapped = kMap(firstKey);
                         var fvMapped = vMap(firstVal);
 
-                        var ret = newDict(fkMapped, fvMapped);
+                        var ret = newDict(fkMapped, fvMapped, asDict.Count);
 
                         ret.Add(fkMapped, fvMapped);
 
                         while (e.MoveNext())
                         {
-                            var mappedKey = kMap(e.Current);
-                            var mappedValue = vMap(asDict[e.Current]);
+                            var curEntry = e.Entry;
+                            var mappedKey = kMap(curEntry.Key);
+                            var mappedValue = vMap(curEntry.Value);
 
                             ret.Add(mappedKey, mappedValue);
                         }

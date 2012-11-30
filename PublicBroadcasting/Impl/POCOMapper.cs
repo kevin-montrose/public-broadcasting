@@ -223,7 +223,10 @@ namespace PublicBroadcasting.Impl
 
             var invoke = typeof(Func<object, object>).GetMethod("Invoke");
 
-            var dynMethod = new DynamicMethod("POCOMapper" + Guid.NewGuid().ToString().Replace("-", ""), typeof(To), new[] { tFrom, typeof(Dictionary<string, POCOMapper>) }, restrictedSkipVisibility: true);
+            var name = "POCOMapper_RefRef";
+            name += "_" + typeof(From).FullName + "_" + typeof(To).FullName;
+
+            var dynMethod = new DynamicMethod(name, typeof(To), new[] { tFrom, typeof(Dictionary<string, POCOMapper>) }, restrictedSkipVisibility: true);
             var il = dynMethod.GetILGenerator();
             var retLoc = il.DeclareLocal(tTo);
 
@@ -301,7 +304,10 @@ namespace PublicBroadcasting.Impl
 
             var invoke = typeof(Func<object, object>).GetMethod("Invoke");
 
-            var dynMethod = new DynamicMethod("POCOMapper" + Guid.NewGuid().ToString().Replace("-", ""), typeof(To), new[] { tFrom, typeof(Dictionary<string, POCOMapper>) }, restrictedSkipVisibility: true);
+            var name = "POCOMapper_RefValue";
+            name += "_" + typeof(From).FullName + "_" + typeof(To).FullName;
+
+            var dynMethod = new DynamicMethod(name, typeof(To), new[] { tFrom, typeof(Dictionary<string, POCOMapper>) }, restrictedSkipVisibility: true);
             var il = dynMethod.GetILGenerator();
             var retLoc = il.DeclareLocal(tTo);
 
