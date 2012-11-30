@@ -187,10 +187,12 @@ namespace PublicBroadcasting.Impl
 
                         var ret = (IList)newListCons.Invoke(new object[0]);
 
-                        var asEnum = (IEnumerable)listX;
+                        var asList = (IList)listX;
 
-                        foreach (var o in asEnum)
+                        for (var i = 0; i < asList.Count; i++)
                         {
+                            var o = asList[i];
+
                             var mapped = func(o);
 
                             ret.Add(mapped);
