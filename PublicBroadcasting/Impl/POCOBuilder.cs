@@ -114,21 +114,21 @@ namespace PublicBroadcasting.Impl
 
             if (desc is SimpleTypeDescription)
             {
-                if (desc == SimpleTypeDescription.Byte) return new POCOBuilder(x => Convert.ToByte(x));
-                if (desc == SimpleTypeDescription.SByte) return new POCOBuilder(x => Convert.ToSByte(x));
-                if (desc == SimpleTypeDescription.Short) return new POCOBuilder(x => Convert.ToInt16(x));
-                if (desc == SimpleTypeDescription.UShort) return new POCOBuilder(x => Convert.ToUInt16(x));
-                if (desc == SimpleTypeDescription.Int) return new POCOBuilder(x => Convert.ToInt32(x));
-                if (desc == SimpleTypeDescription.UInt) return new POCOBuilder(x => Convert.ToUInt32(x));
-                if (desc == SimpleTypeDescription.Long) return new POCOBuilder(x => Convert.ToInt64(x));
-                if (desc == SimpleTypeDescription.ULong) return new POCOBuilder(x => Convert.ToUInt64(x));
-                if (desc == SimpleTypeDescription.Double) return new POCOBuilder(x => Convert.ToDouble(x));
-                if (desc == SimpleTypeDescription.Float) return new POCOBuilder(x => Convert.ToSingle(x));
-                if (desc == SimpleTypeDescription.Decimal) return new POCOBuilder(x => Convert.ToDecimal(x));
-                if (desc == SimpleTypeDescription.Char) return new POCOBuilder(x => Convert.ToChar(x));
-                if (desc == SimpleTypeDescription.String) return new POCOBuilder(x => (string)x);
-                if (desc == SimpleTypeDescription.Bool) return new POCOBuilder(x => Convert.ToBoolean(x));
-                if (desc == SimpleTypeDescription.DateTime) return new POCOBuilder(x => Convert.ToDateTime(x));
+                if (desc == SimpleTypeDescription.Byte) return new POCOBuilder(x => x is byte ? (byte)x : Convert.ToByte(x));
+                if (desc == SimpleTypeDescription.SByte) return new POCOBuilder(x => x is sbyte ? (sbyte)x : Convert.ToSByte(x));
+                if (desc == SimpleTypeDescription.Short) return new POCOBuilder(x => x is short ? (short)x : Convert.ToInt16(x));
+                if (desc == SimpleTypeDescription.UShort) return new POCOBuilder(x => x is ushort ? (ushort)x : Convert.ToUInt16(x));
+                if (desc == SimpleTypeDescription.Int) return new POCOBuilder(x => x is int ? (int)x : Convert.ToInt32(x));
+                if (desc == SimpleTypeDescription.UInt) return new POCOBuilder(x => x is uint ? (uint)x : Convert.ToUInt32(x));
+                if (desc == SimpleTypeDescription.Long) return new POCOBuilder(x => x is long ? (long)x : Convert.ToInt64(x));
+                if (desc == SimpleTypeDescription.ULong) return new POCOBuilder(x => x is ulong ? (ulong)x : Convert.ToUInt64(x));
+                if (desc == SimpleTypeDescription.Double) return new POCOBuilder(x => x is double ? (double)x : Convert.ToDouble(x));
+                if (desc == SimpleTypeDescription.Float) return new POCOBuilder(x => x is float ? (float)x : Convert.ToSingle(x));
+                if (desc == SimpleTypeDescription.Decimal) return new POCOBuilder(x => x is decimal ? (decimal)x : Convert.ToDecimal(x));
+                if (desc == SimpleTypeDescription.Char) return new POCOBuilder(x => x is char ? (char)x : Convert.ToChar(x));
+                if (desc == SimpleTypeDescription.String) return new POCOBuilder(x => x is string || x == null ? (string)x : x.ToString());
+                if (desc == SimpleTypeDescription.Bool) return new POCOBuilder(x => x is bool ? (bool)x : Convert.ToBoolean(x));
+                if (desc == SimpleTypeDescription.DateTime) return new POCOBuilder(x => x is DateTime? (DateTime)x : Convert.ToDateTime(x));
                 if (desc == SimpleTypeDescription.TimeSpan) return new POCOBuilder(x => (TimeSpan)x);
                 if (desc == SimpleTypeDescription.Guid) return new POCOBuilder(x => (Guid)x);
                 if (desc == SimpleTypeDescription.Uri) return new POCOBuilder(x => (Uri)x);

@@ -43,24 +43,47 @@ namespace PublicBroadcasting.Impl
             return AllProtectedInternalPrivate ?? AllProtectedInternalPrivatePromise;
         }
 
+        private static object GetForUseLock = new object();
+        private static volatile TypeDescription Flattened;
+        private static volatile TypeDescription Sealed;
+
         public static TypeDescription GetForUse(bool flatten)
         {
-            var ret = Get();
+            if (Sealed != null && !flatten) return Sealed;
 
-            Action postPromise;
-            ret = ret.DePromise(out postPromise);
-            postPromise();
-
-            ret.Seal();
-
-            if (flatten)
+            if (Sealed == null)
             {
-                ret = ret.Clone(new Dictionary<TypeDescription, TypeDescription>());
+                lock (GetForUseLock)
+                {
+                    if (Sealed != null && !flatten) return Sealed;
 
-                Flattener.Flatten(ret, Describer.GetIdProvider());
+                    var ret = Get();
+                    Action postPromise;
+                    ret = ret.DePromise(out postPromise);
+                    postPromise();
+
+                    ret.Seal();
+
+                    Sealed = ret;
+                }
             }
 
-            return ret;
+            if (!flatten) return Sealed;
+
+            if (Flattened != null) return Flattened;
+
+            lock (GetForUseLock)
+            {
+                if (Flattened != null) return Flattened;
+
+                var ret = Sealed.Clone(new Dictionary<TypeDescription, TypeDescription>());
+
+                Flattener.Flatten(ret, Describer.GetIdProvider());
+
+                Flattened = ret;
+
+                return Flattened;
+            }
         }
     }
 }
