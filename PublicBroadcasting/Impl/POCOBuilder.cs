@@ -411,6 +411,21 @@ namespace PublicBroadcasting.Impl
 
             var itemMapper = (POCOBuilder)(typeof(POCOBuilder<,>).MakeGenericType(fromListType, descType).GetMethod("GetMapper").Invoke(null, new object[0]));
 
+            ConstructorInfo cons = null;
+
+            Func<object, IList> newList =
+                example =>
+                {
+                    if (cons != null)
+                    {
+                        return (IList)cons.Invoke(EmptyObjects);
+                    }
+
+                    cons = typeof(List<>).MakeGenericType(example.GetType()).GetConstructor(EmptyTypes);
+
+                    return (IList)cons.Invoke(EmptyObjects);
+                };
+
             return
                 new POCOBuilder(
                     x =>
@@ -420,16 +435,16 @@ namespace PublicBroadcasting.Impl
                         // it's all the same, don't waste our time
                         if (asList == null || asList.Count == 0) return null;
 
+                        var iMap = itemMapper.GetMapper();
+
                         var first = itemMapper.GetMapper()(asList[0]);
 
-                        var listType = typeof(List<>).MakeGenericType(first.GetType());
-
-                        var ret = (IList)listType.GetConstructor(EmptyTypes).Invoke(EmptyObjects);
+                        var ret = newList(first);
 
                         ret.Add(first);
                         for (var i = 1; i < asList.Count; i++)
                         {
-                            var mapped = itemMapper.GetMapper()(asList[i]);
+                            var mapped = iMap(asList[i]);
                             ret.Add(mapped);
                         }
 
@@ -458,6 +473,20 @@ namespace PublicBroadcasting.Impl
             var keyMapper = (POCOBuilder)(typeof(POCOBuilder<,>).MakeGenericType(keyType, keyDescType).GetMethod("GetMapper").Invoke(null, new object[0]));
             var valMapper = (POCOBuilder)(typeof(POCOBuilder<,>).MakeGenericType(valType, valDescType).GetMethod("GetMapper").Invoke(null, new object[0]));
 
+            ConstructorInfo cons = null;
+            Func<object, object, IDictionary> newDict =
+                (exampleKey, exampleVal) =>
+                {
+                    if (cons != null)
+                    {
+                        return (IDictionary)cons.Invoke(EmptyObjects);
+                    }
+
+                    cons = typeof(Dictionary<,>).MakeGenericType(exampleKey.GetType(), exampleVal.GetType()).GetConstructor(EmptyTypes);
+
+                    return (IDictionary)cons.Invoke(EmptyObjects);
+                };
+
             return
                 new POCOBuilder(
                     x =>
@@ -467,23 +496,26 @@ namespace PublicBroadcasting.Impl
                         // Don't waste my time
                         if (asDict == null || asDict.Count == 0) return null;
 
+                        var kMap = keyMapper.GetMapper();
+                        var vMap = valMapper.GetMapper();
+
                         var e = asDict.Keys.GetEnumerator();
                         e.MoveNext();
 
                         var firstKey = e.Current;
                         var firstVal = asDict[firstKey];
 
-                        var fkMapped = keyMapper.GetMapper()(firstKey);
-                        var fvMapped = valMapper.GetMapper()(firstVal);
+                        var fkMapped = kMap(firstKey);
+                        var fvMapped = vMap(firstVal);
 
-                        var ret = (IDictionary)(typeof(Dictionary<,>).MakeGenericType(fkMapped.GetType(), fvMapped.GetType()).GetConstructor(EmptyTypes).Invoke(EmptyObjects));
+                        var ret = newDict(fkMapped, fvMapped);
 
                         ret.Add(fkMapped, fvMapped);
 
                         while (e.MoveNext())
                         {
-                            var mappedKey = keyMapper.GetMapper()(e.Current);
-                            var mappedValue = valMapper.GetMapper()(asDict[e.Current]);
+                            var mappedKey = kMap(e.Current);
+                            var mappedValue = vMap(asDict[e.Current]);
 
                             ret.Add(mappedKey, mappedValue);
                         }
