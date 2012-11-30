@@ -78,7 +78,7 @@ namespace PublicBroadcasting.Impl
 
                 var ret = Sealed.Clone(new Dictionary<TypeDescription, TypeDescription>());
 
-                Flattener.Flatten(ret, Describer.GetIdProvider());
+                Flattener.Flatten(ret, Config.GetIdProvider());
 
                 Flattened = ret;
 

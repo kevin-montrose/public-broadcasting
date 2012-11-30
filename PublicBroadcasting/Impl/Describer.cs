@@ -142,16 +142,5 @@ namespace PublicBroadcasting.Impl
 
             return ret;
         }
-
-        internal static Func<int> GetIdProvider()
-        {
-            int startId = 0;
-
-            return
-                () =>
-                {
-                    return Interlocked.Increment(ref startId);
-                };
-        }
     }
 }
