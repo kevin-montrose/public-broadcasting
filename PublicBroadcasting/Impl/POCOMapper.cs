@@ -444,7 +444,7 @@ namespace PublicBroadcasting.Impl
             var tFrom = typeof(From);
             var tTo = typeof(To);
 
-            Dictionary<string, Tuple<FieldInfo, POCOMapper>> members = null;
+            Dictionary<string, POCOMapper> members = null;
 
             var toFields = tTo.GetFields(BindingFlags.Instance | BindingFlags.NonPublic);
 
@@ -467,54 +467,71 @@ namespace PublicBroadcasting.Impl
 
                         var mapperRet = (POCOMapper)mapper.GetMethod("Get").Invoke(null, new object[0]);
 
-                        // OH MY GOD THIS IS A GIANT HACK
-                        //  it looks like anonymous type properties always have a backing field that contains <PropName> in their name
-                        //  note that that isn't a legal C# name, so collision is basically impossible.
-                        //  However, if that behavior changes... oy.
-                        var field = toFields.Single(f => f.Name.Contains("<" + s.Name + ">"));
-
-                        return Tuple.Create(field, mapperRet);
+                        return mapperRet;
                     }
                 ).Where(kv => kv.Value != null).ToDictionary(kv => kv.Key, kv => kv.Value);
 
             var cons = tTo.GetConstructors().Single();
 
             var consParams = cons.GetParameters();
-            var consParamsDefaults = new object[consParams.Length];
+
+            var dyn = new DynamicMethod("POCOMapperAnon_" + typeof(From).FullName + "_" + typeof(To).FullName, typeof(To), new[] { typeof(From), typeof(Dictionary<string, POCOMapper>) }, restrictedSkipVisibility: true);
+            var il = dyn.GetILGenerator();
+
+            var createInstance = typeof(Activator).GetMethod("CreateInstance", Type.EmptyTypes);
+            var lookup = typeof(POCOMapper<From, To>).GetMethod("Lookup", BindingFlags.Static | BindingFlags.NonPublic);
+            var invoke = typeof(Func<object, object>).GetMethod("Invoke");
 
             for (var i = 0; i < consParams.Length; i++)
             {
                 var type = consParams[i].ParameterType;
-                consParamsDefaults[i] = type.IsValueType ? Activator.CreateInstance(type) : null;
+
+                // HACK: We're relying on anonymous types using their Property names as Constructor parameter names.
+                //       This isn't guaranteed, so we may be boned randomly.
+                var memKey = consParams[i].Name;
+
+                il.Emit(OpCodes.Ldarg_1);                       // [members]
+                il.Emit(OpCodes.Ldstr, memKey);                 // [memKey] [members]
+                il.Emit(OpCodes.Call, lookup);                  // [Func<object, objet>]
+
+                il.Emit(OpCodes.Ldarg_0);                       // [from] [Func<object, object>]
+
+                var fromProp = tFrom.GetProperty(memKey);
+                il.Emit(OpCodes.Callvirt, fromProp.GetMethod);  // [fromVal] [Func<object, object>]
+
+                if (fromProp.PropertyType.IsValueType)
+                {
+                    il.Emit(OpCodes.Box, fromProp.PropertyType);// [fromVal] [Func<object, object>]
+                }
+
+                il.Emit(OpCodes.Call, invoke);                  // [toVal (as object)]
+
+                if (type.IsValueType)
+                {
+                    il.Emit(OpCodes.Unbox_Any, type);           // [toVal]
+                }
+                else
+                {
+                    il.Emit(OpCodes.Castclass, type);           // [toVal]
+                }
             }
 
-            var fromType = TypeAccessor.Create(tFrom);
+            // Stack is: [params for consParams]
+            il.Emit(OpCodes.Newobj, cons);                  // [ret]
+            il.Emit(OpCodes.Ret);                           // ----
+
+            var func = (Func<From, Dictionary<string, POCOMapper>, To>)dyn.CreateDelegate(typeof(Func<From, Dictionary<string, POCOMapper>, To>));
 
             Func<object, object> retFunc =
                 x =>
                 {
-                    if (x == null) return null;
+                    if (x == null) return x;
 
-                    var ret = (To)cons.Invoke(consParamsDefaults);
+                    var from = (From)x;
 
-                    foreach (var mem in members)
-                    {
-                        var memKey = mem.Key;
-                        var memVal = mem.Value;
+                    var ret = func(from, members);
 
-                        if (memVal == null) continue;
-
-                        var from = fromType[x, memKey];
-
-                        var toField = memVal.Item1;
-                        var mapper = memVal.Item2.GetMapper();
-
-                        var fromMapped = mapper(from);
-
-                        toField.SetValue(ret, fromMapped);
-                    }
-
-                    return ret;
+                    return (To)ret;
                 };
 
             return new POCOMapper(retFunc);
