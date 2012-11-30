@@ -30,9 +30,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="FastMember">
-      <HintPath>..\packages\FastMember.1.0.0.9\lib\net40\FastMember.dll</HintPath>
-    </Reference>
     <Reference Include="protobuf-net">
       <HintPath>..\packages\protobuf-net.2.0.0.602\lib\net40\protobuf-net.dll</HintPath>
     </Reference>
