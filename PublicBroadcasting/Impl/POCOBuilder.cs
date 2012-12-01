@@ -415,19 +415,27 @@ namespace PublicBroadcasting.Impl
 
             var itemMapper = (POCOBuilder)(typeof(POCOBuilder<,>).MakeGenericType(fromListType, descType).GetMethod("GetMapper").Invoke(null, new object[0]));
 
-            ConstructorInfo cons = null;
+            Func<int, IList> newListDyn = null;
 
             Func<object, int, IList> newList =
                 (example, size) =>
                 {
-                    if (cons != null)
+                    if (newListDyn != null)
                     {
-                        return (IList)cons.Invoke(new object[] { size });
+                        return newListDyn(size);
                     }
 
-                    cons = typeof(List<>).MakeGenericType(example.GetType()).GetConstructor(new [] { typeof(int) });
+                    var cons = typeof(List<>).MakeGenericType(example.GetType()).GetConstructor(new[] { typeof(int) });
+                    var dyn = new DynamicMethod("POCOBuilder_NewList_" + example.GetType().FullName, typeof(IList), new [] { typeof(int) }, restrictedSkipVisibility: true);
+                    var il = dyn.GetILGenerator();
 
-                    return (IList)cons.Invoke(new object[] { size });
+                    il.Emit(OpCodes.Ldarg_0);       // [size]
+                    il.Emit(OpCodes.Newobj, cons);  // [ret]
+                    il.Emit(OpCodes.Ret);           // ----
+
+                    newListDyn = (Func<int, IList>)dyn.CreateDelegate(typeof(Func<int, IList>));
+
+                    return newListDyn(size);
                 };
 
             return
@@ -477,18 +485,26 @@ namespace PublicBroadcasting.Impl
             var keyMapper = (POCOBuilder)(typeof(POCOBuilder<,>).MakeGenericType(keyType, keyDescType).GetMethod("GetMapper").Invoke(null, new object[0]));
             var valMapper = (POCOBuilder)(typeof(POCOBuilder<,>).MakeGenericType(valType, valDescType).GetMethod("GetMapper").Invoke(null, new object[0]));
 
-            ConstructorInfo cons = null;
+            Func<int, IDictionary> newDictDyn = null;
             Func<object, object, int, IDictionary> newDict =
                 (exampleKey, exampleVal, size) =>
                 {
-                    if (cons != null)
+                    if (newDictDyn != null)
                     {
-                        return (IDictionary)cons.Invoke(new object[] { size });
+                        return newDictDyn(size);
                     }
 
-                    cons = typeof(Dictionary<,>).MakeGenericType(exampleKey.GetType(), exampleVal.GetType()).GetConstructor(new[] { typeof(int) });
+                    var cons = typeof(Dictionary<,>).MakeGenericType(exampleKey.GetType(), exampleVal.GetType()).GetConstructor(new[] { typeof(int) });
+                    var dyn = new DynamicMethod("POCOBuilder_NewDict_" + exampleKey.GetType().FullName + "_" + exampleVal.GetType().FullName, typeof(IDictionary), new[] { typeof(int) }, restrictedSkipVisibility: true);
+                    var il = dyn.GetILGenerator();
 
-                    return (IDictionary)cons.Invoke(new object[] { size });
+                    il.Emit(OpCodes.Ldarg_0);       // [size]
+                    il.Emit(OpCodes.Newobj, cons);  // [ret]
+                    il.Emit(OpCodes.Ret);           // -----
+
+                    newDictDyn = (Func<int, IDictionary>)dyn.CreateDelegate(typeof(Func<int, IDictionary>));
+
+                    return newDictDyn(size);
                 };
 
             return
