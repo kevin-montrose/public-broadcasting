@@ -14,11 +14,6 @@ namespace PublicBroadcasting.Impl
 {
     public class ProbeClass
     {
-        public static void Probe(string str)
-        {
-            Console.WriteLine(str);
-        }
-
         public static bool Validate(object[] objs)
         {
             return objs.Length == 1 && (objs[0] is string);
@@ -117,7 +112,6 @@ namespace PublicBroadcasting.Impl
             var contractAttrBuilder = new CustomAttributeBuilder(protoContractAttr, new object[0]);
             TypeBuilder.SetCustomAttribute(contractAttrBuilder);
 
-            var probe = typeof(ProbeClass).GetMethod("Probe");
             var validate = typeof(ProbeClass).GetMethod("Validate");
             var eq = typeof(ProbeClass).GetMethod("TwoStrEqs");
 
