@@ -220,26 +220,26 @@ namespace PublicBroadcasting.Impl
                     il.Emit(OpCodes.Call, invoke);                  // [toVal (as object)] [ret]
                 }
 
-                var toMember = tTo.GetProperty(mem.Key);
+                var toMember = tTo.GetField(mem.Key);
 
-                if (toMember.PropertyType.IsValueType)
+                if (toMember.FieldType.IsValueType)
                 {
-                    if (!toMember.PropertyType.IsEnum)
+                    if (!toMember.FieldType.IsEnum)
                     {
-                        il.Emit(OpCodes.Unbox_Any, toMember.PropertyType);// [toVal] [ret]
+                        il.Emit(OpCodes.Unbox_Any, toMember.FieldType);// [toVal] [ret]
                     }
                     else
                     {
-                        var parse = parseEnum.MakeGenericMethod(toMember.PropertyType);
+                        var parse = parseEnum.MakeGenericMethod(toMember.FieldType);
                         il.Emit(OpCodes.Call, parse);                       // [toVal as object] [ret]
                     }
                 }
                 else
                 {
-                    il.Emit(OpCodes.Castclass, toMember.PropertyType);    // [toVal] [ret]
+                    il.Emit(OpCodes.Castclass, toMember.FieldType);     // [toVal] [ret]
                 }
 
-                il.Emit(OpCodes.Callvirt, toMember.SetMethod);        // ----
+                il.Emit(OpCodes.Stfld, toMember);                       // -----
             }
 
             il.Emit(OpCodes.Ldloc, retLoc);
@@ -308,26 +308,26 @@ namespace PublicBroadcasting.Impl
                     il.Emit(OpCodes.Call, invoke);                  // [toVal (as object)] [ret]
                 }
 
-                var toMember = tTo.GetProperty(mem.Key);
+                var toField = tTo.GetField(mem.Key);
 
-                if (toMember.PropertyType.IsValueType)
+                if (toField.FieldType.IsValueType)
                 {
-                    if (!toMember.PropertyType.IsEnum)
+                    if (!toField.FieldType.IsEnum)
                     {
-                        il.Emit(OpCodes.Unbox_Any, toMember.PropertyType);// [toVal] [ret]
+                        il.Emit(OpCodes.Unbox_Any, toField.FieldType);// [toVal] [ret]
                     }
                     else
                     {
-                        var parse = parseEnum.MakeGenericMethod(toMember.PropertyType);
+                        var parse = parseEnum.MakeGenericMethod(toField.FieldType);
                         il.Emit(OpCodes.Call, parse);                       // [toVal as object] [ret]
                     }
                 }
                 else
                 {
-                    il.Emit(OpCodes.Castclass, toMember.PropertyType);    // [toVal] [ret]
+                    il.Emit(OpCodes.Castclass, toField.FieldType);    // [toVal] [ret]
                 }
 
-                il.Emit(OpCodes.Callvirt, toMember.SetMethod);        // ----
+                il.Emit(OpCodes.Stfld, toField);                        // ----
             }
 
             il.Emit(OpCodes.Ldloc, retLoc);

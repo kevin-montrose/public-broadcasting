@@ -112,43 +112,21 @@ namespace PublicBroadcasting.Impl
             var protoMemberAttr = typeof(ProtoMemberAttribute).GetConstructor(new[] { typeof(int) });
             var protoContractAttr = typeof(ProtoContractAttribute).GetConstructor(new Type[0]);
 
-            var propGetters = new Dictionary<string, MethodInfo>();
+            var fields = new Dictionary<string, FieldInfo>();
 
             TypeBuilder = ModuleBuilder.DefineType(name, TypeAttributes.Public, typeof(DynamicObject), new [] { typeof(IEnumerable) });
             var ix = 1;
-            foreach (var kv in Members)
+            foreach (var kv in Members.OrderBy(o => o.Key, StringComparer.Ordinal))
             {
                 var memberAttrBuilder = new CustomAttributeBuilder(protoMemberAttr, new object[] { ix });
 
                 kv.Value.Seal(existing);
                 var propType = kv.Value.GetPocoType(existing);
 
-                var fieldBldr = TypeBuilder.DefineField("_" + kv.Key + "_" + Guid.NewGuid().ToString().Replace("-", ""), propType, FieldAttributes.Private);
+                var field = TypeBuilder.DefineField(kv.Key, propType, FieldAttributes.Public);
+                field.SetCustomAttribute(memberAttrBuilder);
 
-                var prop = TypeBuilder.DefineProperty(kv.Key, PropertyAttributes.None, propType, null);
-                prop.SetCustomAttribute(memberAttrBuilder);
-
-                var getSetAttr = MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig;
-                var getPropMthdBldr = TypeBuilder.DefineMethod("get_" + kv.Key, getSetAttr, propType, Type.EmptyTypes);
-                var custNameGetIL = getPropMthdBldr.GetILGenerator();
-
-                custNameGetIL.Emit(OpCodes.Ldarg_0);
-                custNameGetIL.Emit(OpCodes.Ldfld, fieldBldr);
-                custNameGetIL.Emit(OpCodes.Ret);
-
-                var setPropMthdBldr = TypeBuilder.DefineMethod("set_" + kv.Key, getSetAttr, null, new Type[] { propType });
-                var custNameSetIL = setPropMthdBldr.GetILGenerator();
-
-                custNameSetIL.Emit(OpCodes.Ldarg_0);
-                custNameSetIL.Emit(OpCodes.Ldarg_1);
-                custNameSetIL.Emit(OpCodes.Stfld, fieldBldr);
-                custNameSetIL.Emit(OpCodes.Ret);
-
-                prop.SetGetMethod(getPropMthdBldr);
-                prop.SetSetMethod(setPropMthdBldr);
-
-                propGetters[kv.Key] = getPropMthdBldr;
-
+                fields[kv.Key] = field;
                 ix++;
             }
 
@@ -191,7 +169,7 @@ namespace PublicBroadcasting.Impl
                 next = il.DefineLabel();
 
                 var memKey = mem.Key;
-                var prop = propGetters[memKey];
+                var field = fields[memKey];
 
                 il.Emit(OpCodes.Dup);               // key key (out object)
                 il.Emit(OpCodes.Ldstr, memKey);     // memKey key key (out object)
@@ -200,11 +178,12 @@ namespace PublicBroadcasting.Impl
 
                 il.Emit(OpCodes.Pop);               // (out object)
                 il.Emit(OpCodes.Ldarg_0);           // this (out object)
-                il.Emit(OpCodes.Callvirt, prop);    // ret (out object);
+                //il.Emit(OpCodes.Callvirt, prop);    // ret (out object)
+                il.Emit(OpCodes.Ldfld, field);      // ret (out object)
 
-                if (prop.ReturnType.IsValueType)
+                if (field.FieldType.IsValueType)
                 {
-                    il.Emit(OpCodes.Box, prop.ReturnType);  // ret (out object);
+                    il.Emit(OpCodes.Box, field.FieldType);  // ret (out object);
                 }
 
                 il.Emit(OpCodes.Br, done);          // ret (out object);

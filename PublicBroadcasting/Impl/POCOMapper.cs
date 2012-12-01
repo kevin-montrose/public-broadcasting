@@ -244,12 +244,12 @@ namespace PublicBroadcasting.Impl
 
                 il.Emit(OpCodes.Ldarg_0);                       // [from] [Func<object, object>] [ret]
 
-                var fromProp = tFrom.GetProperty(mem.Key);
-                il.Emit(OpCodes.Callvirt, fromProp.GetMethod);  // [fromVal] [Func<object, object>] [ret]
+                var fromField = tFrom.GetField(mem.Key);
+                il.Emit(OpCodes.Ldfld, fromField);              // [fromVal] [Func<object, object>] [ret]
 
-                if (fromProp.PropertyType.IsValueType)
+                if (fromField.FieldType.IsValueType)
                 {
-                    il.Emit(OpCodes.Box, fromProp.PropertyType);// [fromVal] [Func<object, object>] [ret]
+                    il.Emit(OpCodes.Box, fromField.FieldType);// [fromVal] [Func<object, object>] [ret]
                 }
 
                 il.Emit(OpCodes.Call, invoke);                  // [toVal (as object)] [ret]
@@ -325,12 +325,12 @@ namespace PublicBroadcasting.Impl
 
                 il.Emit(OpCodes.Ldarg_0);                       // [from] [Func<object, object>] [ret]
 
-                var fromProp = tFrom.GetProperty(mem.Key);
-                il.Emit(OpCodes.Callvirt, fromProp.GetMethod);  // [fromVal] [Func<object, object>] [ret]
+                var fromField = tFrom.GetField(mem.Key);
+                il.Emit(OpCodes.Ldfld, fromField);              // [fromVal] [Func<object, object>] [ret]
 
-                if (fromProp.PropertyType.IsValueType)
+                if (fromField.FieldType.IsValueType)
                 {
-                    il.Emit(OpCodes.Box, fromProp.PropertyType);// [fromVal] [Func<object, object>] [ret]
+                    il.Emit(OpCodes.Box, fromField.FieldType);// [fromVal] [Func<object, object>] [ret]
                 }
 
                 il.Emit(OpCodes.Callvirt, invoke);                  // [toVal (as object)] [ret]
@@ -386,12 +386,12 @@ namespace PublicBroadcasting.Impl
 
             members =
                 tFrom
-                .GetProperties()
+                .GetFields()
                 .ToDictionary(
                     s => s.Name,
                     s =>
                     {
-                        var propType = s.PropertyType;
+                        var fieldType = s.FieldType;
 
                         var to = tTo.GetMember(s.Name).Where(w => w is FieldInfo || w is PropertyInfo).SingleOrDefault();
 
@@ -399,7 +399,7 @@ namespace PublicBroadcasting.Impl
 
                         var toPropType = to is FieldInfo ? (to as FieldInfo).FieldType : (to as PropertyInfo).PropertyType;
 
-                        var mapper = typeof(POCOMapper<,>).MakeGenericType(propType, toPropType);
+                        var mapper = typeof(POCOMapper<,>).MakeGenericType(fieldType, toPropType);
 
                         return (POCOMapper)mapper.GetMethod("Get").Invoke(null, new object[0]);
                     }
@@ -445,16 +445,14 @@ namespace PublicBroadcasting.Impl
 
             Dictionary<string, POCOMapper> members = null;
 
-            var toFields = tTo.GetFields(BindingFlags.Instance | BindingFlags.NonPublic);
-
             members =
                 tFrom
-                .GetProperties()
+                .GetFields()
                 .ToDictionary(
                     s => s.Name,
                     s =>
                     {
-                        var propType = s.PropertyType;
+                        var fieldType = s.FieldType;
 
                         var to = tTo.GetMember(s.Name).Where(w => w is FieldInfo || w is PropertyInfo).SingleOrDefault();
 
@@ -462,7 +460,7 @@ namespace PublicBroadcasting.Impl
 
                         var toPropType = to is FieldInfo ? (to as FieldInfo).FieldType : (to as PropertyInfo).PropertyType;
 
-                        var mapper = typeof(POCOMapper<,>).MakeGenericType(propType, toPropType);
+                        var mapper = typeof(POCOMapper<,>).MakeGenericType(fieldType, toPropType);
 
                         var mapperRet = (POCOMapper)mapper.GetMethod("Get").Invoke(null, new object[0]);
 
@@ -495,12 +493,12 @@ namespace PublicBroadcasting.Impl
 
                 il.Emit(OpCodes.Ldarg_0);                       // [from] [Func<object, object>]
 
-                var fromProp = tFrom.GetProperty(memKey);
-                il.Emit(OpCodes.Callvirt, fromProp.GetMethod);  // [fromVal] [Func<object, object>]
+                var fromField = tFrom.GetField(memKey);
+                il.Emit(OpCodes.Ldfld, fromField);              // [fromVal] [Func<object, object>]
 
-                if (fromProp.PropertyType.IsValueType)
+                if (fromField.FieldType.IsValueType)
                 {
-                    il.Emit(OpCodes.Box, fromProp.PropertyType);// [fromVal] [Func<object, object>]
+                    il.Emit(OpCodes.Box, fromField.FieldType);// [fromVal] [Func<object, object>]
                 }
 
                 il.Emit(OpCodes.Call, invoke);                  // [toVal (as object)]
