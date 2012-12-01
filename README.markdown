@@ -117,6 +117,8 @@ dynamic dyn = Serializer.Deserialize(Serializer.Serialize(new { B = "C" }))
 var equiv = dyn.B == dyn["B"]
 ```
 
+The dynamic value returned also defines `GetEnumerator()`, so foreach can iterate over the object as if it were an `IDictionary<TKey, TValue>`.
+
 Note that generally speaking types **will not** map to the originally serialized types, even if they are theoretically available.  In particular,
 be aware that ValueTypes will not necessarily be ValueTypes and enumerations will not have the same underlying values (though they will have the same
 names).

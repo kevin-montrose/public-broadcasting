@@ -1,5 +1,6 @@
 ﻿using ProtoBuf;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Dynamic;
@@ -12,6 +13,48 @@ using System.Threading.Tasks;
 
 namespace PublicBroadcasting.Impl
 {
+    public class ClassEnumerator : IEnumerator
+    {
+        private object CurrentVal;
+        public object Current
+        {
+            get { if (CurrentVal == null) throw new InvalidOperationException("Enumerator has no value"); return CurrentVal; }
+            private set { CurrentVal = value; }
+        }
+
+        private int Index { get; set; }
+        private List<string> Members { get; set; }
+        private dynamic Values { get; set; }
+
+        public ClassEnumerator(List<string> names, object val)
+        {
+            Members = names;
+            Values = val;
+            Index = -1;
+        }
+
+        public bool MoveNext()
+        {
+            Index++;
+
+            if (Index >= Members.Count)
+            {
+                CurrentVal = null;
+                return false;
+            }
+
+            CurrentVal = new DictionaryEntry(Members[Index], Values[Members[Index]]);
+
+            return true;
+        }
+
+        public void Reset()
+        {
+            Index = -1;
+            CurrentVal = null;
+        }
+    }
+
     public class ProbeClass
     {
         public static bool Validate(object[] objs)
@@ -71,7 +114,7 @@ namespace PublicBroadcasting.Impl
 
             var propGetters = new Dictionary<string, MethodInfo>();
 
-            TypeBuilder = ModuleBuilder.DefineType(name, TypeAttributes.Public, typeof(DynamicObject));
+            TypeBuilder = ModuleBuilder.DefineType(name, TypeAttributes.Public, typeof(DynamicObject), new [] { typeof(IEnumerable) });
             var ix = 1;
             foreach (var kv in Members)
             {
@@ -112,6 +155,7 @@ namespace PublicBroadcasting.Impl
             var contractAttrBuilder = new CustomAttributeBuilder(protoContractAttr, new object[0]);
             TypeBuilder.SetCustomAttribute(contractAttrBuilder);
 
+            // Define indexer
             var validate = typeof(ProbeClass).GetMethod("Validate");
             var eq = typeof(ProbeClass).GetMethod("TwoStrEqs");
 
@@ -178,6 +222,30 @@ namespace PublicBroadcasting.Impl
             il.Emit(OpCodes.Ret);           // ----
 
             TypeBuilder.DefineMethodOverride(tryGetIndex, typeof(DynamicObject).GetMethod("TryGetIndex"));
+
+            // Implement IEnumerable
+            var getEnumerator = TypeBuilder.DefineMethod("GetEnumerator", MethodAttributes.Public | MethodAttributes.Virtual, typeof(IEnumerator), Type.EmptyTypes);
+            il = getEnumerator.GetILGenerator();
+
+            var newStrList = typeof(List<string>).GetConstructor(new[] { typeof(int) });
+            var newEnumerator = typeof(ClassEnumerator).GetConstructor(new[] { typeof(List<string>), typeof(object) });
+            var add = typeof(List<string>).GetMethod("Add");
+
+            il.Emit(OpCodes.Ldc_I4, Members.Count); // [count]
+            il.Emit(OpCodes.Newobj, newStrList);    // [mems]
+
+            foreach (var mem in Members)
+            {
+                il.Emit(OpCodes.Dup);               // [mems] [mems]
+                il.Emit(OpCodes.Ldstr, mem.Key);    // [key] [mems] [mems]
+                il.Emit(OpCodes.Call, add);         // [mems]
+            }
+
+            il.Emit(OpCodes.Ldarg_0);               // [this] [mems]
+            il.Emit(OpCodes.Newobj, newEnumerator); // [ret]
+            il.Emit(OpCodes.Ret);
+
+            TypeBuilder.DefineMethodOverride(getEnumerator, typeof(IEnumerable).GetMethod("GetEnumerator"));
 
             PocoType = TypeBuilder.CreateType();
         }

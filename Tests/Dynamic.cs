@@ -55,5 +55,30 @@ namespace Tests
                 Assert.AreEqual(i + 1, dyn["D"][i]);
             }
         }
+
+        [TestMethod]
+        public void ForEach()
+        {
+            var bytes = Serializer.Serialize(new { A = "Foo", B = 123, C = (int?)2, C2 = (int?)null, D = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 } });
+            var dyn = Serializer.Deserialize(bytes);
+
+            foreach (var kv in dyn)
+            {
+                switch ((string)kv.Key)
+                {
+                    case "A": Assert.AreEqual("Foo", kv.Value); break;
+                    case "B": Assert.AreEqual(123, kv.Value); break;
+                    case "C": Assert.AreEqual((int?)2, kv.Value); break;
+                    case "C2": Assert.AreEqual((int?)null, kv.Value); break;
+                    case "D":
+                        for (var i = 0; i < 10; i++)
+                        {
+                            Assert.AreEqual(i + 1, kv.Value[i]);
+                        }
+                        break;
+                    default: Assert.Fail("Unexpected element " + kv.Key); break;
+                }
+            }
+        }
     }
 }
