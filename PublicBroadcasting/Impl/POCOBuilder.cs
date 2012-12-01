@@ -10,15 +10,17 @@ using System.Threading.Tasks;
 
 namespace PublicBroadcasting.Impl
 {
-    class POCOBuilder
+    internal class POCOBuilder
     {
+        internal Type To { get; set; }
         protected Func<object, object> Mapper { get; set; }
 
         protected POCOBuilder() { }
 
-        internal POCOBuilder(Func<object, object> mapper)
+        internal POCOBuilder(Func<object, object> mapper, Type to)
         {
             Mapper = mapper;
+            To = to;
         }
 
         public Func<object, object> GetMapper()
@@ -27,9 +29,12 @@ namespace PublicBroadcasting.Impl
         }
     }
 
-    class PromisedPOCOBuilder : POCOBuilder
+    internal class PromisedPOCOBuilder : POCOBuilder
     {
-        internal PromisedPOCOBuilder() { }
+        internal PromisedPOCOBuilder(Type to)
+        {
+            To = to;
+        }
 
         public void Fulfil(Func<object, object> finalMapper)
         {
@@ -47,18 +52,18 @@ namespace PublicBroadcasting.Impl
 
         static POCOBuilder()
         {
-            PromisedBuilder = new PromisedPOCOBuilder();
+            var desc = (TypeDescription)typeof(Describer).GetMethod("GetForUse").Invoke(null, new object[] { false });
 
-            var builder = Build();
+            PromisedBuilder = new PromisedPOCOBuilder(desc.GetPocoType());
+
+            var builder = Build(desc);
             PromisedBuilder.Fulfil(builder.GetMapper());
 
             Builder = builder;
         }
 
-        private static POCOBuilder Build()
+        private static POCOBuilder Build(TypeDescription desc)
         {
-            var desc = (TypeDescription)typeof(Describer).GetMethod("GetForUse").Invoke(null, new object[] { false });
-
             if (desc is ListTypeDescription)
             {
                 return GetListMapper();
@@ -78,7 +83,8 @@ namespace PublicBroadcasting.Impl
                         x =>
                         {
                             return x != null ? x.ToString() : null;
-                        }
+                        },
+                        typeof(string)
                     );
             }
 
@@ -106,30 +112,31 @@ namespace PublicBroadcasting.Impl
                         }
                         
                         return mapped;
-                    }
+                    },
+                    innerType.IsEnum ? innerType : mapper.To
                 );
             }
 
             if (desc is SimpleTypeDescription)
             {
-                if (desc == SimpleTypeDescription.Byte) return new POCOBuilder(x => x is byte ? (byte)x : Convert.ToByte(x));
-                if (desc == SimpleTypeDescription.SByte) return new POCOBuilder(x => x is sbyte ? (sbyte)x : Convert.ToSByte(x));
-                if (desc == SimpleTypeDescription.Short) return new POCOBuilder(x => x is short ? (short)x : Convert.ToInt16(x));
-                if (desc == SimpleTypeDescription.UShort) return new POCOBuilder(x => x is ushort ? (ushort)x : Convert.ToUInt16(x));
-                if (desc == SimpleTypeDescription.Int) return new POCOBuilder(x => x is int ? (int)x : Convert.ToInt32(x));
-                if (desc == SimpleTypeDescription.UInt) return new POCOBuilder(x => x is uint ? (uint)x : Convert.ToUInt32(x));
-                if (desc == SimpleTypeDescription.Long) return new POCOBuilder(x => x is long ? (long)x : Convert.ToInt64(x));
-                if (desc == SimpleTypeDescription.ULong) return new POCOBuilder(x => x is ulong ? (ulong)x : Convert.ToUInt64(x));
-                if (desc == SimpleTypeDescription.Double) return new POCOBuilder(x => x is double ? (double)x : Convert.ToDouble(x));
-                if (desc == SimpleTypeDescription.Float) return new POCOBuilder(x => x is float ? (float)x : Convert.ToSingle(x));
-                if (desc == SimpleTypeDescription.Decimal) return new POCOBuilder(x => x is decimal ? (decimal)x : Convert.ToDecimal(x));
-                if (desc == SimpleTypeDescription.Char) return new POCOBuilder(x => x is char ? (char)x : Convert.ToChar(x));
-                if (desc == SimpleTypeDescription.String) return new POCOBuilder(x => x is string || x == null ? (string)x : x.ToString());
-                if (desc == SimpleTypeDescription.Bool) return new POCOBuilder(x => x is bool ? (bool)x : Convert.ToBoolean(x));
-                if (desc == SimpleTypeDescription.DateTime) return new POCOBuilder(x => x is DateTime? (DateTime)x : Convert.ToDateTime(x));
-                if (desc == SimpleTypeDescription.TimeSpan) return new POCOBuilder(x => (TimeSpan)x);
-                if (desc == SimpleTypeDescription.Guid) return new POCOBuilder(x => (Guid)x);
-                if (desc == SimpleTypeDescription.Uri) return new POCOBuilder(x => (Uri)x);
+                if (desc == SimpleTypeDescription.Byte) return new POCOBuilder(x => x is byte ? (byte)x : Convert.ToByte(x), typeof(byte));
+                if (desc == SimpleTypeDescription.SByte) return new POCOBuilder(x => x is sbyte ? (sbyte)x : Convert.ToSByte(x), typeof(sbyte));
+                if (desc == SimpleTypeDescription.Short) return new POCOBuilder(x => x is short ? (short)x : Convert.ToInt16(x), typeof(short));
+                if (desc == SimpleTypeDescription.UShort) return new POCOBuilder(x => x is ushort ? (ushort)x : Convert.ToUInt16(x), typeof(ushort));
+                if (desc == SimpleTypeDescription.Int) return new POCOBuilder(x => x is int ? (int)x : Convert.ToInt32(x), typeof(int));
+                if (desc == SimpleTypeDescription.UInt) return new POCOBuilder(x => x is uint ? (uint)x : Convert.ToUInt32(x), typeof(uint));
+                if (desc == SimpleTypeDescription.Long) return new POCOBuilder(x => x is long ? (long)x : Convert.ToInt64(x), typeof(long));
+                if (desc == SimpleTypeDescription.ULong) return new POCOBuilder(x => x is ulong ? (ulong)x : Convert.ToUInt64(x), typeof(ulong));
+                if (desc == SimpleTypeDescription.Double) return new POCOBuilder(x => x is double ? (double)x : Convert.ToDouble(x), typeof(double));
+                if (desc == SimpleTypeDescription.Float) return new POCOBuilder(x => x is float ? (float)x : Convert.ToSingle(x), typeof(float));
+                if (desc == SimpleTypeDescription.Decimal) return new POCOBuilder(x => x is decimal ? (decimal)x : Convert.ToDecimal(x), typeof(decimal));
+                if (desc == SimpleTypeDescription.Char) return new POCOBuilder(x => x is char ? (char)x : Convert.ToChar(x), typeof(char));
+                if (desc == SimpleTypeDescription.String) return new POCOBuilder(x => x is string || x == null ? (string)x : x.ToString(), typeof(string));
+                if (desc == SimpleTypeDescription.Bool) return new POCOBuilder(x => x is bool ? (bool)x : Convert.ToBoolean(x), typeof(bool));
+                if (desc == SimpleTypeDescription.DateTime) return new POCOBuilder(x => x is DateTime? (DateTime)x : Convert.ToDateTime(x), typeof(DateTime));
+                if (desc == SimpleTypeDescription.TimeSpan) return new POCOBuilder(x => (TimeSpan)x, typeof(TimeSpan));
+                if (desc == SimpleTypeDescription.Guid) return new POCOBuilder(x => (Guid)x, typeof(Guid));
+                if (desc == SimpleTypeDescription.Uri) return new POCOBuilder(x => (Uri)x, typeof(Uri));
 
                 throw new Exception("Shouldn't be possible, found " + desc);
             }
@@ -388,7 +395,8 @@ namespace PublicBroadcasting.Impl
                         var asFrom = (From)from;
 
                         return func(asFrom, members);
-                    }
+                    },
+                    pocoType
                 );
         }
 
@@ -415,28 +423,17 @@ namespace PublicBroadcasting.Impl
 
             var itemMapper = (POCOBuilder)(typeof(POCOBuilder<,>).MakeGenericType(fromListType, descType).GetMethod("GetMapper").Invoke(null, new object[0]));
 
-            Func<int, IList> newListDyn = null;
+            Func<int, IList> newListDyn;
 
-            Func<object, int, IList> newList =
-                (example, size) =>
-                {
-                    if (newListDyn != null)
-                    {
-                        return newListDyn(size);
-                    }
+            var cons = typeof(List<>).MakeGenericType(itemMapper.To).GetConstructor(new[] { typeof(int) });
+            var dyn = new DynamicMethod("POCOBuilder_NewList_" + itemMapper.To.FullName, typeof(IList), new[] { typeof(int) }, restrictedSkipVisibility: true);
+            var il = dyn.GetILGenerator();
 
-                    var cons = typeof(List<>).MakeGenericType(example.GetType()).GetConstructor(new[] { typeof(int) });
-                    var dyn = new DynamicMethod("POCOBuilder_NewList_" + example.GetType().FullName, typeof(IList), new [] { typeof(int) }, restrictedSkipVisibility: true);
-                    var il = dyn.GetILGenerator();
+            il.Emit(OpCodes.Ldarg_0);       // [size]
+            il.Emit(OpCodes.Newobj, cons);  // [ret]
+            il.Emit(OpCodes.Ret);           // ----
 
-                    il.Emit(OpCodes.Ldarg_0);       // [size]
-                    il.Emit(OpCodes.Newobj, cons);  // [ret]
-                    il.Emit(OpCodes.Ret);           // ----
-
-                    newListDyn = (Func<int, IList>)dyn.CreateDelegate(typeof(Func<int, IList>));
-
-                    return newListDyn(size);
-                };
+            newListDyn = (Func<int, IList>)dyn.CreateDelegate(typeof(Func<int, IList>));
 
             return
                 new POCOBuilder(
@@ -449,19 +446,17 @@ namespace PublicBroadcasting.Impl
 
                         var iMap = itemMapper.GetMapper();
 
-                        var first = itemMapper.GetMapper()(asList[0]);
+                        var ret = newListDyn(asList.Count);
 
-                        var ret = newList(first, asList.Count);
-
-                        ret.Add(first);
-                        for (var i = 1; i < asList.Count; i++)
+                        for (var i = 0; i < asList.Count; i++)
                         {
                             var mapped = iMap(asList[i]);
                             ret.Add(mapped);
                         }
 
                         return ret;
-                    }
+                    },
+                    typeof(IList<>).MakeGenericType(itemMapper.To)
                 );
         }
 
@@ -485,27 +480,17 @@ namespace PublicBroadcasting.Impl
             var keyMapper = (POCOBuilder)(typeof(POCOBuilder<,>).MakeGenericType(keyType, keyDescType).GetMethod("GetMapper").Invoke(null, new object[0]));
             var valMapper = (POCOBuilder)(typeof(POCOBuilder<,>).MakeGenericType(valType, valDescType).GetMethod("GetMapper").Invoke(null, new object[0]));
 
-            Func<int, IDictionary> newDictDyn = null;
-            Func<object, object, int, IDictionary> newDict =
-                (exampleKey, exampleVal, size) =>
-                {
-                    if (newDictDyn != null)
-                    {
-                        return newDictDyn(size);
-                    }
+            Func<int, IDictionary> newDictDyn;
 
-                    var cons = typeof(Dictionary<,>).MakeGenericType(exampleKey.GetType(), exampleVal.GetType()).GetConstructor(new[] { typeof(int) });
-                    var dyn = new DynamicMethod("POCOBuilder_NewDict_" + exampleKey.GetType().FullName + "_" + exampleVal.GetType().FullName, typeof(IDictionary), new[] { typeof(int) }, restrictedSkipVisibility: true);
-                    var il = dyn.GetILGenerator();
+            var cons = typeof(Dictionary<,>).MakeGenericType(keyMapper.To, valMapper.To).GetConstructor(new[] { typeof(int) });
+            var dyn = new DynamicMethod("POCOBuilder_NewDict_" + keyMapper.To.FullName + "_" + valMapper.To.FullName, typeof(IDictionary), new[] { typeof(int) }, restrictedSkipVisibility: true);
+            var il = dyn.GetILGenerator();
 
-                    il.Emit(OpCodes.Ldarg_0);       // [size]
-                    il.Emit(OpCodes.Newobj, cons);  // [ret]
-                    il.Emit(OpCodes.Ret);           // -----
+            il.Emit(OpCodes.Ldarg_0);       // [size]
+            il.Emit(OpCodes.Newobj, cons);  // [ret]
+            il.Emit(OpCodes.Ret);           // -----
 
-                    newDictDyn = (Func<int, IDictionary>)dyn.CreateDelegate(typeof(Func<int, IDictionary>));
-
-                    return newDictDyn(size);
-                };
+            newDictDyn = (Func<int, IDictionary>)dyn.CreateDelegate(typeof(Func<int, IDictionary>));
 
             return
                 new POCOBuilder(
@@ -519,19 +504,9 @@ namespace PublicBroadcasting.Impl
                         var kMap = keyMapper.GetMapper();
                         var vMap = valMapper.GetMapper();
 
+                        var ret = newDictDyn(asDict.Count);
+
                         var e = asDict.GetEnumerator();
-                        e.MoveNext();
-
-                        var entry = e.Entry;
-                        var firstKey = entry.Key;
-                        var firstVal = entry.Value;
-
-                        var fkMapped = kMap(firstKey);
-                        var fvMapped = vMap(firstVal);
-
-                        var ret = newDict(fkMapped, fvMapped, asDict.Count);
-
-                        ret.Add(fkMapped, fvMapped);
 
                         while (e.MoveNext())
                         {
@@ -543,7 +518,8 @@ namespace PublicBroadcasting.Impl
                         }
 
                         return ret;
-                    }
+                    },
+                    typeof(IDictionary<,>).MakeGenericType(keyMapper.To, valMapper.To)
                 );
         }
 
