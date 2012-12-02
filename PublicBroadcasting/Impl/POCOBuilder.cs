@@ -21,7 +21,7 @@ namespace PublicBroadcasting.Impl
                 get { return Current; }
             }
 
-            private IEnumerator KeyEnumerable;
+            private IDictionaryEnumerator InnerEnumerable;
             private OnDemandDictionary<FromKey, FromVal, ToKey, ToVal> Dictionary;
             public Enumerator(OnDemandDictionary<FromKey, FromVal, ToKey, ToVal> dict)
             {
@@ -30,19 +30,21 @@ namespace PublicBroadcasting.Impl
 
             public bool MoveNext()
             {
-                if (KeyEnumerable == null)
+                if (InnerEnumerable == null)
                 {
-                    KeyEnumerable = Dictionary.InnerDictionary.Keys.GetEnumerator();
+                    InnerEnumerable = Dictionary.InnerDictionary.GetEnumerator();
                 }
 
-                if (!KeyEnumerable.MoveNext())
+                if (!InnerEnumerable.MoveNext())
                 {
                     Current = default(KeyValuePair<ToKey, ToVal>);
                     return false;
                 }
 
-                var key = KeyEnumerable.Current;
-                var val = Dictionary.InnerDictionary[key];
+                var entry = InnerEnumerable.Entry;
+
+                var key = entry.Key;
+                var val = entry.Value;
 
                 var mappedKey = (ToKey)Dictionary.KeyMapper(key);
                 var mappedVal = (ToVal)Dictionary.ValueMapper(val);
@@ -54,7 +56,7 @@ namespace PublicBroadcasting.Impl
 
             public void Reset()
             {
-                KeyEnumerable = null;
+                InnerEnumerable = null;
                 Current = default(KeyValuePair<ToKey, ToVal>);
             }
 
