@@ -116,15 +116,14 @@ namespace PublicBroadcasting.Impl
 
                         var asDict = (IDictionary)dictX;
 
-                        var e = asDict.Keys.GetEnumerator();
+                        var e = asDict.GetEnumerator();
 
                         while (e.MoveNext())
                         {
-                            var key = e.Current;
-                            var mKey = keyFunc(key);
+                            var entry = e.Entry;
 
-                            var val = asDict[key];
-                            var mVal = valFunc(val);
+                            var mKey = keyFunc(entry.Key);
+                            var mVal = valFunc(entry.Value);
 
                             ret.Add(mKey, mVal);
                         }
