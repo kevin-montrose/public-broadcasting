@@ -10,6 +10,160 @@ using System.Threading.Tasks;
 
 namespace PublicBroadcasting.Impl
 {
+    public class OnDemandDictionary<FromKey, FromVal, ToKey, ToVal> : IDictionary<ToKey, ToVal>
+    {
+        class Enumerator : IEnumerator<KeyValuePair<ToKey, ToVal>>, IEnumerator
+        {
+            public KeyValuePair<ToKey, ToVal> Current { get; private set; }
+
+            object IEnumerator.Current
+            {
+                get { return Current; }
+            }
+
+            private IEnumerator KeyEnumerable;
+            private OnDemandDictionary<FromKey, FromVal, ToKey, ToVal> Dictionary;
+            public Enumerator(OnDemandDictionary<FromKey, FromVal, ToKey, ToVal> dict)
+            {
+                Dictionary = dict;
+            }
+
+            public bool MoveNext()
+            {
+                if (KeyEnumerable == null)
+                {
+                    KeyEnumerable = Dictionary.InnerDictionary.Keys.GetEnumerator();
+                }
+
+                if (!KeyEnumerable.MoveNext())
+                {
+                    Current = default(KeyValuePair<ToKey, ToVal>);
+                    return false;
+                }
+
+                var key = KeyEnumerable.Current;
+                var val = Dictionary.InnerDictionary[key];
+
+                var mappedKey = (ToKey)Dictionary.KeyMapper(key);
+                var mappedVal = (ToVal)Dictionary.ValueMapper(val);
+
+                Current = new KeyValuePair<ToKey, ToVal>(mappedKey, mappedVal);
+
+                return true;
+            }
+
+            public void Reset()
+            {
+                KeyEnumerable = null;
+                Current = default(KeyValuePair<ToKey, ToVal>);
+            }
+
+            public void Dispose() { }
+        }
+
+        public ICollection<ToKey> Keys
+        {
+            get { throw new NotImplementedException(); }
+        }
+
+        public ICollection<ToVal> Values
+        {
+            get { throw new NotImplementedException(); }
+        }
+
+        public int Count
+        {
+            get { return InnerDictionary.Count; }
+        }
+
+        public bool IsReadOnly
+        {
+            get { return true; }
+        }
+
+        public ToVal this[ToKey key]
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+            set
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        private IDictionary InnerDictionary;
+        private Func<object, object> KeyMapper;
+        private Func<object, object> ValueMapper;
+
+        public OnDemandDictionary(IDictionary innerDict, Func<object, object> keyMapper, Func<object, object> valMapper)
+        {
+            InnerDictionary = innerDict;
+            KeyMapper = keyMapper;
+            ValueMapper = valMapper;
+        }
+
+        public IEnumerator<KeyValuePair<ToKey, ToVal>> GetEnumerator()
+        {
+            return new Enumerator(this);
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return new Enumerator(this);
+        }
+
+        #region Not Implemented
+
+        public void Add(ToKey key, ToVal value)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool ContainsKey(ToKey key)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Remove(ToKey key)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool TryGetValue(ToKey key, out ToVal value)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Add(KeyValuePair<ToKey, ToVal> item)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Clear()
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Contains(KeyValuePair<ToKey, ToVal> item)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void CopyTo(KeyValuePair<ToKey, ToVal>[] array, int arrayIndex)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Remove(KeyValuePair<ToKey, ToVal> item)
+        {
+            throw new NotImplementedException();
+        }
+
+        #endregion
+    }
+
     public class OnDemandList<From, To> : IList<To>
     {
         class Enumerator<A, B> : IEnumerator, IEnumerator<B>
@@ -555,18 +709,6 @@ namespace PublicBroadcasting.Impl
 
             var itemMapper = (POCOBuilder)(typeof(POCOBuilder<,>).MakeGenericType(fromListType, descType).GetMethod("GetMapper").Invoke(null, new object[0]));
 
-            /*Func<int, IList> newListDyn;
-
-            var cons = typeof(List<>).MakeGenericType(itemMapper.To).GetConstructor(new[] { typeof(int) });
-            var dyn = new DynamicMethod("POCOBuilder_NewList_" + itemMapper.To.FullName, typeof(IList), new[] { typeof(int) }, restrictedSkipVisibility: true);
-            var il = dyn.GetILGenerator();
-
-            il.Emit(OpCodes.Ldarg_0);       // [size]
-            il.Emit(OpCodes.Newobj, cons);  // [ret]
-            il.Emit(OpCodes.Ret);           // ----
-
-            newListDyn = (Func<int, IList>)dyn.CreateDelegate(typeof(Func<int, IList>));*/
-
             Func<IList, Func<object, object>, object> mapperListDyn;
             var cons = typeof(OnDemandList<,>).MakeGenericType(typeof(From), itemMapper.To).GetConstructor(new[] { typeof(IList), typeof(Func<object, object>) });
             var dyn = new DynamicMethod("POCOBuilder_NewList_" + itemMapper.To.FullName, typeof(object), new[] { typeof(IList), typeof(Func<object, object>) }, restrictedSkipVisibility: true);
@@ -591,13 +733,6 @@ namespace PublicBroadcasting.Impl
                         var iMap = itemMapper.GetMapper();
 
                         var ret = mapperListDyn(asList, iMap);
-
-                        /*var ret = newListDyn(asList.Count);
-
-                        for (var i = 0; i < asList.Count; i++)
-                        {
-                            ret.Add(iMap(asList[i]));
-                        }*/
 
                         return ret;
                     },
@@ -625,17 +760,18 @@ namespace PublicBroadcasting.Impl
             var keyMapper = (POCOBuilder)(typeof(POCOBuilder<,>).MakeGenericType(keyType, keyDescType).GetMethod("GetMapper").Invoke(null, new object[0]));
             var valMapper = (POCOBuilder)(typeof(POCOBuilder<,>).MakeGenericType(valType, valDescType).GetMethod("GetMapper").Invoke(null, new object[0]));
 
-            Func<int, IDictionary> newDictDyn;
-
-            var cons = typeof(Dictionary<,>).MakeGenericType(keyMapper.To, valMapper.To).GetConstructor(new[] { typeof(int) });
-            var dyn = new DynamicMethod("POCOBuilder_NewDict_" + keyMapper.To.FullName + "_" + valMapper.To.FullName, typeof(IDictionary), new[] { typeof(int) }, restrictedSkipVisibility: true);
+            Func<IDictionary, Func<object, object>, Func<object, object>, object> mapperDictDyn;
+            var cons = typeof(OnDemandDictionary<,,,>).MakeGenericType(keyType, valType, keyMapper.To, valMapper.To).GetConstructor(new[] { typeof(IDictionary), typeof(Func<object, object>), typeof(Func<object, object>) });
+            var dyn = new DynamicMethod("POCOBuilder_NewDict_" + keyType.FullName + "_" + valType.FullName + "_" + keyMapper.To.FullName + "_" + valMapper.To.FullName, typeof(object), new[] { typeof(IDictionary), typeof(Func<object, object>), typeof(Func<object, object>) }, restrictedSkipVisibility: true);
             var il = dyn.GetILGenerator();
 
-            il.Emit(OpCodes.Ldarg_0);       // [size]
+            il.Emit(OpCodes.Ldarg_0);       // [IDictionary]
+            il.Emit(OpCodes.Ldarg_1);       // [Func<object, object>] [IDictionary]
+            il.Emit(OpCodes.Ldarg_2);       // [Func<object, object>] [Func<object, object>] [IDictionary]
             il.Emit(OpCodes.Newobj, cons);  // [ret]
             il.Emit(OpCodes.Ret);           // -----
 
-            newDictDyn = (Func<int, IDictionary>)dyn.CreateDelegate(typeof(Func<int, IDictionary>));
+            mapperDictDyn = (Func<IDictionary, Func<object, object>, Func<object, object>, object>)dyn.CreateDelegate(typeof(Func<IDictionary, Func<object, object>, Func<object, object>, object>));
 
             return
                 new POCOBuilder(
@@ -649,22 +785,11 @@ namespace PublicBroadcasting.Impl
                         var kMap = keyMapper.GetMapper();
                         var vMap = valMapper.GetMapper();
 
-                        var ret = newDictDyn(asDict.Count);
-
-                        var e = asDict.GetEnumerator();
-
-                        while (e.MoveNext())
-                        {
-                            var curEntry = e.Entry;
-                            var mappedKey = kMap(curEntry.Key);
-                            var mappedValue = vMap(curEntry.Value);
-
-                            ret.Add(mappedKey, mappedValue);
-                        }
+                        var ret = mapperDictDyn(asDict, kMap, vMap);
 
                         return ret;
                     },
-                    typeof(IDictionary<,>).MakeGenericType(keyMapper.To, valMapper.To)
+                    typeof(OnDemandDictionary<,,,>).MakeGenericType(keyType, valType, keyMapper.To, valMapper.To)
                 );
         }
 

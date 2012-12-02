@@ -30,7 +30,7 @@ namespace PublicBroadcasting.Impl
 
         internal override Type GetPocoType(TypeDescription existing = null)
         {
-            return typeof(Dictionary<,>).MakeGenericType(KeyType.GetPocoType(existing), ValueType.GetPocoType(existing));
+            return typeof(IDictionary<,>).MakeGenericType(KeyType.GetPocoType(existing), ValueType.GetPocoType(existing));
         }
 
         internal override void Seal(TypeDescription existing = null)
