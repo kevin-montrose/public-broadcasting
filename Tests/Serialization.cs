@@ -139,6 +139,54 @@ namespace Tests
         }
 
         [TestMethod]
+        public void WidenCollections()
+        {
+            var b = Serializer.Serialize(new List<byte> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
+            var s = Serializer.Deserialize<List<short>>(b);
+            var us = Serializer.Deserialize<List<ushort>>(b);
+            var i = Serializer.Deserialize<List<int>>(b);
+            var ui = Serializer.Deserialize<List<uint>>(b);
+            var l = Serializer.Deserialize<List<long>>(b);
+            var ul = Serializer.Deserialize<List<ulong>>(b);
+            var f = Serializer.Deserialize<List<float>>(b);
+            var d = Serializer.Deserialize<List<double>>(b);
+            var m = Serializer.Deserialize<List<decimal>>(b);
+            
+            var sa = Serializer.Deserialize<short[]>(b);
+            var usa = Serializer.Deserialize<ushort[]>(b);
+            var ia = Serializer.Deserialize<int[]>(b);
+            var uia = Serializer.Deserialize<uint[]>(b);
+            var la = Serializer.Deserialize<long[]>(b);
+            var ula = Serializer.Deserialize<ulong[]>(b);
+            var fa = Serializer.Deserialize<float[]>(b);
+            var da = Serializer.Deserialize<double[]>(b);
+            var ma = Serializer.Deserialize<decimal[]>(b);
+
+            for (var j = 0; j < 10; j++)
+            {
+                Assert.AreEqual((short)(j + 1), s[j]);
+                Assert.AreEqual((ushort)(j + 1), us[j]);
+                Assert.AreEqual((int)(j + 1), i[j]);
+                Assert.AreEqual((uint)(j + 1), ui[j]);
+                Assert.AreEqual((long)(j + 1), l[j]);
+                Assert.AreEqual((ulong)(j + 1), ul[j]);
+                Assert.AreEqual((float)(j + 1), f[j]);
+                Assert.AreEqual((double)(j + 1), d[j]);
+                Assert.AreEqual((decimal)(j + 1), m[j]);
+
+                Assert.AreEqual((short)(j + 1), sa[j]);
+                Assert.AreEqual((ushort)(j + 1), usa[j]);
+                Assert.AreEqual((int)(j + 1), ia[j]);
+                Assert.AreEqual((uint)(j + 1), uia[j]);
+                Assert.AreEqual((long)(j + 1), la[j]);
+                Assert.AreEqual((ulong)(j + 1), ula[j]);
+                Assert.AreEqual((float)(j + 1), fa[j]);
+                Assert.AreEqual((double)(j + 1), da[j]);
+                Assert.AreEqual((decimal)(j + 1), ma[j]);
+            }
+        }
+
+        [TestMethod]
         public void Widen()
         {
             //Byte -> Short, UShort, Integer, UInteger, Long, ULong, Decimal, Single, Double
