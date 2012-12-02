@@ -10,6 +10,137 @@ using System.Threading.Tasks;
 
 namespace PublicBroadcasting.Impl
 {
+    public class OnDemandList<From, To> : IList<To>
+    {
+        class Enumerator<A, B> : IEnumerator, IEnumerator<B>
+        {
+            object IEnumerator.Current
+            {
+                get { return this.Current; }
+            }
+
+            public B Current { get; private set; }
+
+            private int Index = -1;
+            private OnDemandList<A, B> List;
+
+            public Enumerator(OnDemandList<A, B> list)
+            {
+                List = list;
+            }
+
+            public bool MoveNext()
+            {
+                Index++;
+
+                if (Index >= List.Count) return false;
+
+                Current = List[Index];
+
+                return true;
+            }
+
+            public void Reset()
+            {
+                Index = -1;
+                Current = default(B);
+            }
+
+            public void Dispose() { }
+        }
+
+        public Type FromType { get { return typeof(From); } }
+        public Type ToType { get { return typeof(To); } }
+
+        public int Count
+        {
+            get { return UnderlyingList.Count; }
+        }
+
+        public bool IsReadOnly
+        {
+            get { return true; }
+        }
+
+        public To this[int index]
+        {
+            get
+            {
+                var raw = UnderlyingList[index];
+                var mapped = Mapper(raw);
+
+                return (To)mapped;
+            }
+            set
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        private IList UnderlyingList;
+        private Func<object, object> Mapper;
+
+        public OnDemandList(IList underlyingList, Func<object, object> mapper)
+        {
+            UnderlyingList = underlyingList;
+            Mapper = mapper;
+        }
+
+        public IEnumerator<To> GetEnumerator()
+        {
+            return new Enumerator<From, To>(this);
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return new Enumerator<From, To>(this);
+        }
+
+        #region Not Implemented
+
+        public int IndexOf(To item)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Insert(int index, To item)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void RemoveAt(int index)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Add(To item)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Clear()
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Contains(To item)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void CopyTo(To[] array, int arrayIndex)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Remove(To item)
+        {
+            throw new NotImplementedException();
+        }
+
+        #endregion
+    }
+
     internal class POCOBuilder
     {
         internal Type To { get; set; }
@@ -407,7 +538,8 @@ namespace PublicBroadcasting.Impl
             if (typeof(From).IsArray)
             {
                 fromListType = typeof(From).GetElementType();
-            }else
+            }
+            else
             {
                 var list = typeof(From);
 
@@ -423,7 +555,7 @@ namespace PublicBroadcasting.Impl
 
             var itemMapper = (POCOBuilder)(typeof(POCOBuilder<,>).MakeGenericType(fromListType, descType).GetMethod("GetMapper").Invoke(null, new object[0]));
 
-            Func<int, IList> newListDyn;
+            /*Func<int, IList> newListDyn;
 
             var cons = typeof(List<>).MakeGenericType(itemMapper.To).GetConstructor(new[] { typeof(int) });
             var dyn = new DynamicMethod("POCOBuilder_NewList_" + itemMapper.To.FullName, typeof(IList), new[] { typeof(int) }, restrictedSkipVisibility: true);
@@ -433,7 +565,19 @@ namespace PublicBroadcasting.Impl
             il.Emit(OpCodes.Newobj, cons);  // [ret]
             il.Emit(OpCodes.Ret);           // ----
 
-            newListDyn = (Func<int, IList>)dyn.CreateDelegate(typeof(Func<int, IList>));
+            newListDyn = (Func<int, IList>)dyn.CreateDelegate(typeof(Func<int, IList>));*/
+
+            Func<IList, Func<object, object>, object> mapperListDyn;
+            var cons = typeof(OnDemandList<,>).MakeGenericType(typeof(From), itemMapper.To).GetConstructor(new[] { typeof(IList), typeof(Func<object, object>) });
+            var dyn = new DynamicMethod("POCOBuilder_NewList_" + itemMapper.To.FullName, typeof(object), new[] { typeof(IList), typeof(Func<object, object>) }, restrictedSkipVisibility: true);
+            var il = dyn.GetILGenerator();
+
+            il.Emit(OpCodes.Ldarg_0);       // [ilist]
+            il.Emit(OpCodes.Ldarg_1);       // [func<object, object>] [ilist]
+            il.Emit(OpCodes.Newobj, cons);  // [ret]
+            il.Emit(OpCodes.Ret);           // -----
+
+            mapperListDyn = (Func<IList, Func<object, object>, object>)dyn.CreateDelegate(typeof(Func<IList, Func<object, object>, object>));
 
             return
                 new POCOBuilder(
@@ -446,17 +590,18 @@ namespace PublicBroadcasting.Impl
 
                         var iMap = itemMapper.GetMapper();
 
-                        var ret = newListDyn(asList.Count);
+                        var ret = mapperListDyn(asList, iMap);
+
+                        /*var ret = newListDyn(asList.Count);
 
                         for (var i = 0; i < asList.Count; i++)
                         {
-                            var mapped = iMap(asList[i]);
-                            ret.Add(mapped);
-                        }
+                            ret.Add(iMap(asList[i]));
+                        }*/
 
                         return ret;
                     },
-                    typeof(IList<>).MakeGenericType(itemMapper.To)
+                    typeof(OnDemandList<,>).MakeGenericType(typeof(From), itemMapper.To)
                 );
         }
 

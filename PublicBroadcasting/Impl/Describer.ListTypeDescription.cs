@@ -1,5 +1,6 @@
 ﻿using ProtoBuf;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -27,7 +28,7 @@ namespace PublicBroadcasting.Impl
 
         internal override Type GetPocoType(TypeDescription existing = null)
         {
-            return typeof(List<>).MakeGenericType(Contains.GetPocoType(existing));
+            return typeof(IList<>).MakeGenericType(Contains.GetPocoType(existing));
         }
 
         internal override void Seal(TypeDescription existing = null)
