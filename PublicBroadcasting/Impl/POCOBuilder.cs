@@ -361,15 +361,17 @@ namespace PublicBroadcasting.Impl
 
             if (desc is EnumTypeDescription)
             {
-                var vals = ((EnumTypeDescription)desc).Values;
+                var type = ((EnumTypeDescription)desc).GetPocoType();
 
                 return 
                     new POCOBuilder(
                         x =>
                         {
-                            return x != null ? x.ToString() : null;
+                            return Enum.Parse(type, x.ToString());
+
+                            //return x != null ? x.ToString() : null;
                         },
-                        typeof(string)
+                        type
                     );
             }
 
@@ -438,7 +440,7 @@ namespace PublicBroadcasting.Impl
 
         private static object ParseEnumNonGeneric(object o, Type @enum)
         {
-            var asStr = (string)o;
+            var asStr = o.ToString();
 
             var ret = Enum.Parse(@enum, asStr);
 
@@ -447,6 +449,11 @@ namespace PublicBroadcasting.Impl
 
         private static T ParseEnum<T>(object o) where T : struct
         {
+            if (o is T)
+            {
+                return (T)o;
+            }
+
             var asStr = (string)o;
 
             var ret = Enum.Parse(typeof(T), asStr);

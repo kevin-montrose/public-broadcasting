@@ -139,6 +139,19 @@ namespace Tests
         }
 
         [TestMethod]
+        public void EnumCompactness()
+        {
+            var b = Serializer.Serialize(En.Bar);
+            var asStr = Encoding.UTF8.GetString(b);
+
+            var i = asStr.IndexOf("Bar");
+            Assert.AreNotEqual(-1, i);
+
+            var j = asStr.IndexOf("Bar", i + 1);
+            Assert.AreEqual(-1, j);
+        }
+
+        [TestMethod]
         public void WidenCollections()
         {
             var b = Serializer.Serialize(new List<byte> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
