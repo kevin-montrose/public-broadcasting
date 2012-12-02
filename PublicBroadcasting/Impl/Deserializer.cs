@@ -11,17 +11,16 @@ namespace PublicBroadcasting.Impl
     public class Deserializer
     {
         private static readonly Dictionary<TypeDescription, Type> TypeCache = new Dictionary<TypeDescription, Type>(new TypeDescriptionComparer());
+        private static readonly Dictionary<Tuple<Type, Type>, Func<object, object>> MapperCache = new Dictionary<Tuple<Type, Type>, Func<object, object>>();
 
         public static T Deserialize<T>(Stream stream)
         {
             Type type;
             var raw = DeserializeCore(stream, out type);
 
-            var mapGetter = typeof(POCOMapper<,>).MakeGenericType(type, typeof(T)).GetMethod("Get");
+            var mapper = GetMapper(type, typeof(T));
 
-            var arg = (POCOMapper)mapGetter.Invoke(null, new object[0]);
-
-            return (T)arg.GetMapper()(raw);
+            return (T)mapper(raw);
         }
 
         public static dynamic Deserialize(Stream stream)
@@ -30,13 +29,35 @@ namespace PublicBroadcasting.Impl
             return DeserializeCore(stream, out ignored);
         }
 
+        private static Func<object, object> GetMapper(Type pocoType, Type toType)
+        {
+            var key = Tuple.Create(pocoType, toType);
+            lock (MapperCache)
+            {
+                Func<object, object> ret;
+                if (MapperCache.TryGetValue(key, out ret))
+                {
+                    return ret;
+                }
+
+                var mapGetter = typeof(POCOMapper<,>).MakeGenericType(pocoType, toType).GetMethod("Get");
+
+                var map = (POCOMapper)mapGetter.Invoke(null, new object[0]);
+
+                ret = map.GetMapper();
+
+                MapperCache[key] = ret;
+
+                return ret;
+            }
+        }
+
         private static object DeserializeCore(Stream stream, out Type type)
         {
             var untyped = ProtoBuf.Serializer.Deserialize<Envelope>(stream);
 
             var effectDesc = untyped.Description;
 
-            // TODO: Find a way to kill this lock
             lock (TypeCache)
             {
                 if (!TypeCache.TryGetValue(effectDesc, out type))
