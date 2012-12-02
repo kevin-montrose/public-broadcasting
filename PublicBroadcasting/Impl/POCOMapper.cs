@@ -93,6 +93,16 @@ namespace PublicBroadcasting.Impl
                 throw new Exception(typeof(To).FullName + " doesn't have a parameterless constructor");
             }
 
+            Func<IDictionary> newDictDyn;
+
+            var dyn = new DynamicMethod("POCOMapper_NewDict_" + typeof(From).FullName + "_" + typeof(To).FullName, typeof(IDictionary), Type.EmptyTypes, restrictedSkipVisibility: true);
+            var il = dyn.GetILGenerator();
+
+            il.Emit(OpCodes.Newobj, newDictCons);   // [ret]
+            il.Emit(OpCodes.Ret);                   // -----
+
+            newDictDyn = (Func<IDictionary>)dyn.CreateDelegate(typeof(Func<IDictionary>));
+
             return
                 new POCOMapper(
                     dictX =>
@@ -102,7 +112,7 @@ namespace PublicBroadcasting.Impl
                         var keyFunc = keyMap.GetMapper();
                         var valFunc = valMap.GetMapper();
 
-                        var ret = (IDictionary)newDictCons.Invoke(new object[0]);
+                        var ret = newDictDyn();
 
                         var asDict = (IDictionary)dictX;
 
@@ -176,6 +186,16 @@ namespace PublicBroadcasting.Impl
 
             if (newListCons == null) throw new Exception(newListType.FullName + " has no parameterless constructor");
 
+            Func<IList> newListDyn;
+
+            var dyn = new DynamicMethod("POCOMapper_NewList_" + typeof(From).FullName + "_" + typeof(To).FullName, typeof(IList), Type.EmptyTypes, restrictedSkipVisibility: true);
+            var il = dyn.GetILGenerator();
+
+            il.Emit(OpCodes.Newobj, newListCons);   // [ret]
+            il.Emit(OpCodes.Ret);                   // ----
+
+            newListDyn = (Func<IList>)dyn.CreateDelegate(typeof(Func<IList>));
+
             return
                 new POCOMapper(
                     listX =>
@@ -184,9 +204,9 @@ namespace PublicBroadcasting.Impl
 
                         var func = map.GetMapper();
 
-                        var ret = (IList)newListCons.Invoke(new object[0]);
-
                         var asList = (IList)listX;
+
+                        var ret = newListDyn();
 
                         for (var i = 0; i < asList.Count; i++)
                         {
