@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace PublicBroadcasting.Impl
 {
-    public class OnDemandDictionary<FromKey, FromVal, ToKey, ToVal> : IDictionary<ToKey, ToVal>
+    internal class OnDemandDictionary<FromKey, FromVal, ToKey, ToVal> : IDictionary<ToKey, ToVal>
     {
         class Enumerator : IEnumerator<KeyValuePair<ToKey, ToVal>>, IEnumerator
         {
@@ -166,7 +166,7 @@ namespace PublicBroadcasting.Impl
         #endregion
     }
 
-    public class OnDemandList<From, To> : IList<To>
+    internal class OnDemandList<From, To> : IList<To>
     {
         class Enumerator<A, B> : IEnumerator, IEnumerator<B>
         {

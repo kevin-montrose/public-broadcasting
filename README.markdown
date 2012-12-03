@@ -127,7 +127,7 @@ Public Broadcasting encodes a "structural type map" when serializing, and will t
 the length of all relevant strings (such as property names, field names, and enumeration values).  Types and enumerations that are used multiple
 times are only encoded a single time, with further uses replaced by references.
 
-When serializing many instances of each type (such as in a collection) this overhead is typically dwarfed by the size of data.  For single
+When serializing many instances of each type (such as in a collection) this overhead is typically dwarfed by the size of the data.  For single
 instances, the overhead is comparable (if usually somewhat smaller) to JSON.
 
 Naturally, if you need the absolute smallest sizes possible you should use protobuf-net directly.
