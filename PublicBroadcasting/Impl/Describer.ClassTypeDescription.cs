@@ -71,15 +71,6 @@ namespace PublicBroadcasting.Impl
             ModuleBuilder = asmBuilder.DefineDynamicModule(asmName.Name);
 
             Enumerator = BuildEnumerator();
-
-            var cons = Enumerator.GetConstructor(new[] { typeof(List<string>), typeof(object) });
-            var alloc = (IEnumerator)cons.Invoke(new object[] { new List<string> { "Foo", "Bar" }, new Dictionary<string, string> { { "Foo", "Hello" }, { "Bar", "World" } } });
-
-            while (alloc.MoveNext())
-            {
-                var dict = (DictionaryEntry)alloc.Current;
-                Debug.WriteLine(dict.Key +" -> "+dict.Value);
-            }
         }
 
         // kind of a giant HACK here, since I can do this in normal c#... but I need the class to exist in the dynamic module for visibility purposes.
@@ -88,6 +79,10 @@ namespace PublicBroadcasting.Impl
             ILGenerator il;
 
             var enumerator = ModuleBuilder.DefineType("ClassEnumerator", TypeAttributes.Class, typeof(object), new[] { typeof(IEnumerator) });
+            
+            var callSite = typeof(System.Runtime.CompilerServices.CallSite<Func<System.Runtime.CompilerServices.CallSite, object, string, object>>);
+            var callSiteField = enumerator.DefineField("_CallSite", callSite, FieldAttributes.Private | FieldAttributes.Static);
+            
             var currentProp = enumerator.DefineProperty("Current", PropertyAttributes.None, typeof(object), Type.EmptyTypes);
             var currentField = enumerator.DefineField("_Current", typeof(object), FieldAttributes.Private);
 
@@ -176,58 +171,58 @@ namespace PublicBroadcasting.Impl
             var argInfo = typeof(CSharpArgumentInfo);
             var createArgInfo = argInfo.GetMethod("Create");
             var getIndex = typeof(Microsoft.CSharp.RuntimeBinder.Binder).GetMethod("GetIndex");
-            var callSite = typeof(System.Runtime.CompilerServices.CallSite<Func<System.Runtime.CompilerServices.CallSite, object, string, object>>);
             var createCallSite = callSite.GetMethod("Create");
             var callSiteTarget = callSite.GetField("Target");
             var callSiteInvoke = typeof(Func<System.Runtime.CompilerServices.CallSite, object, string, object>).GetMethod("Invoke");
             var typeFromHandle = typeof(Type).GetMethod("GetTypeFromHandle");
 
-            var callSiteLocal = il.DeclareLocal(callSite);
             var keyLocal = il.DeclareLocal(typeof(string));
             
-            /// TODO: Should try and load cached call site first ///
-            
-            il.Emit(OpCodes.Dup);
-            il.Emit(OpCodes.Stloc, keyLocal);
+            il.Emit(OpCodes.Dup);                                   // [key] [key] [this]
+            il.Emit(OpCodes.Stloc, keyLocal);                       // [key] [this]
 
-            il.Emit(OpCodes.Ldc_I4_0);                              // [0]
-            il.Emit(OpCodes.Ldtoken, enumerator);                   // [ClassEnumerator token] [0]
-            il.Emit(OpCodes.Call, typeFromHandle);                  // [typeof(ClassEnumerator)]
+            var ready = il.DefineLabel();
+            il.Emit(OpCodes.Ldsfld, callSiteField);                 // [CallSite<T>] [key] [this]
+            il.Emit(OpCodes.Brtrue_S, ready);                       // [key] [this]
 
-            il.Emit(OpCodes.Ldc_I4_2);                              // 2
-            il.Emit(OpCodes.Newarr, argInfo);                       // [CSharpArgumentInfo[]]
-            il.Emit(OpCodes.Dup);                                   // [CSharpArgumentInfo[]] [CSharpArgumentInfo[]]
-            il.Emit(OpCodes.Dup);                                   // [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]]
-            il.Emit(OpCodes.Ldc_I4_0);                              // [0] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]]
-            il.Emit(OpCodes.Ldc_I4_0);                              // [0] [0] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]]
-            il.Emit(OpCodes.Ldnull);                                // [null] [0] [0] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]]
-            il.Emit(OpCodes.Call, createArgInfo);                   // [CSharpArgumentInfo] [0] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]]
-            il.Emit(OpCodes.Stelem_Ref);                            // [CSharpArgumentInfo[]] [CSharpArgumentInfo[]]
-            
-            il.Emit(OpCodes.Ldc_I4_1);                              // [1] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]]
-            il.Emit(OpCodes.Ldc_I4_3);                              // [3] [1] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]]
-            il.Emit(OpCodes.Ldnull);                                // [null] [3] [1] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]]
-            il.Emit(OpCodes.Call, createArgInfo);                   // [CSharpArgumentInfo] [1] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]]
-            il.Emit(OpCodes.Stelem_Ref);                            // [CSharpArgumentInfo[]]
-            
-            il.Emit(OpCodes.Call, getIndex);                        // [CallSiteBinder]
-            
-            il.Emit(OpCodes.Call, createCallSite);                  // [CallSite<T>]
-            il.Emit(OpCodes.Stloc, callSiteLocal);                  // -----
+            il.Emit(OpCodes.Ldc_I4_0);                              // [0] [key] [this]
+            il.Emit(OpCodes.Ldtoken, enumerator);                   // [ClassEnumerator token] [0] [key] [this]
+            il.Emit(OpCodes.Call, typeFromHandle);                  // [typeof(ClassEnumerator)] [0] [key] [this]
 
-            il.Emit(OpCodes.Ldloc, callSiteLocal);                  // [CallSite<T>]
-            il.Emit(OpCodes.Ldfld, callSiteTarget);                 // [CallSite<T>.Target]
+            il.Emit(OpCodes.Ldc_I4_2);                              // [2] [typeof(ClassEnumerator)] [0] [key] [this]
+            il.Emit(OpCodes.Newarr, argInfo);                       // [CSharpArgumentInfo[]] [typeof(ClassEnumerator)] [0] [key] [this]
+            il.Emit(OpCodes.Dup);                                   // [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [typeof(ClassEnumerator)] [0] [key] [this]
+            il.Emit(OpCodes.Dup);                                   // [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [typeof(ClassEnumerator)] [0] [key] [this]
+            il.Emit(OpCodes.Ldc_I4_0);                              // [0] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [typeof(ClassEnumerator)] [0] [key] [this]
+            il.Emit(OpCodes.Ldc_I4_0);                              // [0] [0] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [typeof(ClassEnumerator)] [0] [key] [this]
+            il.Emit(OpCodes.Ldnull);                                // [null] [0] [0] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [typeof(ClassEnumerator)] [0] [key] [this]
+            il.Emit(OpCodes.Call, createArgInfo);                   // [CSharpArgumentInfo] [0] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [typeof(ClassEnumerator)] [0] [key] [this]
+            il.Emit(OpCodes.Stelem_Ref);                            // [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [typeof(ClassEnumerator)] [0] [key] [this]
 
-            il.Emit(OpCodes.Ldloc, callSiteLocal);                  // [CallSite<T>] [CallSite<T>.Target]
-            il.Emit(OpCodes.Ldarg_0);                               // [this] [CallSite<T>] [CallSite<T>.Target]
-            il.Emit(OpCodes.Ldfld, values);                         // [Values] [CallSite<T>] [CallSite<T>.Target]
-            il.Emit(OpCodes.Ldloc, keyLocal);                       // [key] [Values] [CallSite<T>] [CallSite<T>.Target]
-            
-            il.Emit(OpCodes.Callvirt, callSiteInvoke);              // [value]
+            il.Emit(OpCodes.Ldc_I4_1);                              // [1] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [typeof(ClassEnumerator)] [0] [key] [this]
+            il.Emit(OpCodes.Ldc_I4_3);                              // [3] [1] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [typeof(ClassEnumerator)] [0] [key] [this]
+            il.Emit(OpCodes.Ldnull);                                // [null] [3] [1] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [typeof(ClassEnumerator)] [0] [key] [this]
+            il.Emit(OpCodes.Call, createArgInfo);                   // [CSharpArgumentInfo] [1] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [typeof(ClassEnumerator)] [0] [key] [this]
+            il.Emit(OpCodes.Stelem_Ref);                            // [CSharpArgumentInfo[]] [typeof(ClassEnumerator)] [0] [key] [this]
+
+            il.Emit(OpCodes.Call, getIndex);                        // [CallSiteBinder] [key] [this]
+
+            il.Emit(OpCodes.Call, createCallSite);                  // [CallSite<T>] [key] [this]
+            il.Emit(OpCodes.Stsfld, callSiteField);                 // [key] [this]
+
+            il.MarkLabel(ready);
+            il.Emit(OpCodes.Ldsfld, callSiteField);                 // [CallSite<T>] [key] [this]
+            il.Emit(OpCodes.Ldfld, callSiteTarget);                 // [CallSite<T>.Target] [key] [this]
+
+            il.Emit(OpCodes.Ldsfld, callSiteField);                 // [CallSite<T>] [CallSite<T>.Target] [key] [this]
+            il.Emit(OpCodes.Ldarg_0);                               // [this] [CallSite<T>] [CallSite<T>.Target] [key] [this]
+            il.Emit(OpCodes.Ldfld, values);                         // [Values] [CallSite<T>] [CallSite<T>.Target] [key] [this]
+            il.Emit(OpCodes.Ldloc, keyLocal);                       // [key] [Values] [CallSite<T>] [CallSite<T>.Target] [key] [this]
+
+            il.Emit(OpCodes.Callvirt, callSiteInvoke);              // [value] [key] [this]
 
             // --- end dynamic
 
-            //il.Emit(OpCodes.Ldnull);                // [null] [key] [this]
             il.Emit(OpCodes.Newobj, entryCons);     // [entry] [this]
             il.Emit(OpCodes.Box, entry);            // [entry as object] [this]
             il.Emit(OpCodes.Stfld, currentField);   // -----
