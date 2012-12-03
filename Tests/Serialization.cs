@@ -152,6 +152,30 @@ namespace Tests
         }
 
         [TestMethod]
+        public void CollectionConversions()
+        {
+            var b1 = Serializer.Serialize(new byte[] { 1, 2, 3 });
+            var b2 = Serializer.Serialize(new List<byte> { 1, 2, 3 });
+            var l = Serializer.Deserialize<List<byte>>(b1);
+            var a = Serializer.Deserialize<byte[]>(b2);
+            var li = Serializer.Deserialize<List<int>>(b1);
+            var ai = Serializer.Deserialize<int[]>(b2);
+
+            Assert.AreEqual(3, l.Count);
+            Assert.AreEqual(3, a.Length);
+            Assert.AreEqual(3, li.Count);
+            Assert.AreEqual(3, ai.Length);
+
+            for (var i = 0; i < 3; i++)
+            {
+                Assert.AreEqual(i + 1, l[i]);
+                Assert.AreEqual(i + 1, a[i]);
+                Assert.AreEqual(i + 1, li[i]);
+                Assert.AreEqual(i + 1, ai[i]);
+            }
+        }
+
+        [TestMethod]
         public void WidenCollections()
         {
             var b = Serializer.Serialize(new List<byte> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });

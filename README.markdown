@@ -2,8 +2,6 @@
 
 A self-describing wrapper around [protobuf-net](http://code.google.com/p/protobuf-net/).
 
-#Work In Progress, Use At Own Risk!
-
 Public Broadcasting sacrifices *some* of the compactness of [Protocol Buffers](http://en.wikipedia.org/wiki/Protocol_Buffers) and *some*
 of the performance of [protobuf-net](http://code.google.com/p/protobuf-net/) to avoid the hassle of .proto files or manually adding
 attributes to your types.  Addition and removal of members is handled gracefully, avoiding versioning headaches.
@@ -81,7 +79,7 @@ The only constraint on implementations of IList&lt;T&gt; and IDictionary&lt;TKey
 ###Type Conversions
 
 All widening conversions between numeric types are legal.  This means that conversions such as `byte -> int` during deserialization are legal,
-but `sbyte -> uint` and `uint -> int` are not.
+but `sbyte -> uint` and `uint -> int` are not.  Widening conversions in collections are also legal, so `int[] -> List<double>` is also legal.
 
 Public Broadcasting will ignore the distinction between user-defined ValueTypes and ReferenceTypes, conversion between any combination of them
 is legal.
@@ -140,5 +138,3 @@ At time of writing, Public Broadcasting is typically within an order of magnitud
 than static deserialization, due to skipping a fair number of allocations and type mappings.
 
 As with extreme compactness, a need for extreme speed would be best served by directly using protobuf-net.
-
-#Reminder, Work In Progress!  Use At Your Own Risk, Because It Could All Break Tomorrow!
