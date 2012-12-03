@@ -14,48 +14,6 @@ using System.Threading.Tasks;
 
 namespace PublicBroadcasting.Impl
 {
-    public class ClassEnumerator : IEnumerator
-    {
-        private object CurrentVal;
-        public object Current
-        {
-            get { if (CurrentVal == null) throw new InvalidOperationException("Enumerator has no value"); return CurrentVal; }
-            private set { CurrentVal = value; }
-        }
-
-        private int Index { get; set; }
-        private List<string> Members { get; set; }
-        private dynamic Values { get; set; }
-
-        public ClassEnumerator(List<string> names, object val)
-        {
-            Members = names;
-            Values = val;
-            Index = -1;
-        }
-
-        public bool MoveNext()
-        {
-            Index++;
-
-            if (Index >= Members.Count)
-            {
-                CurrentVal = null;
-                return false;
-            }
-
-            CurrentVal = new DictionaryEntry(Members[Index], Values[Members[Index]]);
-
-            return true;
-        }
-
-        public void Reset()
-        {
-            Index = -1;
-            CurrentVal = null;
-        }
-    }
-
     [ProtoContract]
     internal class ClassTypeDescription : TypeDescription
     {
@@ -371,7 +329,7 @@ namespace PublicBroadcasting.Impl
             il = getEnumerator.GetILGenerator();
 
             var newStrList = typeof(List<string>).GetConstructor(new[] { typeof(int) });
-            var newEnumerator = typeof(ClassEnumerator).GetConstructor(new[] { typeof(List<string>), typeof(object) });
+            var newEnumerator = Enumerator.GetConstructor(new[] { typeof(List<string>), typeof(object) });
             var add = typeof(List<string>).GetMethod("Add");
 
             il.Emit(OpCodes.Ldc_I4, Members.Count); // [count]
