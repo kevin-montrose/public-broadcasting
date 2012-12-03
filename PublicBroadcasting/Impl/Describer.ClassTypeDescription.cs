@@ -57,11 +57,6 @@ namespace PublicBroadcasting.Impl
 
     public class ProbeClass
     {
-        public static bool Validate(object[] objs)
-        {
-            return objs.Length == 1 && (objs[0] is string);
-        }
-
         public static bool TwoStrEqs(string s1, string s2)
         {
             return s1.Equals(s2);
@@ -134,7 +129,6 @@ namespace PublicBroadcasting.Impl
             TypeBuilder.SetCustomAttribute(contractAttrBuilder);
 
             // Define indexer
-            var validate = typeof(ProbeClass).GetMethod("Validate");
             var eq = typeof(ProbeClass).GetMethod("TwoStrEqs");
 
             var tryGetIndex = TypeBuilder.DefineMethod("TryGetIndex", MethodAttributes.Public | MethodAttributes.Virtual, typeof(bool), new[] { typeof(GetIndexBinder), typeof(object[]), Type.GetType("System.Object&") });
@@ -142,10 +136,21 @@ namespace PublicBroadcasting.Impl
 
             il.Emit(OpCodes.Ldarg_2);       // object[]
 
-            il.Emit(OpCodes.Call, validate);// bool
+            var invalid = il.DefineLabel();
+            il.Emit(OpCodes.Dup);                   // object[] object[]
+            il.Emit(OpCodes.Ldlen);                 // length object[]
+            il.Emit(OpCodes.Ldc_I4_1);              // 1 length object[]
+            il.Emit(OpCodes.Bne_Un_S, invalid);     // object[]
+            il.Emit(OpCodes.Ldc_I4_0);              // 0 object[]
+            il.Emit(OpCodes.Ldelem_Ref);            // object
+            il.Emit(OpCodes.Isinst, typeof(string));// bool
 
             var valid = il.DefineLabel();
-            il.Emit(OpCodes.Brtrue_S, valid);
+            il.Emit(OpCodes.Brtrue_S, valid);   // ----
+            il.Emit(OpCodes.Ldc_I4_0);          // 0
+
+            il.MarkLabel(invalid);              // (object[] or 0)
+            il.Emit(OpCodes.Pop);               // ----
 
             il.Emit(OpCodes.Ldarg_3);       // (out object)
             il.Emit(OpCodes.Ldnull);        // null (out object);
