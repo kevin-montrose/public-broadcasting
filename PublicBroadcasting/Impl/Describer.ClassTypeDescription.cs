@@ -55,14 +55,6 @@ namespace PublicBroadcasting.Impl
         }
     }
 
-    public class ProbeClass
-    {
-        public static bool TwoStrEqs(string s1, string s2)
-        {
-            return s1.Equals(s2);
-        }
-    }
-
     [ProtoContract]
     internal class ClassTypeDescription : TypeDescription
     {
@@ -129,7 +121,7 @@ namespace PublicBroadcasting.Impl
             TypeBuilder.SetCustomAttribute(contractAttrBuilder);
 
             // Define indexer
-            var eq = typeof(ProbeClass).GetMethod("TwoStrEqs");
+            var strEq = typeof(string).GetMethod("Equals", new[] { typeof(string) });
 
             var tryGetIndex = TypeBuilder.DefineMethod("TryGetIndex", MethodAttributes.Public | MethodAttributes.Virtual, typeof(bool), new[] { typeof(GetIndexBinder), typeof(object[]), Type.GetType("System.Object&") });
             var il = tryGetIndex.GetILGenerator();
@@ -178,12 +170,13 @@ namespace PublicBroadcasting.Impl
 
                 il.Emit(OpCodes.Dup);               // key key (out object)
                 il.Emit(OpCodes.Ldstr, memKey);     // memKey key key (out object)
-                il.Emit(OpCodes.Call, eq);          // bool key (out object)
+
+                il.Emit(OpCodes.Callvirt, strEq);   // bool key (out object)
+
                 il.Emit(OpCodes.Brfalse_S, next);   // key (out object)
 
                 il.Emit(OpCodes.Pop);               // (out object)
                 il.Emit(OpCodes.Ldarg_0);           // this (out object)
-                //il.Emit(OpCodes.Callvirt, prop);    // ret (out object)
                 il.Emit(OpCodes.Ldfld, field);      // ret (out object)
 
                 if (field.FieldType.IsValueType)
