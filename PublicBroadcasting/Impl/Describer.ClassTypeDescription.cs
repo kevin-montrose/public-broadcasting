@@ -1,4 +1,5 @@
-﻿using ProtoBuf;
+﻿using Microsoft.CSharp.RuntimeBinder;
+using ProtoBuf;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -59,6 +60,7 @@ namespace PublicBroadcasting.Impl
     internal class ClassTypeDescription : TypeDescription
     {
         static readonly ModuleBuilder ModuleBuilder;
+        static readonly Type Enumerator;
 
         static ClassTypeDescription()
         {
@@ -67,6 +69,175 @@ namespace PublicBroadcasting.Impl
             AssemblyBuilder asmBuilder = domain.DefineDynamicAssembly(asmName, AssemblyBuilderAccess.Run);
 
             ModuleBuilder = asmBuilder.DefineDynamicModule(asmName.Name);
+
+            Enumerator = BuildEnumerator();
+
+            var cons = Enumerator.GetConstructor(new[] { typeof(List<string>), typeof(object) });
+            var alloc = (IEnumerator)cons.Invoke(new object[] { new List<string> { "Foo", "Bar" }, new Dictionary<string, string> { { "Foo", "Hello" }, { "Bar", "World" } } });
+
+            while (alloc.MoveNext())
+            {
+                var dict = (DictionaryEntry)alloc.Current;
+                Debug.WriteLine(dict.Key +" -> "+dict.Value);
+            }
+        }
+
+        // kind of a giant HACK here, since I can do this in normal c#... but I need the class to exist in the dynamic module for visibility purposes.
+        private static Type BuildEnumerator()
+        {
+            ILGenerator il;
+
+            var enumerator = ModuleBuilder.DefineType("ClassEnumerator", TypeAttributes.Class, typeof(object), new[] { typeof(IEnumerator) });
+            var currentProp = enumerator.DefineProperty("Current", PropertyAttributes.None, typeof(object), Type.EmptyTypes);
+            var currentField = enumerator.DefineField("_Current", typeof(object), FieldAttributes.Private);
+
+            // Current { get; }
+            var getCurrent = enumerator.DefineMethod("get_Current", MethodAttributes.Public | MethodAttributes.Virtual, typeof(object), Type.EmptyTypes);
+            
+            il = getCurrent.GetILGenerator();
+            il.Emit(OpCodes.Ldarg_0);               // [this]
+            il.Emit(OpCodes.Ldfld, currentField);   // [ret]
+            il.Emit(OpCodes.Ret);                   // -----
+
+            currentProp.SetGetMethod(getCurrent);
+            enumerator.DefineMethodOverride(getCurrent, typeof(IEnumerator).GetProperty("Current").GetGetMethod());
+
+            // Enumerator(List<string>, object)
+            var index = enumerator.DefineField("Index", typeof(int), FieldAttributes.Private);
+            var members = enumerator.DefineField("Members", typeof(List<string>), FieldAttributes.Private);
+            var values = enumerator.DefineField("Values", typeof(object), FieldAttributes.Private);
+            var cons = enumerator.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis, new[] { typeof(List<string>), typeof(object) });
+            
+            il = cons.GetILGenerator();
+            il.Emit(OpCodes.Ldarg_0);       // [this]
+            il.Emit(OpCodes.Ldarg_1);       // [List<string>] [this]
+            il.Emit(OpCodes.Stfld, members);// -----
+            il.Emit(OpCodes.Ldarg_0);       // [this]
+            il.Emit(OpCodes.Ldarg_2);       // [object] [this]
+            il.Emit(OpCodes.Stfld, values); // -----
+            il.Emit(OpCodes.Ldarg_0);       // [this]
+            il.Emit(OpCodes.Ldc_I4_M1);     // [-1] [this]
+            il.Emit(OpCodes.Stfld, index);  // -----
+            il.Emit(OpCodes.Ret);
+
+            // void Reset()
+            var reset = enumerator.DefineMethod("Reset", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.HasThis, null, Type.EmptyTypes);
+            
+            il = reset.GetILGenerator();
+            il.Emit(OpCodes.Ldarg_0);               // [this]
+            il.Emit(OpCodes.Ldc_I4_M1);             // [-1] [this]
+            il.Emit(OpCodes.Stfld, index);          // -----
+            il.Emit(OpCodes.Ldarg_0);               // [this]
+            il.Emit(OpCodes.Ldnull);                // [null] [this]
+            il.Emit(OpCodes.Stfld, currentField);   // -----
+            il.Emit(OpCodes.Ret);                   // -----
+
+            enumerator.DefineMethodOverride(reset, typeof(IEnumerator).GetMethod("Reset"));
+
+            // bool MoveNext()
+            var moveNext = enumerator.DefineMethod("MoveNext", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.HasThis, typeof(bool), Type.EmptyTypes);
+            var getCount = typeof(List<string>).GetProperty("Count").GetGetMethod();
+            var getItem = typeof(List<string>).GetProperty("Item").GetGetMethod();
+            var entry = typeof(DictionaryEntry);
+            var entryCons = entry.GetConstructor(new[] { typeof(object), typeof(object) });
+
+            il = moveNext.GetILGenerator();
+            il.Emit(OpCodes.Ldarg_0);               // [this]
+            il.Emit(OpCodes.Dup);                   // [this] [this]
+            il.Emit(OpCodes.Ldfld, index);          // [index] [this]
+            il.Emit(OpCodes.Ldc_I4_1);              // [1] [index] [this]
+            il.Emit(OpCodes.Add);                   // [index+1] [this]
+            il.Emit(OpCodes.Stfld, index);          // -----
+
+            il.Emit(OpCodes.Ldarg_0);               // [this]
+            il.Emit(OpCodes.Ldfld, index);          // [index]
+            il.Emit(OpCodes.Ldarg_0);               // [this] [index]
+            il.Emit(OpCodes.Ldfld, members);        // [members] [index]
+            il.Emit(OpCodes.Callvirt, getCount);    // [count] [index]
+
+            var good = il.DefineLabel();
+            il.Emit(OpCodes.Blt_S, good);           // -----
+
+            il.Emit(OpCodes.Ldarg_0);               // [this]
+            il.Emit(OpCodes.Ldnull);                // [null] [this]
+            il.Emit(OpCodes.Stfld, currentField);   // -----
+            il.Emit(OpCodes.Ldc_I4_0);              // 0
+            il.Emit(OpCodes.Ret);                   // -----
+
+            il.MarkLabel(good);                     // -----
+            il.Emit(OpCodes.Ldarg_0);               // [this] 
+            il.Emit(OpCodes.Dup);                   // [this] [this]
+            il.Emit(OpCodes.Ldfld, members);        // [members] [this]
+            il.Emit(OpCodes.Ldarg_0);               // [this] [members] [this]
+            il.Emit(OpCodes.Ldfld, index);          // [index] [members] [this]
+            il.Emit(OpCodes.Callvirt, getItem);     // [key] [this]
+
+            // --- begin dynamic
+            var argInfo = typeof(CSharpArgumentInfo);
+            var createArgInfo = argInfo.GetMethod("Create");
+            var getIndex = typeof(Microsoft.CSharp.RuntimeBinder.Binder).GetMethod("GetIndex");
+            var callSite = typeof(System.Runtime.CompilerServices.CallSite<Func<System.Runtime.CompilerServices.CallSite, object, string, object>>);
+            var createCallSite = callSite.GetMethod("Create");
+            var callSiteTarget = callSite.GetField("Target");
+            var callSiteInvoke = typeof(Func<System.Runtime.CompilerServices.CallSite, object, string, object>).GetMethod("Invoke");
+            var typeFromHandle = typeof(Type).GetMethod("GetTypeFromHandle");
+
+            var callSiteLocal = il.DeclareLocal(callSite);
+            var keyLocal = il.DeclareLocal(typeof(string));
+            
+            /// TODO: Should try and load cached call site first ///
+            
+            il.Emit(OpCodes.Dup);
+            il.Emit(OpCodes.Stloc, keyLocal);
+
+            il.Emit(OpCodes.Ldc_I4_0);                              // [0]
+            il.Emit(OpCodes.Ldtoken, enumerator);                   // [ClassEnumerator token] [0]
+            il.Emit(OpCodes.Call, typeFromHandle);                  // [typeof(ClassEnumerator)]
+
+            il.Emit(OpCodes.Ldc_I4_2);                              // 2
+            il.Emit(OpCodes.Newarr, argInfo);                       // [CSharpArgumentInfo[]]
+            il.Emit(OpCodes.Dup);                                   // [CSharpArgumentInfo[]] [CSharpArgumentInfo[]]
+            il.Emit(OpCodes.Dup);                                   // [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]]
+            il.Emit(OpCodes.Ldc_I4_0);                              // [0] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]]
+            il.Emit(OpCodes.Ldc_I4_0);                              // [0] [0] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]]
+            il.Emit(OpCodes.Ldnull);                                // [null] [0] [0] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]]
+            il.Emit(OpCodes.Call, createArgInfo);                   // [CSharpArgumentInfo] [0] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]]
+            il.Emit(OpCodes.Stelem_Ref);                            // [CSharpArgumentInfo[]] [CSharpArgumentInfo[]]
+            
+            il.Emit(OpCodes.Ldc_I4_1);                              // [1] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]]
+            il.Emit(OpCodes.Ldc_I4_3);                              // [3] [1] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]]
+            il.Emit(OpCodes.Ldnull);                                // [null] [3] [1] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]]
+            il.Emit(OpCodes.Call, createArgInfo);                   // [CSharpArgumentInfo] [1] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]]
+            il.Emit(OpCodes.Stelem_Ref);                            // [CSharpArgumentInfo[]]
+            
+            il.Emit(OpCodes.Call, getIndex);                        // [CallSiteBinder]
+            
+            il.Emit(OpCodes.Call, createCallSite);                  // [CallSite<T>]
+            il.Emit(OpCodes.Stloc, callSiteLocal);                  // -----
+
+            il.Emit(OpCodes.Ldloc, callSiteLocal);                  // [CallSite<T>]
+            il.Emit(OpCodes.Ldfld, callSiteTarget);                 // [CallSite<T>.Target]
+
+            il.Emit(OpCodes.Ldloc, callSiteLocal);                  // [CallSite<T>] [CallSite<T>.Target]
+            il.Emit(OpCodes.Ldarg_0);                               // [this] [CallSite<T>] [CallSite<T>.Target]
+            il.Emit(OpCodes.Ldfld, values);                         // [Values] [CallSite<T>] [CallSite<T>.Target]
+            il.Emit(OpCodes.Ldloc, keyLocal);                       // [key] [Values] [CallSite<T>] [CallSite<T>.Target]
+            
+            il.Emit(OpCodes.Callvirt, callSiteInvoke);              // [value]
+
+            // --- end dynamic
+
+            //il.Emit(OpCodes.Ldnull);                // [null] [key] [this]
+            il.Emit(OpCodes.Newobj, entryCons);     // [entry] [this]
+            il.Emit(OpCodes.Box, entry);            // [entry as object] [this]
+            il.Emit(OpCodes.Stfld, currentField);   // -----
+
+            il.Emit(OpCodes.Ldc_I4_1);              // 1
+            il.Emit(OpCodes.Ret);                   // -----
+
+            enumerator.DefineMethodOverride(moveNext, typeof(IEnumerator).GetMethod("MoveNext"));
+
+            return enumerator.CreateType();
         }
 
         [ProtoMember(1)]
