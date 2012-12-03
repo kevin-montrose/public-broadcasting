@@ -10,23 +10,64 @@ using System.Threading.Tasks;
 
 namespace PublicBroadcasting
 {
+    /// <summary>
+    /// Provides serialization and deserialization methods for a self-describing format
+    /// built on top of protocol buffers.
+    /// </summary>
+    /// <remarks>
+    /// Public Broadcasting is built on top of protobuf-net, and by design will always be
+    /// somewhat slower and larger.  If you need higher performace or more compact results,
+    /// consider using protobuf-net directly; but be aware that protobuf-net requires
+    /// manual member anotation and versioning.
+    /// </remarks>
     public class Serializer
     {
+        /// <summary>
+        /// Serializes public fields and properties of the given instance to a byte array.
+        /// </summary>
+        /// <typeparam name="T">The type being serialized.</typeparam>
+        /// <param name="obj">The existing instance to be serialized.</param>
+        /// <returns>A byte array representing the public fields and properties of obj.</returns>
+        /// <remarks>To specify a different collection of members to serialize, use one of the overrides of Serialize&lt;T&gt;.</remarks>
         public static byte[] Serialize<T>(T obj)
         {
             return Serialize(obj, IncludedMembers.Properties | IncludedMembers.Fields, IncludedVisibility.Public);
         }
 
+        /// <summary>
+        /// Serializes the specified public members of the given instance to a byte array.
+        /// </summary>
+        /// <typeparam name="T">The type being serialized.</typeparam>
+        /// <param name="obj">The existing instance to be serialized.</param>
+        /// <param name="members">The members to serialize, either Fields, Properties, or both.</param>
+        /// <returns>A byte array representing the specified public members of obj.</returns>
+        /// <remarks>To specify a different collection of members to serialize, use one of the overrides of Serialize&lt;T&gt;.</remarks>
         public static byte[] Serialize<T>(T obj, IncludedMembers members)
         {
             return Serialize(obj, members, IncludedVisibility.Public);
         }
 
+        /// <summary>
+        /// Serializes the specified fields and properties of the given instance to a byte array.
+        /// </summary>
+        /// <typeparam name="T">The type being serialized.</typeparam>
+        /// <param name="obj">The existing instance to be serialized.</param>
+        /// <param name="visibility">The visibility of fields and properties to serialize, some combination of Public, Protected, Internal, and Private.</param>
+        /// <returns>A byte array representing the specified fields and properties of obj.</returns>
+        /// <remarks>To specify a different collection of members to serialize, use one of the overrides of Serialize&lt;T&gt;.</remarks>
         public static byte[] Serialize<T>(T obj, IncludedVisibility visibility)
         {
             return Serialize(obj, IncludedMembers.Properties | IncludedMembers.Properties, visibility);
         }
 
+        /// <summary>
+        /// Serializes the specified members of the given instance to a byte array.
+        /// </summary>
+        /// <typeparam name="T">The type being serialized.</typeparam>
+        /// <param name="obj">The existing instance to be serialized.</param>
+        /// <param name="members">The members to serialize, either Fields, Properties, or both.</param>
+        /// <param name="visibility">The visibility of fields and properties to serialize, some combination of Public, Protected, Internal, and Private.</param>
+        /// <returns>A byte array representing the specified members of obj.</returns>
         public static byte[] Serialize<T>(T obj, IncludedMembers members, IncludedVisibility visibility)
         {
             using (var mem = new MemoryStream())
@@ -37,19 +78,67 @@ namespace PublicBroadcasting
             }
         }
 
+        /// <summary>
+        /// Serializes public fields and properties of the given instance to the given Stream.
+        /// </summary>
+        /// <typeparam name="T">The type being serialized.</typeparam>
+        /// <param name="stream">The stream to serialize obj to.</param>
+        /// <param name="obj">The existing instance to be serialized.</param>
+        /// <remarks>To specify a different collection of members to serialize, use one of the overrides of Serialize&lt;T&gt;.</remarks>
         public static void Serialize<T>(Stream stream, T obj)
         {
             Serialize(stream, obj, IncludedMembers.Properties | IncludedMembers.Fields, IncludedVisibility.Public);
         }
 
+        /// <summary>
+        /// Serializes the specified public members of the given instance to the given Stream.
+        /// </summary>
+        /// <typeparam name="T">The type being serialized.</typeparam>
+        /// <param name="stream">The stream to serialize obj to.</param>
+        /// <param name="obj">The existing instance to be serialized.</param>
+        /// <param name="members">The members to serialize, either Fields, Properties, or both.</param>
+        /// <remarks>To specify a different collection of members to serialize, use one of the overrides of Serialize&lt;T&gt;.</remarks>
         public static void Serialize<T>(Stream stream, T obj, IncludedMembers members)
         {
             Serialize(stream, obj, members, IncludedVisibility.Public);
         }
 
+        /// <summary>
+        /// Serializes the specified fields and properties of the given instance to the given Stream.
+        /// </summary>
+        /// <typeparam name="T">The type being serialized.</typeparam>
+        /// <param name="stream">The stream to serialize obj to.</param>
+        /// <param name="obj">The existing instance to be serialized.</param>
+        /// <param name="visibility">The visibility of fields and properties to serialize, some combination of Public, Protected, Internal, and Private.</param>
+        /// <remarks>To specify a different collection of members to serialize, use one of the overrides of Serialize&lt;T&gt;.</remarks>
         public static void Serialize<T>(Stream stream, T obj, IncludedVisibility visibility)
         {
             Serialize(stream, obj, IncludedMembers.Properties | IncludedMembers.Fields, visibility);
+        }
+
+        /// <summary>
+        /// Serializes the specified members of the given instance to the given Stream.
+        /// </summary>
+        /// <typeparam name="T">The type being serialized.</typeparam>
+        /// <param name="stream">The stream to serialize obj to.</param>
+        /// <param name="obj">The existing instance to be serialized.</param>
+        /// <param name="members">The members to serialize, either Fields, Properties, or both.</param>
+        /// <param name="visibility">The visibility of fields and properties to serialize, some combination of Public, Protected, Internal, and Private.</param>
+        public static void Serialize<T>(Stream stream, T obj, IncludedMembers members, IncludedVisibility visibility)
+        {
+            if (stream == null) throw new ArgumentNullException("stream");
+            if (members == 0) throw new ArgumentException("members");
+            if (visibility == 0) throw new ArgumentException("visibility");
+
+            TypeDescription desc;
+            POCOBuilder builder;
+            GetDescriptionAndBuilder<T>(members, visibility, out desc, out builder);
+
+            var payload = builder.GetMapper()(obj);
+
+            var envelope = Envelope.Get(desc, payload);
+
+            ProtoBuf.Serializer.Serialize(stream, envelope);
         }
 
         #region GetDescriptionAndBuilder
@@ -496,36 +585,51 @@ namespace PublicBroadcasting
 
         #endregion
 
-        public static void Serialize<T>(Stream stream, T obj, IncludedMembers members, IncludedVisibility visibility)
-        {
-            if (stream == null) throw new ArgumentNullException("stream");
-            if (members == 0) throw new ArgumentException("members");
-            if (visibility == 0) throw new ArgumentException("visibility");
-
-            TypeDescription desc;
-            POCOBuilder builder;
-            GetDescriptionAndBuilder<T>(members, visibility, out desc, out builder);
-
-            var payload = builder.GetMapper()(obj);
-
-            var envelope = Envelope.Get(desc, payload);
-
-            ProtoBuf.Serializer.Serialize(stream, envelope);
-        }
-
+        /// <summary>
+        /// Creates a new instance from a byte array previously generated with Public Broadcasting.
+        /// </summary>
+        /// <typeparam name="T">The type to be created.</typeparam>
+        /// <param name="bytes">The byte array to deserialize from.</param>
+        /// <returns>A new, initialized instance.</returns>
+        /// <remarks>T does not need to be the same type used to generate bytes, Public Broadcasting will map
+        /// types based on their structure.  In short, members with the same names and compatible types will be mapped to
+        /// each other.</remarks>
         public static T Deserialize<T>(byte[] bytes)
         {
+            if (bytes == null) throw new ArgumentNullException("bytes");
+
             using (var mem = new MemoryStream(bytes))
             {
                 return Deserialize<T>(mem);
             }
         }
 
+        /// <summary>
+        /// Creates a new instance from a Stream previously generated with Public Broadcasting.
+        /// </summary>
+        /// <typeparam name="T">The type to be created.</typeparam>
+        /// <param name="stream">The Stream to deserialize from.</param>
+        /// <returns>A new, initialized instance.</returns>
+        /// <remarks>T does not need to be the same type used to generate stream, Public Broadcasting will map
+        /// types based on their structure.  In short, members with the same names and compatible types will be mapped to
+        /// each other.</remarks>
         public static T Deserialize<T>(Stream stream)
         {
+            if (stream == null) throw new ArgumentNullException("stream");
+
             return Deserializer.Deserialize<T>(stream);
         }
 
+        /// <summary>
+        /// Creates a dynamically bound object from a byte array previously generated with Public Broadcasting.
+        /// </summary>
+        /// <param name="bytes">The byte array to deserialize from.</param>
+        /// <returns>A new, initialized instance.</returns>
+        /// <remarks>Public Broadcasting will not map the type returned to the type used to generate bytes, even if
+        /// it is available in theory.  Also be aware that the underlying types of enumerations and the Value/Reference Type distinction
+        /// of any serialized types will be lost.
+        /// 
+        /// In short, dynamically typed returns will have the correct member names and values but nothing else is guaranteed.</remarks>
         public static dynamic Deserialize(byte[] bytes)
         {
             using (var mem = new MemoryStream(bytes))
@@ -534,6 +638,16 @@ namespace PublicBroadcasting
             }
         }
 
+        /// <summary>
+        /// Creates a dynamically bound object from a Stream previously generated with Public Broadcasting.
+        /// </summary>
+        /// <param name="stream">The Stream to deserialize from.</param>
+        /// <returns>A new, initialized instance.</returns>
+        /// <remarks>Public Broadcasting will not map the type returned to the type used to generate bytes, even if
+        /// it is available in theory.  Also be aware that the underlying types of enumerations and the Value/Reference Type distinction
+        /// of any serialized types will be lost.
+        /// 
+        /// In short, dynamically typed returns will have the correct member names and values but nothing else is guaranteed.</remarks>
         public static dynamic Deserialize(Stream stream)
         {
             return Deserializer.Deserialize(stream);
