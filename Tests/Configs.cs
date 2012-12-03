@@ -89,5 +89,17 @@ namespace Tests
 
             bytes = Serializer.Serialize(obj, IncludedMembers.Fields, IncludedVisibility.Private);
         }
+
+        [TestMethod]
+        public void Interface()
+        {
+            var exposedTypes = typeof(Serializer).Assembly.GetTypes().Where(t => t.IsPublic).ToList();
+
+            Assert.IsTrue(exposedTypes.Where(w => w == typeof(Serializer)).Count() == 1);
+            Assert.IsTrue(exposedTypes.Where(w => w == typeof(IncludedVisibility)).Count() == 1);
+            Assert.IsTrue(exposedTypes.Where(w => w == typeof(IncludedMembers)).Count() == 1);
+
+            Assert.AreEqual(3, exposedTypes.Count);
+        }
     }
 }

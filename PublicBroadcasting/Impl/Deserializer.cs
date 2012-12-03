@@ -8,12 +8,12 @@ using System.Threading.Tasks;
 
 namespace PublicBroadcasting.Impl
 {
-    public class Deserializer
+    internal class Deserializer
     {
         private static readonly Dictionary<TypeDescription, Type> TypeCache = new Dictionary<TypeDescription, Type>(new TypeDescriptionComparer());
         private static readonly Dictionary<Tuple<Type, Type>, Func<object, object>> MapperCache = new Dictionary<Tuple<Type, Type>, Func<object, object>>();
 
-        public static T Deserialize<T>(Stream stream)
+        internal static T Deserialize<T>(Stream stream)
         {
             Type type;
             var raw = DeserializeCore(stream, out type);
@@ -23,7 +23,7 @@ namespace PublicBroadcasting.Impl
             return (T)mapper(raw);
         }
 
-        public static dynamic Deserialize(Stream stream)
+        internal static dynamic Deserialize(Stream stream)
         {
             Type ignored;
             return DeserializeCore(stream, out ignored);
