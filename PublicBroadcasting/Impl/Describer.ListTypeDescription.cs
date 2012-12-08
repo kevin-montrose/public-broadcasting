@@ -28,7 +28,6 @@ namespace PublicBroadcasting.Impl
 
         private ListTypeDescription() 
         {
-            Console.WriteLine();
         }
 
         private ListTypeDescription(TypeDescription contains, Type listType)

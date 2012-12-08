@@ -32,7 +32,7 @@ namespace Benchmark
         [ProtoBuf.ProtoMember(10)]
         public string J;
         [ProtoBuf.ProtoMember(11)]
-        public int[] K;
+        public List<int> K;
         [ProtoBuf.ProtoMember(12)]
         public List<long> L;
         [ProtoBuf.ProtoMember(13)]
@@ -62,9 +62,9 @@ namespace Benchmark
 
             if (K != null)
             {
-                if (K.Length != other.K.Length) return false;
+                if (K.Count != other.K.Count) return false;
 
-                for (var i = 0; i < K.Length; i++)
+                for (var i = 0; i < K.Count; i++)
                 {
                     if (K[i] != other.K[i]) return false;
                 }
@@ -135,7 +135,7 @@ namespace Benchmark
         [ProtoBuf.ProtoMember(10)]
         public string J { get; set; }
         [ProtoBuf.ProtoMember(11)]
-        public int[] K { get; set; }
+        public List<int> K { get; set; }
         [ProtoBuf.ProtoMember(12)]
         public List<long> L { get; set; }
         [ProtoBuf.ProtoMember(13)]
@@ -165,9 +165,9 @@ namespace Benchmark
 
             if (K != null)
             {
-                if (K.Length != other.K.Length) return false;
+                if (K.Count != other.K.Count) return false;
 
-                for (var i = 0; i < K.Length; i++)
+                for (var i = 0; i < K.Count; i++)
                 {
                     if (K[i] != other.K[i]) return false;
                 }
@@ -233,7 +233,7 @@ namespace Benchmark
                     H = rand.Next<sbyte>(),
                     I = rand.Next<char>(),
                     J = rand.NextString(10),
-                    K = rand.NextArray<int>(10),
+                    K = rand.NextArray<int>(10).ToList(),
                     L = rand.NextArray<long>(10).ToList(),
                     M = rand.NextDictionary<short, byte>(10),
                     N = rand.Next() % 2 == 0 ? null : BuildPropsPoco(seed + 1)
@@ -257,7 +257,7 @@ namespace Benchmark
                     H = rand.Next<sbyte>(),
                     I = rand.Next<char>(),
                     J = rand.NextString(10),
-                    K = rand.NextArray<int>(10),
+                    K = rand.NextArray<int>(10).ToList(),
                     L = rand.NextArray<long>(10).ToList(),
                     M = rand.NextDictionary<short, byte>(10),
                     N = rand.Next() % 2 == 0 ? null : BuildFieldsPoco(seed + 1)

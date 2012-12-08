@@ -37,10 +37,10 @@ namespace PublicBroadcasting.Impl
                 // null *can* be serialized, it just has no value
                 if (payload != null)
                 {
-                    // Alot of models can skip the whole "create shadow type" operation, so let's squeeze those savings out
+                    // A lot of models can skip the whole "create shadow type" operation, so let's squeeze those savings out
                     if (!desc.NeedsMapping)
                     {
-                        var model = TypeModelBuilder.BuildTypeModel(desc) ?? RuntimeTypeModel.Default;
+                        var model = desc.TypeModel ?? RuntimeTypeModel.Default;
 
                         model.Serialize(mem, payload);
                     }

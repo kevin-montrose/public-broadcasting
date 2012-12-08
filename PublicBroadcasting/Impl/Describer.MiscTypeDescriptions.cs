@@ -19,6 +19,8 @@ namespace PublicBroadcasting.Impl
     [ProtoInclude(10, typeof(NoTypeDescription))]
     internal abstract class TypeDescription
     {
+        internal RuntimeTypeModel TypeModel { get; set; }
+
         internal abstract bool NeedsMapping { get; }
 
         internal abstract Type GetPocoType(TypeDescription existingDescription = null);

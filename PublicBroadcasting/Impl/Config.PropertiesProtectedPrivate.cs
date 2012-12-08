@@ -80,6 +80,12 @@ namespace PublicBroadcasting.Impl
 
                 Flattener.Flatten(ret, Config.GetIdProvider());
 
+                if (!ret.NeedsMapping)
+                {
+                    ret.TypeModel = TypeModelBuilder.BuildTypeModel(ret);
+                    ret.TypeModel.CompileInPlace();
+                }
+
                 Flattened = ret;
 
                 return Flattened;
