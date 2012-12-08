@@ -102,5 +102,54 @@ namespace Tests
                 asStr
             );
         }
+
+        class Fast
+        {
+            public int A { get; set; }
+            public List<byte> B { get; set; }
+            public Fast C { get; set; }
+        }
+
+        class Slow
+        {
+            public int A { get; set; }
+            public byte[] B { get; set; }
+            public Slow C { get; set; }
+        }
+
+        [TestMethod]
+        public void SlowFast()
+        {
+            var b1 = Serializer.Serialize(new Fast { A = 123, B = new List<byte> { 128, 129, 130 }, C = new Fast { A = 456, B = new List<byte> { 1 } } });
+            var b2 = Serializer.Serialize(new Slow { A = 255, B = new byte[] { 10, 32, 68 }, C = new Slow { A = 789, B = new byte[] { 15, 10 } } });
+
+            var f1 = Serializer.Deserialize<Fast>(b2);
+            var s1 = Serializer.Deserialize<Slow>(b1);
+
+            Assert.IsNotNull(f1);
+            Assert.IsNotNull(s1);
+
+            Assert.AreEqual(123, s1.A);
+            Assert.AreEqual(3, s1.B.Length);
+            Assert.AreEqual(128, s1.B[0]);
+            Assert.AreEqual(129, s1.B[1]);
+            Assert.AreEqual(130, s1.B[2]);
+            Assert.IsNotNull(s1.C);
+            Assert.AreEqual(456, s1.C.A);
+            Assert.AreEqual(1, s1.C.B.Length);
+            Assert.AreEqual(1, s1.C.B[0]);
+            Assert.IsNull(s1.C.C);
+
+            Assert.AreEqual(255, f1.A);
+            Assert.AreEqual(3, f1.B.Count);
+            Assert.AreEqual(10, f1.B[0]);
+            Assert.AreEqual(32, f1.B[1]);
+            Assert.AreEqual(68, f1.B[2]);
+            Assert.AreEqual(789, f1.C.A);
+            Assert.AreEqual(2, f1.C.B.Count);
+            Assert.AreEqual(15, f1.C.B[0]);
+            Assert.AreEqual(10, f1.C.B[1]);
+            Assert.IsNull(f1.C.C);
+        }
     }
 }
