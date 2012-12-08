@@ -10,6 +10,11 @@ namespace PublicBroadcasting.Impl
     [ProtoContract]
     internal class NullableTypeDescription : TypeDescription
     {
+        internal override bool NeedsMapping
+        {
+            get { return false; }
+        }
+
         [ProtoMember(1)]
         internal TypeDescription InnerType { get; set; }
 

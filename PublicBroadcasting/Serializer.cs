@@ -134,9 +134,7 @@ namespace PublicBroadcasting
             POCOBuilder builder;
             GetDescriptionAndBuilder<T>(members, visibility, out desc, out builder);
 
-            var payload = builder.GetMapper()(obj);
-
-            var envelope = Envelope.Get(desc, payload);
+            var envelope = Envelope.Get(desc, builder, obj);
 
             ProtoBuf.Serializer.Serialize(stream, envelope);
         }

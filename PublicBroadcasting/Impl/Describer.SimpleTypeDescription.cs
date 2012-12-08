@@ -54,6 +54,11 @@ namespace PublicBroadcasting.Impl
 
         internal static readonly SimpleTypeDescription Uri = new SimpleTypeDescription(UriTag);
 
+        internal override bool NeedsMapping
+        {
+            get { return false; }
+        }
+
         [ProtoMember(1)]
         internal int Tag { get; private set; }
 

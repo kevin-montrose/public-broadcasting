@@ -1,4 +1,5 @@
 ﻿using ProtoBuf;
+using ProtoBuf.Meta;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,6 +19,8 @@ namespace PublicBroadcasting.Impl
     [ProtoInclude(10, typeof(NoTypeDescription))]
     internal abstract class TypeDescription
     {
+        internal abstract bool NeedsMapping { get; }
+
         internal abstract Type GetPocoType(TypeDescription existingDescription = null);
 
         internal virtual void Seal(TypeDescription existing = null) { }
@@ -30,6 +33,11 @@ namespace PublicBroadcasting.Impl
     [ProtoContract]
     internal class NoTypeDescription : TypeDescription
     {
+        internal override bool NeedsMapping
+        {
+            get { throw new NotImplementedException(); }
+        }
+
         internal NoTypeDescription() { }
 
         internal override Type GetPocoType(TypeDescription existing = null)

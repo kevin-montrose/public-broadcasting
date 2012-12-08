@@ -193,13 +193,23 @@ namespace PublicBroadcasting.Impl
             return enumerator.CreateType();
         }
 
+        internal override bool NeedsMapping
+        {
+            get 
+            {
+                return 
+                    ForType.IsAnonymouseClass() || 
+                    Members.Any(m => m.Value.NeedsMapping);
+            }
+        }
+
         [ProtoMember(1)]
         internal Dictionary<string, TypeDescription> Members { get; set; }
 
         [ProtoMember(2)]
         internal int Id { get; set; }
 
-        private Type ForType { get; set; }
+        internal Type ForType { get; set; }
 
         private ClassTypeDescription() { }
 

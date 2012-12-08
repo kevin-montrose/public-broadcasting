@@ -10,6 +10,11 @@ namespace PublicBroadcasting.Impl
     [ProtoContract]
     internal class DictionaryTypeDescription : TypeDescription
     {
+        internal override bool NeedsMapping
+        {
+            get { return KeyType.NeedsMapping || ValueType.NeedsMapping; }
+        }
+
         [ProtoMember(1)]
         internal TypeDescription KeyType { get; set; }
         [ProtoMember(2)]

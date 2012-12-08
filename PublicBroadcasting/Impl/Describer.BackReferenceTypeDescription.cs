@@ -10,6 +10,11 @@ namespace PublicBroadcasting.Impl
     [ProtoContract]
     internal class BackReferenceTypeDescription : TypeDescription
     {
+        internal override bool NeedsMapping
+        {
+            get { return false; }
+        }
+
         [ProtoMember(1)]
         public int Id { get; set; }
 

@@ -11,19 +11,36 @@ namespace PublicBroadcasting.Impl
     [ProtoContract]
     internal class ListTypeDescription : TypeDescription
     {
+        internal override bool NeedsMapping
+        {
+            get 
+            { 
+                return 
+                    ForType.IsArray ||
+                    Contains.NeedsMapping; 
+            }
+        }
+
         [ProtoMember(1)]
         internal TypeDescription Contains { get; set; }
 
-        private ListTypeDescription() { }
+        internal Type ForType { get; set; }
 
-        private ListTypeDescription(TypeDescription contains)
+        private ListTypeDescription() 
         {
+            Console.WriteLine();
+        }
+
+        private ListTypeDescription(TypeDescription contains, Type listType)
+        {
+            ForType = listType;
+
             Contains = contains;
         }
 
-        static internal ListTypeDescription Create(TypeDescription contains)
+        static internal ListTypeDescription Create(TypeDescription contains, Type type)
         {
-            return new ListTypeDescription(contains);
+            return new ListTypeDescription(contains, type);
         }
 
         internal override Type GetPocoType(TypeDescription existing = null)
@@ -54,6 +71,7 @@ namespace PublicBroadcasting.Impl
             backRefLookup[this] = ret;
 
             ret.Contains = Contains.Clone(backRefLookup);
+            ret.ForType = ForType;
 
             return ret;
         }

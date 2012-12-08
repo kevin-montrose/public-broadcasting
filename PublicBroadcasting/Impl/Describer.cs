@@ -128,7 +128,7 @@ namespace PublicBroadcasting.Impl
 
                 val = (TypeDescription)valDesc.Invoke(null, new object[0]);
 
-                var listRet = ListTypeDescription.Create(val);
+                var listRet = ListTypeDescription.Create(val, t);
 
                 listPromise.Fulfil(listRet);
 

@@ -8,6 +8,11 @@ namespace PublicBroadcasting.Impl
 {
     internal class PromisedTypeDescription : TypeDescription
     {
+        internal override bool NeedsMapping
+        {
+            get { return Fulfilment.NeedsMapping; }
+        }
+
         private TypeDescription Fulfilment { get; set; }
 
         private Type ForType { get; set; }

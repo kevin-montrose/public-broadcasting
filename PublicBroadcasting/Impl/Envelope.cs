@@ -1,4 +1,5 @@
 ﻿using ProtoBuf;
+using ProtoBuf.Meta;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -29,11 +30,27 @@ namespace PublicBroadcasting.Impl
             Payload = payload;
         }
 
-        public static Envelope Get(TypeDescription desc, object payload)
+        public static Envelope Get(TypeDescription desc, POCOBuilder mapper, object payload)
         {
             using(var mem = new MemoryStream())
             {
-                ProtoBuf.Serializer.NonGeneric.Serialize(mem, payload);
+                // null *can* be serialized, it just has no value
+                if (payload != null)
+                {
+                    // Alot of models can skip the whole "create shadow type" operation, so let's squeeze those savings out
+                    if (!desc.NeedsMapping)
+                    {
+                        var model = TypeModelBuilder.BuildTypeModel(desc) ?? RuntimeTypeModel.Default;
+
+                        model.Serialize(mem, payload);
+                    }
+                    else
+                    {
+                        payload = mapper.GetMapper()(payload);
+
+                        ProtoBuf.Serializer.NonGeneric.Serialize(mem, payload);
+                    }
+                }
 
                 return new Envelope(desc, mem.ToArray());
             }

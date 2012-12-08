@@ -36,15 +36,24 @@ namespace PublicBroadcasting.Impl
             ModuleBuilder = asmBuilder.DefineDynamicModule(asmName.Name);
         }
 
+        internal override bool NeedsMapping
+        {
+            get { return true; }
+        }
+
         [ProtoMember(1)]
         internal List<string> Values { get; set; }
         [ProtoMember(2)]
         internal int Id { get; set; }
 
+        internal Type ForType { get; set; }
+
         private EnumTypeDescription() { }
 
         private EnumTypeDescription(Type t)
         {
+            ForType = t;
+
             Values = Enum.GetNames(t).OrderBy(o => o, StringOrdinalComparer.Singleton).ToList();
         }
 
