@@ -38,7 +38,7 @@ namespace PublicBroadcasting.Impl
 
         internal override bool NeedsMapping
         {
-            get { return true; }
+            get { return false; }
         }
 
         [ProtoMember(1)]
@@ -71,9 +71,15 @@ namespace PublicBroadcasting.Impl
 
             var protoContractAttr = typeof(ProtoContractAttribute).GetConstructor(new Type[0]);
 
+            var enumAttr = typeof(ProtoEnumAttribute).GetConstructor(Type.EmptyTypes);
+            var enumAttrVal = typeof(ProtoEnumAttribute).GetProperty("Value");
+
             for (var i = 0; i < Values.Count; i++)
             {
-                builder.DefineLiteral(Values[i], i);
+                var field = builder.DefineLiteral(Values[i], i);
+
+                var enumAttrBuilder = new CustomAttributeBuilder(enumAttr, new object[0], new[] { enumAttrVal }, new object[] { i });
+                field.SetCustomAttribute(enumAttrBuilder);
             }
 
             var contractAttrBuilder = new CustomAttributeBuilder(protoContractAttr, new object[0]);

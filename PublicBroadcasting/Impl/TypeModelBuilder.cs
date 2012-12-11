@@ -38,7 +38,17 @@ namespace PublicBroadcasting.Impl
 
             if (desc is EnumTypeDescription)
             {
-                throw new Exception("Enums cannot be serialized with TypeModelBuilder, they must be mapped");
+                var meta = existing.Add(((EnumTypeDescription)desc).ForType, applyDefaultBehaviour: false);
+
+                var ordered = ((EnumTypeDescription)desc).Values.OrderBy(o => o, StringOrdinalComparer.Singleton);
+                var equiv = 0;
+                foreach (var val in ordered)
+                {
+                    meta.Add(equiv, val);
+                    equiv++;
+                }
+
+                return existing;
             }
 
             if (!(desc is ClassTypeDescription))
