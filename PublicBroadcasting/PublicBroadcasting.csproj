@@ -45,6 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Impl\ArrayThunk.cs" />
     <Compile Include="Impl\Deserializer.cs" />
     <Compile Include="Impl\Config.AllAll.cs">
       <DependentUpon>Config.cs</DependentUpon>
@@ -215,6 +216,7 @@
     <Compile Include="Impl\Flattener.cs" />
     <Compile Include="Impl\OnDemandDictionary.cs" />
     <Compile Include="Impl\OnDemandList.cs" />
+    <Compile Include="Impl\PassThroughList.cs" />
     <Compile Include="Impl\POCOBuilder.cs" />
     <Compile Include="Impl\POCOMapper.cs" />
     <Compile Include="Impl\TypeModelBuilder.cs" />

@@ -151,6 +151,40 @@ namespace Tests
             Assert.AreEqual(-1, j);
         }
 
+        class ListMem<T>
+        {
+            public List<T> Mem { get; set; }
+        }
+
+        class ArrMem<T>
+        {
+            public T[] Mem { get; set; }
+        }
+
+        [TestMethod]
+        public void MemberCollectionConversions()
+        {
+            var b1 = Serializer.Serialize(new ArrMem<byte> { Mem = new byte[] { 1, 2, 3 } });
+            var b2 = Serializer.Serialize(new ListMem<byte> { Mem = new List<byte> { 1, 2, 3 } });
+            var l = Serializer.Deserialize<ListMem<byte>>(b1);
+            var a = Serializer.Deserialize<ArrMem<byte>>(b2);
+            var li = Serializer.Deserialize<ListMem<int>>(b1);
+            var ai = Serializer.Deserialize<ArrMem<int>>(b2);
+
+            Assert.AreEqual(3, l.Mem.Count);
+            Assert.AreEqual(3, a.Mem.Length);
+            Assert.AreEqual(3, li.Mem.Count);
+            Assert.AreEqual(3, ai.Mem.Length);
+
+            for (var i = 0; i < 3; i++)
+            {
+                Assert.AreEqual(i + 1, l.Mem[i]);
+                Assert.AreEqual(i + 1, a.Mem[i]);
+                Assert.AreEqual(i + 1, li.Mem[i]);
+                Assert.AreEqual(i + 1, ai.Mem[i]);
+            }
+        }
+
         [TestMethod]
         public void CollectionConversions()
         {

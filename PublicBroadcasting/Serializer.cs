@@ -130,6 +130,14 @@ namespace PublicBroadcasting
             if (members == 0) throw new ArgumentException("members");
             if (visibility == 0) throw new ArgumentException("visibility");
 
+            // Protobuf-net special cases arrays (or List<T>; depending on how you look at it) at a top level
+            //   So we need to special case it so arrays and lists end up with the same serialization.
+            if (typeof(T).IsArray)
+            {
+                ArrayThunk<T>.Serialize(stream, obj, members, visibility);
+                return;
+            }
+
             TypeDescription desc;
             POCOBuilder builder;
             GetDescriptionAndBuilder<T>(members, visibility, out desc, out builder);
@@ -137,6 +145,11 @@ namespace PublicBroadcasting
             var envelope = Envelope.Get(desc, builder, obj);
 
             ProtoBuf.Serializer.Serialize(stream, envelope);
+        }
+
+        private static PassThroughList<T> CreatePassthoughList<T>(T[] toWrap)
+        {
+            return null;
         }
 
         #region GetDescriptionAndBuilder

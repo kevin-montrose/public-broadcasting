@@ -16,7 +16,7 @@ namespace PublicBroadcasting.Impl
             get 
             { 
                 return 
-                    ForType.IsArray ||
+                    //ForType.IsArray ||
                     Contains.NeedsMapping; 
             }
         }
