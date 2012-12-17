@@ -151,5 +151,40 @@ namespace Tests
             Assert.AreEqual(10, f1.C.B[1]);
             Assert.IsNull(f1.C.C);
         }
+
+        [TestMethod]
+        public void ListArray()
+        {
+            const string oldArr = "EgYqBAoCGgAaDwgCCBAI/P//////////AQ==";
+            const string oldList = "EgYqBAoCGgAaBggBCAUICw==";
+
+            var list = Serializer.Deserialize<List<int>>(Convert.FromBase64String(oldList));
+            var arr = Serializer.Deserialize<int[]>(Convert.FromBase64String(oldArr));
+
+            var toList = Serializer.Deserialize<List<int>>(Convert.FromBase64String(oldArr));
+            var toArr = Serializer.Deserialize<int[]>(Convert.FromBase64String(oldList));
+
+            Assert.AreEqual(3, list.Count);
+            Assert.AreEqual(3, arr.Length);
+            Assert.AreEqual(3, toList.Count);
+            Assert.AreEqual(3, toArr.Length);
+
+            Assert.AreEqual(1, list[0]);
+            Assert.AreEqual(5, list[1]);
+            Assert.AreEqual(11, list[2]);
+
+            Assert.AreEqual(2, arr[0]);
+            Assert.AreEqual(16, arr[1]);
+            Assert.AreEqual(-4, arr[2]);
+
+            Assert.AreEqual(2, toList[0]);
+            Assert.AreEqual(16, toList[1]);
+            Assert.AreEqual(-4, toList[2]);
+
+            Assert.AreEqual(1, toArr[0]);
+            Assert.AreEqual(5, toArr[1]);
+            Assert.AreEqual(11, toArr[2]);
+
+        }
     }
 }
