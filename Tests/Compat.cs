@@ -184,7 +184,44 @@ namespace Tests
             Assert.AreEqual(1, toArr[0]);
             Assert.AreEqual(5, toArr[1]);
             Assert.AreEqual(11, toArr[2]);
+        }
 
+        private T DeserializeByExample<T>(T example, byte[] bytes)
+        {
+            return Serializer.Deserialize<T>(bytes);
+        }
+
+        [TestMethod]
+        public void CollectionMember()
+        {
+            const string oldList = "EhEiDwoNCgNNZW0SBioECgIaABoGCAEIAggD";
+            const string oldArr = "EhEiDwoNCgNNZW0SBioECgIaABoGCAQIBQgG";
+
+            var arr = DeserializeByExample(new { Mem = new int[0] }, Convert.FromBase64String(oldArr));
+            var list = DeserializeByExample(new { Mem = new List<int>() }, Convert.FromBase64String(oldList));
+            var asArr = DeserializeByExample(new { Mem = new int[0] }, Convert.FromBase64String(oldList));
+            var asList = DeserializeByExample(new { Mem = new List<int>() }, Convert.FromBase64String(oldArr));
+
+            Assert.AreEqual(3, arr.Mem.Length);
+            Assert.AreEqual(3, list.Mem.Count);
+            Assert.AreEqual(3, asArr.Mem.Length);
+            Assert.AreEqual(3, asList.Mem.Count);
+
+            Assert.AreEqual(1, list.Mem[0]);
+            Assert.AreEqual(2, list.Mem[1]);
+            Assert.AreEqual(3, list.Mem[2]);
+
+            Assert.AreEqual(1, asArr.Mem[0]);
+            Assert.AreEqual(2, asArr.Mem[1]);
+            Assert.AreEqual(3, asArr.Mem[2]);
+
+            Assert.AreEqual(4, arr.Mem[0]);
+            Assert.AreEqual(5, arr.Mem[1]);
+            Assert.AreEqual(6, arr.Mem[2]);
+
+            Assert.AreEqual(4, asList.Mem[0]);
+            Assert.AreEqual(5, asList.Mem[1]);
+            Assert.AreEqual(6, asList.Mem[2]);
         }
     }
 }
