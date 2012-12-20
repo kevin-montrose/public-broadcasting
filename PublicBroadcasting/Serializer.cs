@@ -147,11 +147,6 @@ namespace PublicBroadcasting
             ProtoBuf.Serializer.Serialize(stream, envelope);
         }
 
-        private static PassThroughList<T> CreatePassthoughList<T>(T[] toWrap)
-        {
-            return null;
-        }
-
         #region GetDescriptionAndBuilder
 
         private static void GetDescriptionAndBuilder<T>(IncludedMembers members, IncludedVisibility visibility, out TypeDescription description, out POCOBuilder builder)
