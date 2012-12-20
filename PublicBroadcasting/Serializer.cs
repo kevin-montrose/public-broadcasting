@@ -149,7 +149,7 @@ namespace PublicBroadcasting
 
         #region GetDescriptionAndBuilder
 
-        private static void GetDescriptionAndBuilder<T>(IncludedMembers members, IncludedVisibility visibility, out TypeDescription description, out POCOBuilder builder)
+        internal static void GetDescriptionAndBuilder<T>(IncludedMembers members, IncludedVisibility visibility, out TypeDescription description, out POCOBuilder builder)
         {
             if (visibility == IncludedVisibility.Public)
             {

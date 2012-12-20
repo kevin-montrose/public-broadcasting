@@ -367,33 +367,6 @@ namespace PublicBroadcasting.Impl
             return PocoType ?? TypeBuilder;
         }
 
-        private List<Tuple<TypeDescription, Action<TypeDescription>>> GetDescendentMemberModifiers()
-        {
-            var ret = new List<Tuple<TypeDescription, Action<TypeDescription>>>();
-
-            foreach (var member in Members)
-            {
-                var copy = member.Key;
-
-                ret.Add(
-                    Tuple.Create(
-                        member.Value,
-                        (Action<TypeDescription>)(x => Members[copy] = x)
-                    )
-                );
-            }
-
-            var recurOn = Members.Select(m => m.Value).OfType<ClassTypeDescription>();
-            recurOn = recurOn.Where(o => !ret.Any(r => r.Item1 == o));
-
-            foreach (var clazz in recurOn.ToList())
-            {
-                ret.AddRange(clazz.GetDescendentMemberModifiers());
-            }
-
-            return ret;
-        }
-
         private bool DePromised { get; set; }
         internal override TypeDescription DePromise(out Action afterPromise)
         {
