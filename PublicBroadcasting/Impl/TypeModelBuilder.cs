@@ -9,7 +9,6 @@ namespace PublicBroadcasting.Impl
 {
     internal static class TypeModelBuilder
     {
-
         public static RuntimeTypeModel BuildTypeModel(TypeDescription desc, RuntimeTypeModel existing = null)
         {
             existing = existing ?? RuntimeTypeModel.Create();

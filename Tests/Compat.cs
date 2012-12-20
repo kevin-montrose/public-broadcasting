@@ -223,5 +223,28 @@ namespace Tests
             Assert.AreEqual(5, asList.Mem[1]);
             Assert.AreEqual(6, asList.Mem[2]);
         }
+
+        class NoSetter
+        {
+            public string A { get { return "A"; } }
+        }
+
+        class NoGetter
+        {
+            private string _A;
+
+            public string A { set { _A = value; } }
+
+            public string GetA() { return _A; }
+        }
+
+        [TestMethod]
+        public void NonUniformAccessors()
+        {
+            var bytes = Serializer.Serialize(new NoSetter());
+            var g = Serializer.Deserialize<NoGetter>(bytes);
+
+            Assert.AreEqual("A", g.GetA());
+        }
     }
 }

@@ -198,7 +198,8 @@ namespace PublicBroadcasting.Impl
             get 
             {
                 return 
-                    ForType.IsAnonymouseClass() || 
+                    //ForType.IsAnonymouseClass() || 
+                    AnyNonUniformMembers() ||
                     Members.Any(m => m.Value.NeedsMapping);
             }
         }
@@ -442,6 +443,29 @@ namespace PublicBroadcasting.Impl
             clone.PocoType = PocoType;
 
             return clone;
+        }
+
+        /// <summary>
+        /// Returns true if any member chosen to be serialized is
+        /// A) A property
+        /// B) Has only a getter or only a setter
+        /// </summary>
+        /// <returns></returns>
+        private bool AnyNonUniformMembers()
+        {
+            foreach (var mem in Members)
+            {
+                var prop = ForType.GetProperty(mem.Key, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+                if (prop == null) continue;
+
+                if ((prop.CanRead && !prop.CanWrite) || (prop.CanWrite && !prop.CanRead))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 
