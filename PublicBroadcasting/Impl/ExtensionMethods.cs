@@ -87,5 +87,35 @@ namespace PublicBroadcasting.Impl
 
             return arr;
         }
+
+        internal static bool IsList(this Type t)
+        {
+            return
+                (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IList<>)) ||
+                t.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>));
+        }
+
+        internal static Type GetListInterface(this Type t)
+        {
+            return
+                (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IList<>)) ?
+                t :
+                t.GetInterfaces().First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>));
+        }
+
+        internal static bool IsDictionary(this Type t)
+        {
+            return
+                (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IDictionary<,>)) ||
+                t.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>));
+        }
+
+        internal static Type GetDictionaryInterface(this Type t)
+        {
+            return
+                (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IDictionary<,>)) ?
+                t :
+                t.GetInterfaces().First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>));
+        }
     }
 }

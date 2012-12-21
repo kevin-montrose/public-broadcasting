@@ -43,7 +43,7 @@ namespace PublicBroadcasting.Impl
                 var equiv = 0;
                 foreach (var val in ordered)
                 {
-                    meta.Add(equiv, val);
+                    meta.AddField(equiv, val);
                     equiv++;
                 }
 

@@ -78,13 +78,9 @@ namespace PublicBroadcasting.Impl
                 return (EnumTypeDescription)single.GetValue(null);
             }
 
-            if ((t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IDictionary<,>)) ||
-               t.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>)))
+            if (t.IsDictionary())
             {
-                var dictI = 
-                    (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IDictionary<,>)) ?
-                    t :
-                    t.GetInterfaces().First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>));
+                var dictI = t.GetDictionaryInterface();
 
                 var dictPromiseType = typeof(PromisedTypeDescription<,>).MakeGenericType(dictI, describerType.MakeGenericType(dictI));
                 var dictPromiseSingle = dictPromiseType.GetField("Singleton");
@@ -108,13 +104,9 @@ namespace PublicBroadcasting.Impl
                 return dictRet;
             }
 
-            if ((t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IList<>)) ||
-               t.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>)))
+            if (t.IsList())
             {
-                var listI = 
-                    (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IList<>)) ?
-                    t :
-                    t.GetInterfaces().First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>));
+                var listI = t.GetListInterface();
 
                 var listPromiseType = typeof(PromisedTypeDescription<,>).MakeGenericType(listI, describerType.MakeGenericType(listI));
                 var listPromiseSingle = listPromiseType.GetField("Singleton");

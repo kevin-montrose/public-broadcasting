@@ -10,24 +10,24 @@ namespace PublicBroadcasting.Impl
     [ProtoContract]
     internal class SimpleTypeDescription : TypeDescription
     {
-        private const int IntTag = 0;
-        private const int StringTag = 1;
-        private const int BoolTag = 2;
-        private const int DoubleTag = 3;
-        private const int LongTag = 4;
-        private const int ByteTag = 5;
-        private const int CharTag = 6;
-        private const int DateTimeTag = 7;
-        private const int TimeSpanTag = 8;
-        private const int UIntTag = 9;
-        private const int ULongTag = 10;
-        private const int ShortTag = 11;
-        private const int UShortTag = 12;
-        private const int FloatTag = 13;
-        private const int DecimalTag = 14;
-        private const int GuidTag = 15;
-        private const int UriTag = 16;
-        private const int SByteTag = 17;
+        internal const int IntTag = 0;
+        internal const int StringTag = 1;
+        internal const int BoolTag = 2;
+        internal const int DoubleTag = 3;
+        internal const int LongTag = 4;
+        internal const int ByteTag = 5;
+        internal const int CharTag = 6;
+        internal const int DateTimeTag = 7;
+        internal const int TimeSpanTag = 8;
+        internal const int UIntTag = 9;
+        internal const int ULongTag = 10;
+        internal const int ShortTag = 11;
+        internal const int UShortTag = 12;
+        internal const int FloatTag = 13;
+        internal const int DecimalTag = 14;
+        internal const int GuidTag = 15;
+        internal const int UriTag = 16;
+        internal const int SByteTag = 17;
 
         internal static readonly SimpleTypeDescription Int = new SimpleTypeDescription(IntTag);
         internal static readonly SimpleTypeDescription UInt = new SimpleTypeDescription(UIntTag);

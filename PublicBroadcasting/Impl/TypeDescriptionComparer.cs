@@ -6,6 +6,32 @@ using System.Text;
 namespace PublicBroadcasting.Impl
 {
     /// <summary>
+    /// Uses TypeDescriptionComparer, and thus like it only works on types that *don't* have cycles
+    /// </summary>
+    class TypeAndTypeDescriptionComparer : IEqualityComparer<Tuple<Type, TypeDescription>>
+    {
+        private IEqualityComparer<TypeDescription> DescriptionComparer = new TypeDescriptionComparer();
+
+        public bool Equals(Tuple<Type, TypeDescription> x, Tuple<Type, TypeDescription> y)
+        {
+            if(object.ReferenceEquals(x, y)) return true;
+            if(x == null && y != null) return false;
+            if(y == null && x != null) return false;
+
+            return
+                x.Item1 == y.Item1 &&
+                DescriptionComparer.Equals(x.Item2, y.Item2);
+        }
+
+        public int GetHashCode(Tuple<Type, TypeDescription> obj)
+        {
+            return
+                obj.Item1.GetHashCode() ^
+                DescriptionComparer.GetHashCode(obj.Item2);
+        }
+    }
+
+    /// <summary>
     /// Note that this only works on TypeDescriptions that *don't have cycles*!
     /// 
     /// In practice this means it can't be used while serializing, but after a type has been flattened
