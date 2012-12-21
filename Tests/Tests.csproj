@@ -57,6 +57,7 @@
     <Compile Include="Describer.cs" />
     <Compile Include="Dynamic.cs" />
     <Compile Include="Errors.cs" />
+    <Compile Include="Issues.cs" />
     <Compile Include="POCOBuilder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Readme.cs" />

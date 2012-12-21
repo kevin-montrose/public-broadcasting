@@ -415,6 +415,7 @@ namespace PublicBroadcasting.Impl
                         var to = tTo.GetMember(s.Name).Where(w => w is FieldInfo || w is PropertyInfo).SingleOrDefault();
 
                         if (to == null) return null;
+                        if (to is PropertyInfo && !((PropertyInfo)to).CanWrite) return null;
 
                         var toPropType = to is FieldInfo ? (to as FieldInfo).FieldType : (to as PropertyInfo).PropertyType;
 
