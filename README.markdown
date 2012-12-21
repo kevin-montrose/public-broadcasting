@@ -6,6 +6,8 @@ Public Broadcasting sacrifices *some* of the compactness of [Protocol Buffers](h
 of the performance of [protobuf-net](http://code.google.com/p/protobuf-net/) to avoid the hassle of .proto files or manually adding
 attributes to your types.  Addition and removal of members is handled gracefully, avoiding versioning headaches.
 
+Stable releases are available as [NuGet packages](http://nuget.org/packages/PublicBroadcasting), also available on [GitHub](https://github.com/kevin-montrose/public-broadcasting/tree/master/Nuget).
+
 ###Structurally Typed
 
 Public Broadcasting encodes the structure of your data, not type names.  Thus there's no requirement to deserialize to a type of the same
