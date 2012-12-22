@@ -65,7 +65,11 @@ namespace PublicBroadcasting.Impl
                 {
                     var asClass = (ClassTypeDescription)top;
 
-                    if (asClass.Id == Id) return asClass.GetPocoType(existingDescription);
+                    if (asClass.Id == Id)
+                    {
+                        asClass.Seal(existingDescription);
+                        return asClass.GetPocoType(existingDescription);
+                    }
 
                     foreach (var member in asClass.Members)
                     {
@@ -79,7 +83,11 @@ namespace PublicBroadcasting.Impl
                 {
                     var asEnum = (EnumTypeDescription)top;
 
-                    if (asEnum.Id == Id) return asEnum.GetPocoType(existingDescription);
+                    if (asEnum.Id == Id)
+                    {
+                        asEnum.Seal(existingDescription);
+                        return asEnum.GetPocoType(existingDescription);
+                    }
 
                     continue;
                 }
