@@ -1055,5 +1055,86 @@ namespace Tests
             Assert.AreEqual(7.75, a2.Bar[3]);
             Assert.AreEqual(7.75, n2.Bar[3]);
         }
+
+        class WithMem<T>
+        {
+            public T Mem { get; set; }
+        }
+
+        [TestMethod]
+        public void ArrayAndListMapping()
+        {
+            var b1 = Serializer.Serialize(new List<byte> { 1, 5, 9 });
+            var b2 = Serializer.Serialize(new List<sbyte> { 1, 5, 9 });
+            var b3 = Serializer.Serialize(new List<short> { 1, 5, 9 });
+            var b4 = Serializer.Serialize(new List<ushort> { 1, 5, 9 });
+            var b5 = Serializer.Serialize(new List<int> { 1, 5, 9 });
+            var b6 = Serializer.Serialize(new List<uint> { 1, 5, 9 });
+            var b7 = Serializer.Serialize(new List<long> { 1, 5, 9 });
+            var b8 = Serializer.Serialize(new List<ulong> { 1, 5, 9 });
+            var b9 = Serializer.Serialize(new List<float> { 1, 5, 9 });
+            var b10 = Serializer.Serialize(new List<double> { 1, 5, 9 });
+            var b11 = Serializer.Serialize(new List<decimal> { 1, 5, 9 });
+
+            var a1 = Serializer.Serialize(new byte[] { 1, 5, 9 });
+            var a2 = Serializer.Serialize(new sbyte[] { 1, 5, 9 });
+            var a3 = Serializer.Serialize(new short[] { 1, 5, 9 });
+            var a4 = Serializer.Serialize(new ushort[] { 1, 5, 9 });
+            var a5 = Serializer.Serialize(new int[] { 1, 5, 9 });
+            var a6 = Serializer.Serialize(new uint[] { 1, 5, 9 });
+            var a7 = Serializer.Serialize(new long[] { 1, 5, 9 });
+            var a8 = Serializer.Serialize(new ulong[] { 1, 5, 9 });
+            var a9 = Serializer.Serialize(new float[] { 1, 5, 9 });
+            var a10 = Serializer.Serialize(new double[] { 1, 5, 9 });
+            var a11 = Serializer.Serialize(new decimal[] { 1, 5, 9 });
+
+            var bm1 = Serializer.Serialize(new WithMem<List<byte>> { Mem = new List<byte> { 2, 8, 23 } });
+            var bm2 = Serializer.Serialize(new WithMem<List<sbyte>> { Mem = new List<sbyte> { 2, 8, 23 } });
+            var bm3 = Serializer.Serialize(new WithMem<List<short>> { Mem = new List<short> { 2, 8, 23 } });
+            var bm4 = Serializer.Serialize(new WithMem<List<ushort>> { Mem = new List<ushort> { 2, 8, 23 } });
+            var bm5 = Serializer.Serialize(new WithMem<List<int>> { Mem = new List<int> { 2, 8, 23 } });
+            var bm6 = Serializer.Serialize(new WithMem<List<uint>> { Mem = new List<uint> { 2, 8, 23 } });
+            var bm7 = Serializer.Serialize(new WithMem<List<long>> { Mem = new List<long> { 2, 8, 23 } });
+            var bm8 = Serializer.Serialize(new WithMem<List<ulong>> { Mem = new List<ulong> { 2, 8, 23 } });
+            var bm9 = Serializer.Serialize(new WithMem<List<float>> { Mem = new List<float> { 2, 8, 23 } });
+            var bm10 = Serializer.Serialize(new WithMem<List<double>> { Mem = new List<double> { 2, 8, 23 } });
+            var bm11 = Serializer.Serialize(new WithMem<List<decimal>> { Mem = new List<decimal> { 2, 8, 23 } });
+
+            var am1 = Serializer.Serialize(new WithMem<byte[]> { Mem = new byte[] { 2, 8, 23 } });
+            var am2 = Serializer.Serialize(new WithMem<sbyte[]> { Mem = new sbyte[] { 2, 8, 23 } });
+            var am3 = Serializer.Serialize(new WithMem<short[]> { Mem = new short[] { 2, 8, 23 } });
+            var am4 = Serializer.Serialize(new WithMem<ushort[]> { Mem = new ushort[] { 2, 8, 23 } });
+            var am5 = Serializer.Serialize(new WithMem<int[]> { Mem = new int[] { 2, 8, 23 } });
+            var am6 = Serializer.Serialize(new WithMem<uint[]> { Mem = new uint[] { 2, 8, 23 } });
+            var am7 = Serializer.Serialize(new WithMem<long[]> { Mem = new long[] { 2, 8, 23 } });
+            var am8 = Serializer.Serialize(new WithMem<ulong[]> { Mem = new ulong[] { 2, 8, 23 } });
+            var am9 = Serializer.Serialize(new WithMem<float[]> { Mem = new float[] { 2, 8, 23 } });
+            var am10 = Serializer.Serialize(new WithMem<double[]> { Mem = new double[] { 2, 8, 23 } });
+            var am11 = Serializer.Serialize(new WithMem<decimal[]> { Mem = new decimal[] { 2, 8, 23 } });
+
+            Assert.IsTrue(b1.SequenceEqual(a1));
+            Assert.IsTrue(b2.SequenceEqual(a2));
+            Assert.IsTrue(b3.SequenceEqual(a3));
+            Assert.IsTrue(b4.SequenceEqual(a4));
+            Assert.IsTrue(b5.SequenceEqual(a5));
+            Assert.IsTrue(b6.SequenceEqual(a6));
+            Assert.IsTrue(b7.SequenceEqual(a7));
+            Assert.IsTrue(b8.SequenceEqual(a8));
+            Assert.IsTrue(b9.SequenceEqual(a9));
+            Assert.IsTrue(b10.SequenceEqual(a10));
+            Assert.IsTrue(b11.SequenceEqual(a11));
+
+            Assert.IsTrue(bm1.SequenceEqual(am1));
+            Assert.IsTrue(bm2.SequenceEqual(am2));
+            Assert.IsTrue(bm3.SequenceEqual(am3));
+            Assert.IsTrue(bm4.SequenceEqual(am4));
+            Assert.IsTrue(bm5.SequenceEqual(am5));
+            Assert.IsTrue(bm6.SequenceEqual(am6));
+            Assert.IsTrue(bm7.SequenceEqual(am7));
+            Assert.IsTrue(bm8.SequenceEqual(am8));
+            Assert.IsTrue(bm9.SequenceEqual(am9));
+            Assert.IsTrue(bm10.SequenceEqual(am10));
+            Assert.IsTrue(bm11.SequenceEqual(am11));
+        }
     }
 }

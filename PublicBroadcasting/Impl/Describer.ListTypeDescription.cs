@@ -15,7 +15,9 @@ namespace PublicBroadcasting.Impl
         {
             get 
             { 
-                return Contains.NeedsMapping; 
+                return 
+                    ForType == typeof(byte[]) ||
+                    Contains.NeedsMapping; 
             }
         }
 
