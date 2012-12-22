@@ -235,8 +235,6 @@ namespace PublicBroadcasting.Impl
 
         private static void MakeModel(Type type, TypeDescription description, ProtoBuf.Meta.RuntimeTypeModel model)
         {
-            if (model.IsDefined(type)) return;
-
             if (description is SimpleTypeDescription) return;
             if(description is BackReferenceTypeDescription) return;
 
