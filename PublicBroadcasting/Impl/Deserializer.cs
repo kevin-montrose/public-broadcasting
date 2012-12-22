@@ -155,6 +155,9 @@ namespace PublicBroadcasting.Impl
             if (list != null)
             {
                 if (!type.IsList()) return false;
+                
+                // Handling of arrays is funky, just bail for arrays
+                if (type.IsArray) return false;
 
                 var listI = type.GetListInterface();
 
@@ -294,10 +297,13 @@ namespace PublicBroadcasting.Impl
 
                     cT.AddField(i + 1, memNames[i]);
 
-                    MakeModel(
+                    var memType = 
                         mem is PropertyInfo ?
                             ((PropertyInfo)mem).PropertyType :
-                            ((FieldInfo)mem).FieldType,
+                            ((FieldInfo)mem).FieldType;
+
+                    MakeModel(
+                        memType,
                         classD.Members[memNames[i]],
                         model
                     );

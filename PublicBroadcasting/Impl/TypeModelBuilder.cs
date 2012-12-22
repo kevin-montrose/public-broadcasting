@@ -57,11 +57,6 @@ namespace PublicBroadcasting.Impl
 
             var asClass = desc as ClassTypeDescription;
 
-            if (asClass.ForType.IsAnonymouseClass())
-            {
-                throw new Exception("Anonymous classes cannot be serialized with TypeModelBuilder, they must be mapped");
-            }
-
             var type = existing.Add(asClass.ForType, applyDefaultBehaviour: false);
 
             int ix = 1;
