@@ -62,7 +62,7 @@ namespace PublicBroadcasting.Impl
             int ix = 1;
             foreach (var mem in asClass.Members.OrderBy(o => o.Key, StringComparer.Ordinal))
             {
-                var valMem = type.AddField(ix, mem.Key);
+                type.AddField(ix, mem.Key);
 
                 BuildTypeModel(mem.Value, existing);
                 ix++;

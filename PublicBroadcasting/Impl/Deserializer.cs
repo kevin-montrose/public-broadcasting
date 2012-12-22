@@ -155,9 +155,9 @@ namespace PublicBroadcasting.Impl
             if (list != null)
             {
                 if (!type.IsList()) return false;
-                
-                // Handling of arrays is funky, just bail for arrays
-                if (type.IsArray) return false;
+
+                // protobuf-net treats byte[] differently from all our []'s, bail because we need to make it a list.
+                if (type == typeof(byte[])) return false;
 
                 var listI = type.GetListInterface();
 
@@ -295,7 +295,7 @@ namespace PublicBroadcasting.Impl
 
                     if(mem == null) continue;
 
-                    cT.AddField(i + 1, memNames[i]);
+                    var field = cT.AddField(i + 1, memNames[i]);
 
                     var memType = 
                         mem is PropertyInfo ?
