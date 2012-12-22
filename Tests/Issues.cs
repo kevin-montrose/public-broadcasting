@@ -33,5 +33,20 @@ namespace Tests
             Assert.AreEqual("Foo", obj.Property1);
             Assert.AreEqual(string.Empty, obj.ThisBreaksThings);
         }
+
+        private class ThreeTestObject
+        {
+			// The order of these makes a difference.
+            public TwoTestObject BProperty { get; set; }
+            public TwoTestObject AProperty { get; set; }
+        }
+
+        [TestMethod]
+        public void Three()
+        {
+            var bytes = Serializer.Serialize(new ThreeTestObject());
+
+            var obj = Serializer.Deserialize<ThreeTestObject>(bytes);
+        }
     }
 }
