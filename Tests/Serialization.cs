@@ -1,10 +1,13 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PublicBroadcasting;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Tests
@@ -1135,6 +1138,135 @@ namespace Tests
             Assert.IsTrue(bm9.SequenceEqual(am9));
             Assert.IsTrue(bm10.SequenceEqual(am10));
             Assert.IsTrue(bm11.SequenceEqual(am11));
+        }
+
+        class ThreadObj
+        {
+            public string Str { get; set; }
+            public int Int { get; set; }
+            public List<int> List { get; set; }
+        }
+
+        private static T Next<T>(Random rand) where T : struct
+        {
+            int size = Marshal.SizeOf(typeof(T));
+
+            var bytes = new byte[size];
+            rand.NextBytes(bytes);
+
+            var ret = Activator.CreateInstance<T>();
+
+            IntPtr ptr = Marshal.AllocHGlobal(size);
+
+            Marshal.Copy(bytes, 0, ptr, size);
+
+            ret = (T)Marshal.PtrToStructure(ptr, ret.GetType());
+            Marshal.FreeHGlobal(ptr);
+
+            return ret;
+        }
+
+        private static string NextString(Random rand, int length)
+        {
+            var builder = new StringBuilder();
+
+            while (builder.Length < length)
+            {
+                var c = Next<char>(rand);
+
+                if (char.IsLetterOrDigit(c) || char.IsPunctuation(c) || char.IsWhiteSpace(c) || char.IsSymbol(c))
+                {
+                    builder.Append(c);
+                }
+            }
+
+            return builder.ToString();
+        }
+
+        [TestMethod]
+        public void Threads()
+        {
+            var acts = new List<Action>();
+
+            var rand = new Random();
+
+            for (var i = 0; i < 50000; i++)
+            {
+                var wait = rand.Next(10);
+                var obj = new ThreadObj();
+                obj.Str = NextString(rand, 20);
+                obj.Int = Next<int>(rand);
+                
+                var listLen = rand.Next(5) + 5;
+                obj.List = new List<int>(listLen);
+
+                for(var j = 0; j < listLen; j++)
+                {
+                    obj.List.Add(rand.Next());
+                }
+
+                acts.Add(
+                    () =>
+                    {
+                        Thread.Sleep(wait);
+
+                        var bytes = Serializer.Serialize(obj);
+
+                        var copy = Serializer.Deserialize<ThreadObj>(bytes);
+                        var dynCopy = Serializer.Deserialize(bytes);
+
+                        if (copy.Int != obj.Int) throw new Exception();
+                        if (dynCopy.Int != obj.Int) throw new Exception();
+                        
+                        if (copy.Str != obj.Str) throw new Exception();
+                        if (!dynCopy.Str.Equals(obj.Str)) throw new Exception();
+
+                        if (copy.List.Count != obj.List.Count) throw new Exception();
+                        if (dynCopy.List.Count != obj.List.Count) throw new Exception();
+
+                        for (var j = 0; j < obj.List.Count; j++)
+                        {
+                            if (copy.List[j] != obj.List[j]) throw new Exception();
+                            if (dynCopy.List[j] != obj.List[j]) throw new Exception();
+                        }
+                    }
+                );
+            }
+
+            var semaphore = new Semaphore(0, 64);
+
+            var threads = new List<Thread>(64);
+
+            for (var i = 0; i < 64; i++)
+            {
+                var part = acts.Where((a, ix) => ix % 64 == i).ToList();
+
+                threads.Add(
+                    new Thread(
+                        new ThreadStart(
+                            () => 
+                            {
+                                foreach (var act in part)
+                                {
+                                    act();
+                                }
+
+                                semaphore.Release();
+                            }
+                        )
+                    )
+                );
+            }
+
+            threads.ForEach(t => t.Start());
+
+            var finished = 0;
+
+            while (finished != threads.Count)
+            {
+                semaphore.WaitOne();
+                finished++;
+            }
         }
     }
 }
