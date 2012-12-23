@@ -1192,6 +1192,7 @@ namespace Tests
 
             for (var i = 0; i < 50000; i++)
             {
+                var doWait = i >= 64 && rand.Next(3) == 0;
                 var wait = rand.Next(10);
                 var obj = new ThreadObj();
                 obj.Str = NextString(rand, 20);
@@ -1208,7 +1209,10 @@ namespace Tests
                 acts.Add(
                     () =>
                     {
-                        Thread.Sleep(wait);
+                        if (doWait)
+                        {
+                            Thread.Sleep(wait);
+                        }
 
                         var bytes = Serializer.Serialize(obj);
 
