@@ -197,8 +197,7 @@ namespace PublicBroadcasting.Impl
         {
             get 
             {
-                return 
-                    //ForType.IsAnonymouseClass() || 
+                return
                     AnyNonUniformMembers() ||
                     Members.Any(m => m.Value.NeedsMapping);
             }
@@ -226,8 +225,6 @@ namespace PublicBroadcasting.Impl
         internal override void Seal(TypeDescription existing = null)
         {
             if (PocoType != null || TypeBuilder != null) return;
-
-            Debug.WriteLine("ClassTypeDescription.Seal: [" + ForType + "]");
 
             var name = "POCO" + Guid.NewGuid().ToString().Replace("-", "");
 
