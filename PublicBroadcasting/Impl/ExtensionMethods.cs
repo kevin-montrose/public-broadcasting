@@ -117,5 +117,28 @@ namespace PublicBroadcasting.Impl
                 t :
                 t.GetInterfaces().First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>));
         }
+
+        internal static bool IsSimple(this Type t)
+        {
+            return
+                t == typeof(bool) ||
+                t == typeof(char) ||
+                t == typeof(byte) ||
+                t == typeof(sbyte) ||
+                t == typeof(short) ||
+                t == typeof(ushort) ||
+                t == typeof(int) ||
+                t == typeof(uint) ||
+                t == typeof(long) ||
+                t == typeof(ulong) ||
+                t == typeof(float) ||
+                t == typeof(double) ||
+                t == typeof(decimal) ||
+                t == typeof(Guid) ||
+                t == typeof(Uri) ||
+                t == typeof(string) ||
+                t == typeof(TimeSpan) ||
+                t == typeof(DateTime);
+        }
     }
 }
