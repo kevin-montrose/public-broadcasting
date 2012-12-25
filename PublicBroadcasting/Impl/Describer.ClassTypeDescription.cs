@@ -590,7 +590,50 @@ namespace PublicBroadcasting.Impl
                 il.Emit(OpCodes.Br_S, end);                 // [ret]
 
                 il.MarkLabel(contL);                        // [field] [ret]
-                il.Emit(OpCodes.Callvirt, toString);        // [string] [ret]
+
+                Type effectiveType = field.FieldType;
+
+                if (Nullable.GetUnderlyingType(effectiveType) != null)
+                {
+                    var getValue = effectiveType.GetProperty("Value").GetGetMethod();
+
+                    effectiveType = Nullable.GetUnderlyingType(effectiveType);
+
+                    il.Emit(OpCodes.Call, getValue);            // [field] [ret]
+                    il.Emit(OpCodes.Box, effectiveType);        // [field] [ret]
+                }
+
+                if (effectiveType == typeof(DateTime))
+                {
+                    var dtToString = typeof(DateTime).GetMethod("ToString", new[] { typeof(string) });
+
+                    il.Emit(OpCodes.Ldstr, "u");        // ["..."] [field] [ret]
+                    il.Emit(OpCodes.Call, dtToString);  // [string] [ret]
+                }
+                else
+                {
+                    if (effectiveType == typeof(Guid))
+                    {
+                        var gToString = typeof(Guid).GetMethod("ToString", new[] { typeof(string) });
+
+                        il.Emit(OpCodes.Ldstr, "D");        // ["..."] [field] [ret]
+                        il.Emit(OpCodes.Call, gToString);   // [string] [ret]
+                    }
+                    else
+                    {
+                        if (effectiveType == typeof(TimeSpan))
+                        {
+                            var tsToString = typeof(TimeSpan).GetMethod("ToString", new[] { typeof(string) });
+
+                            il.Emit(OpCodes.Ldstr, "c");        // ["..."] [field] [ret]
+                            il.Emit(OpCodes.Call, tsToString);  // ["..."] [ret]
+                        }
+                        else
+                        {
+                            il.Emit(OpCodes.Callvirt, toString);        // [string] [ret]
+                        }
+                    }
+                }
 
                 il.Emit(OpCodes.Dup);                       // [string] [string] [ret]
                 il.Emit(OpCodes.Ldstr, Environment.NewLine);// ["..."] [string] [string] [ret]
