@@ -156,7 +156,7 @@ namespace PublicBroadcasting.Impl
             {
                 if (!type.IsList()) return false;
 
-                // protobuf-net treats byte[] differently from all our []'s, bail because we need to make it a list.
+                // protobuf-net treats byte[] differently from all other []'s, bail because we need to make it a list.
                 if (type == typeof(byte[])) return false;
 
                 var listI = type.GetListInterface();

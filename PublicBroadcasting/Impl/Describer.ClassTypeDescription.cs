@@ -530,15 +530,54 @@ namespace PublicBroadcasting.Impl
 
             // Define ToString()
             var toString = TypeBuilder.DefineMethod("ToString", MethodAttributes.Public | MethodAttributes.Virtual, typeof(string), Type.EmptyTypes);
+            var objToString = typeof(object).GetMethod("ToString");
+
             il = toString.GetILGenerator();
 
-            var toStringThunk = typeof(ToStringThunk).GetMethod("Call");
+            var sbCons = typeof(StringBuilder).GetConstructor(Type.EmptyTypes);
+            var sbAppend = typeof(StringBuilder).GetMethod("Append", new [] { typeof(string) });
+            var sbToString = typeof(StringBuilder).GetMethod("ToString", Type.EmptyTypes);
 
-            il.Emit(OpCodes.Ldarg_0);               // [this]
-            il.Emit(OpCodes.Call, toStringThunk);   // [string]
-            il.Emit(OpCodes.Ret);                   // -----
+            il.Emit(OpCodes.Newobj, sbCons);        // [ret]
 
-            TypeBuilder.DefineMethodOverride(toString, typeof(object).GetMethod("ToString"));
+            foreach (var prop in Members.OrderBy(o => o.Key))
+            {
+                var field = fields[prop.Key];
+
+                il.Emit(OpCodes.Ldarg_0);                   // [this] [ret]
+                il.Emit(OpCodes.Ldfld, field);              // [field] [ret]
+
+                if (field.FieldType.IsValueType)
+                {
+                    il.Emit(OpCodes.Box, field.FieldType);  // [field] [ret]
+                }
+
+                il.Emit(OpCodes.Dup);                       // [field] [field] [ret]
+                il.Emit(OpCodes.Ldnull);                    // [null] [field] [field] [ret]
+                il.Emit(OpCodes.Ceq);                       // [isNull] [field] [ret]
+
+                var contL = il.DefineLabel();
+                var end = il.DefineLabel();
+
+                il.Emit(OpCodes.Brfalse_S, contL);          // [field] [ret]
+
+                il.Emit(OpCodes.Pop);                       // [ret]
+                il.Emit(OpCodes.Ldstr, "null");             // ["null"] [ret]
+                il.Emit(OpCodes.Callvirt, sbAppend);        // [ret]
+                il.Emit(OpCodes.Br_S, end);                 // [ret]
+
+                il.MarkLabel(contL);                        // [field] [ret]
+                il.Emit(OpCodes.Callvirt, toString);        // [string] [ret]
+
+                il.Emit(OpCodes.Callvirt, sbAppend);        // [ret]
+
+                il.MarkLabel(end);                          // [ret]
+            }
+
+            il.Emit(OpCodes.Call, sbToString);         // [ret as string]
+            il.Emit(OpCodes.Ret);                      // -----
+
+            TypeBuilder.DefineMethodOverride(toString, objToString);
 
             PocoType = TypeBuilder.CreateType();
         }
