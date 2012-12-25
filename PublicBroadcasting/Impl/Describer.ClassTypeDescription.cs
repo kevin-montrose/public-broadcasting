@@ -537,8 +537,14 @@ namespace PublicBroadcasting.Impl
             var sbCons = typeof(StringBuilder).GetConstructor(Type.EmptyTypes);
             var sbAppend = typeof(StringBuilder).GetMethod("Append", new [] { typeof(string) });
             var sbToString = typeof(StringBuilder).GetMethod("ToString", Type.EmptyTypes);
+            var contains = typeof(string).GetMethod("Contains");
+            var replace = typeof(Regex).GetMethod("Replace", new[] { typeof(string), typeof(string), typeof(string), typeof(RegexOptions) });
+
+            var loc = il.DeclareLocal(typeof(StringBuilder));
 
             il.Emit(OpCodes.Newobj, sbCons);        // [ret]
+            il.Emit(OpCodes.Stloc, loc);            // -----
+            il.Emit(OpCodes.Ldloc, loc);            // [ret]
 
             il.Emit(OpCodes.Ldstr, "{" + Environment.NewLine);  // ["..."] [ret]
             il.Emit(OpCodes.Call, sbAppend);                    // [ret]
@@ -574,6 +580,7 @@ namespace PublicBroadcasting.Impl
 
                 var contL = il.DefineLabel();
                 var end = il.DefineLabel();
+                var noIndent = il.DefineLabel();
 
                 il.Emit(OpCodes.Brfalse_S, contL);          // [field] [ret]
 
@@ -585,6 +592,24 @@ namespace PublicBroadcasting.Impl
                 il.MarkLabel(contL);                        // [field] [ret]
                 il.Emit(OpCodes.Callvirt, toString);        // [string] [ret]
 
+                il.Emit(OpCodes.Dup);                       // [string] [string] [ret]
+                il.Emit(OpCodes.Ldstr, Environment.NewLine);// ["..."] [string] [string] [ret]
+                il.Emit(OpCodes.Call, contains);            // [bool] [string] [ret]
+                il.Emit(OpCodes.Brfalse_S, noIndent);       // [string] [ret]
+
+                //Regex.Replace(str, @"^", @byStr, RegexOptions.Multiline);
+
+                il.Emit(OpCodes.Ldloc, loc);                // [ret] [string] [ret]
+                il.Emit(OpCodes.Ldstr, Environment.NewLine);// ["..."] [ret] [string] [ret]
+                il.Emit(OpCodes.Call, sbAppend);            // [ret] [string] [ret]
+                il.Emit(OpCodes.Pop);                       // [string] [ret]
+
+                il.Emit(OpCodes.Ldstr, "^");                            // ["..."] [string] [ret]
+                il.Emit(OpCodes.Ldstr, "  ");                           // ["..."] ["..."] [string] [ret]
+                il.Emit(OpCodes.Ldc_I4, (int)RegexOptions.Multiline);   // [Multiline] ["..."] ["..."] [string] [ret]
+                il.Emit(OpCodes.Call, replace);                         // [string] [ret]
+
+                il.MarkLabel(noIndent);                     // [string] [ret]
                 il.Emit(OpCodes.Callvirt, sbAppend);        // [ret]
 
                 il.MarkLabel(end);                          // [ret]
