@@ -540,9 +540,25 @@ namespace PublicBroadcasting.Impl
 
             il.Emit(OpCodes.Newobj, sbCons);        // [ret]
 
+            il.Emit(OpCodes.Ldstr, "{" + Environment.NewLine);  // ["..."] [ret]
+            il.Emit(OpCodes.Call, sbAppend);                    // [ret]
+
+            var first = true;
+
             foreach (var prop in Members.OrderBy(o => o.Key))
             {
                 var field = fields[prop.Key];
+
+                if (!first)
+                {
+                    il.Emit(OpCodes.Ldstr, ","+Environment.NewLine);    // ["..."] [ret]
+                    il.Emit(OpCodes.Call, sbAppend);                    // [ret]
+                }
+
+                first = false;
+
+                il.Emit(OpCodes.Ldstr, " " + prop.Key + ": ");  // ["..."] [ret]
+                il.Emit(OpCodes.Call, sbAppend);                // [ret]
 
                 il.Emit(OpCodes.Ldarg_0);                   // [this] [ret]
                 il.Emit(OpCodes.Ldfld, field);              // [field] [ret]
@@ -574,8 +590,11 @@ namespace PublicBroadcasting.Impl
                 il.MarkLabel(end);                          // [ret]
             }
 
-            il.Emit(OpCodes.Call, sbToString);         // [ret as string]
-            il.Emit(OpCodes.Ret);                      // -----
+            il.Emit(OpCodes.Ldstr, Environment.NewLine + "}");  // ["..."] [ret]
+            il.Emit(OpCodes.Call, sbAppend);                    // [ret]
+
+            il.Emit(OpCodes.Call, sbToString);          // [ret as string]
+            il.Emit(OpCodes.Ret);                       // -----
 
             TypeBuilder.DefineMethodOverride(toString, objToString);
 
