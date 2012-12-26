@@ -630,7 +630,76 @@ namespace PublicBroadcasting.Impl
                         }
                         else
                         {
-                            il.Emit(OpCodes.Callvirt, toString);        // [string] [ret]
+                            if (effectiveType == typeof(Uri))
+                            {
+                                var isAbsolute = typeof(Uri).GetProperty("IsAbsoluteUri").GetGetMethod();
+                                var notAbsL = il.DefineLabel();
+                                var getAbs = typeof(Uri).GetProperty("AbsoluteUri").GetGetMethod();
+
+                                il.Emit(OpCodes.Dup);               // [field] [field] [ret]
+                                il.Emit(OpCodes.Call, isAbsolute);  // [bool] [field] [ret]
+                                il.Emit(OpCodes.Brfalse_S, notAbsL);// [field] [ret]
+
+                                il.Emit(OpCodes.Call, getAbs);      // [string] [ret]
+
+                                il.MarkLabel(notAbsL);              // [string/field] [ret]
+                                il.Emit(OpCodes.Callvirt, toString);// [string] [ret]
+
+                            }
+                            else
+                            {
+                                if (effectiveType.IsList())
+                                {
+                                    var containsType = effectiveType.GetListInterface().GetGenericArguments()[0];
+                                    var allStatic = typeof(string).GetMethods(BindingFlags.Public | BindingFlags.Static);
+                                    var joins = allStatic.Where(m => m.Name == "Join").ToList();
+                                    joins = joins.Where(w => w.GetParameters().Length == 2).ToList();
+                                    joins = joins.Where(w => w.GetParameters()[1].ParameterType.IsGenericType && w.GetParameters()[1].ParameterType.GetGenericTypeDefinition() == typeof(IEnumerable<>)).ToList();
+                                    var join = joins.Single(w => w.IsGenericMethod);
+                                    join = join.MakeGenericMethod(containsType);
+
+                                    var list = il.DeclareLocal(effectiveType);
+
+                                    if (containsType.IsSimple())
+                                    {
+                                        var tempLoc = il.DeclareLocal(typeof(StringBuilder));
+                                        il.Emit(OpCodes.Newobj, sbCons);        // [temp] [list] [ret]
+                                        il.Emit(OpCodes.Stloc, tempLoc);        // [list] [ret]
+                                        il.Emit(OpCodes.Ldloc, tempLoc);        // [temp] [list] [ret]
+
+                                        il.Emit(OpCodes.Ldstr, "[");            // ["..."] [temp] [list] [ret]
+                                        il.Emit(OpCodes.Callvirt, sbAppend);    // [temp] [list] [ret]
+                                        il.Emit(OpCodes.Pop);                   // [list] [ret]
+                                        il.Emit(OpCodes.Stloc, list);           // [ret]
+                                        il.Emit(OpCodes.Ldloc, tempLoc);        // [temp] [ret]
+                                        il.Emit(OpCodes.Ldstr, ", ");           // ["..."] [temp] [ret]
+                                        il.Emit(OpCodes.Ldloc, list);           // [list] ["..."] [temp] [ret]
+                                        il.Emit(OpCodes.Call, join);            // [string] [temp] [ret]
+                                        il.Emit(OpCodes.Callvirt, sbAppend);    // [temp] [ret]
+                                        il.Emit(OpCodes.Ldstr, "]");            // ["..."] [temp] [ret]
+                                        il.Emit(OpCodes.Callvirt, sbAppend);    // [temp] [ret]
+                                        il.Emit(OpCodes.Call, sbToString);      // [string] [ret]
+                                    }
+                                    else
+                                    {
+                                        il.Emit(OpCodes.Pop);                   // [ret]
+                                        il.Emit(OpCodes.Ldstr, "nope");         // [string] [ret]
+                                    }
+
+                                    /*if (containsType.IsSimple())
+                                    {
+                                        return "[" + string.Join(", ", parts) + "]";
+                                    }
+                                    else
+                                    {
+                                        return "[" + Environment.NewLine + Indent(string.Join("," + Environment.NewLine, parts), 1) + Environment.NewLine + "]";
+                                    }*/
+                                }
+                                else
+                                {
+                                    il.Emit(OpCodes.Callvirt, toString);        // [string] [ret]
+                                }
+                            }
                         }
                     }
                 }

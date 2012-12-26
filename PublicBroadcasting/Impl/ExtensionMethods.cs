@@ -90,9 +90,13 @@ namespace PublicBroadcasting.Impl
 
         internal static bool IsList(this Type t)
         {
-            return
-                (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IList<>)) ||
-                t.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>));
+            try
+            {
+                return
+                    (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IList<>)) ||
+                    t.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>));
+            }
+            catch (Exception) { return false; }
         }
 
         internal static Type GetListInterface(this Type t)
