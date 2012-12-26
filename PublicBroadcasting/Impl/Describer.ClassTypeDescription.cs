@@ -682,8 +682,30 @@ namespace PublicBroadcasting.Impl
                                     }
                                     else
                                     {
-                                        il.Emit(OpCodes.Pop);                   // [ret]
-                                        il.Emit(OpCodes.Ldstr, "nope");         // [string] [ret]
+                                        var tempLoc = il.DeclareLocal(typeof(StringBuilder));
+                                        il.Emit(OpCodes.Newobj, sbCons);        // [temp] [list] [ret]
+                                        il.Emit(OpCodes.Stloc, tempLoc);        // [list] [ret]
+                                        il.Emit(OpCodes.Ldloc, tempLoc);        // [temp] [list] [ret]
+
+                                        il.Emit(OpCodes.Ldstr, "[" + Environment.NewLine);  // ["..."] [temp] [list] [ret]
+                                        il.Emit(OpCodes.Callvirt, sbAppend);                // [temp] [list] [ret]
+                                        il.Emit(OpCodes.Pop);                               // [list] [ret]
+                                        il.Emit(OpCodes.Stloc, list);                       // [ret]
+                                        il.Emit(OpCodes.Ldloc, tempLoc);                    // [temp] [ret]
+                                        il.Emit(OpCodes.Ldstr, "," + Environment.NewLine);  // ["..."] [temp] [ret]
+                                        il.Emit(OpCodes.Ldloc, list);                       // [list] ["..."] [temp] [ret]
+                                        il.Emit(OpCodes.Call, join);                        // [string] [temp] [ret]
+
+                                        // Regex.Replace
+                                        il.Emit(OpCodes.Ldstr, "^");                            // ["..."] [string] [temp] [ret]
+                                        il.Emit(OpCodes.Ldstr, " ");                            // ["..."] ["..."] [string] [temp] [ret]
+                                        il.Emit(OpCodes.Ldc_I4, (int)RegexOptions.Multiline);   // [Multiline] ["..."] ["..."] [string] [temp] [ret]
+                                        il.Emit(OpCodes.Call, replace);                         // [string] [temp] [ret]
+
+                                        il.Emit(OpCodes.Callvirt, sbAppend);                    // [temp] [ret]
+                                        il.Emit(OpCodes.Ldstr, Environment.NewLine + "]");      // ["..."] [temp] [ret]
+                                        il.Emit(OpCodes.Callvirt, sbAppend);                    // [temp] [ret]
+                                        il.Emit(OpCodes.Call, sbToString);                      // [string] [ret]
                                     }
 
                                     /*if (containsType.IsSimple())
