@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Dynamic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
@@ -15,182 +16,12 @@ using System.Threading.Tasks;
 
 namespace PublicBroadcasting.Impl
 {
-    public class ToStringThunk
-    {
-        private static string EscapeString(string str)
-        {
-            return str.Replace("\"", @"\""");
-        }
-
-        private static string Indent(string str, int by)
-        {
-            var byStr = "";
-            for (var i = 0; i < by; i++)
-            {
-                byStr += " ";
-            }
-
-            return Regex.Replace(str, @"^", @byStr, RegexOptions.Multiline);
-        }
-
-        private static List<dynamic> OrderDynamic(dynamic dyn)
-        {
-            var ret = new List<dynamic>();
-
-            foreach (var kv in dyn)
-            {
-                ret.Add(new { Key = (string)kv.Key, Value = kv.Value });
-            }
-
-            ret = (List<dynamic>)ret.OrderBy(o => o.Key).ToList();
-
-            return ret;
-        }
-
-        public static string Call(dynamic val)
-        {
-            if (val == null)
-            {
-                return "null";
-            }
-
-            if (val is string)
-            {
-                return "\"" + EscapeString((string)val) + "\"";
-            }
-
-            if (Nullable.GetUnderlyingType(val.GetType()) != null)
-            {
-                val = val.Value;
-            }
-
-            var valType = (Type)val.GetType();
-
-            if (valType == typeof(byte) || valType == typeof(sbyte) || valType == typeof(short) || valType == typeof(ushort) || valType == typeof(int) || valType == typeof(uint) ||
-                valType == typeof(long) || valType == typeof(ulong) || valType == typeof(float) || valType == typeof(double) || valType == typeof(decimal) || valType == typeof(bool) ||
-                valType == typeof(char))
-            {
-                return val.ToString();
-            }
-
-            if (val is Guid)
-            {
-                return val.ToString("D");
-            }
-
-            if (val is Uri)
-            {
-                if (val.IsAbsoluteUri)
-                {
-                    return val.AbsoluteUri;
-                }
-                else
-                {
-                    return val.ToString();
-                }
-            }
-
-            if (val is TimeSpan)
-            {
-                return val.ToString("c");
-            }
-
-            if (val is DateTime)
-            {
-                return val.ToString("u");
-            }
-
-            if (valType.IsList())
-            {
-                var parts = new List<string>();
-
-                foreach (var part in val)
-                {
-                    parts.Add(Call(part));
-                }
-
-                var containsType = valType.GetListInterface().GetGenericArguments()[0];
-
-                if (containsType.IsSimple())
-                {
-                    return "[" + string.Join(", ", parts) + "]";
-                }
-                else
-                {
-                    return "[" + Environment.NewLine + Indent(string.Join("," + Environment.NewLine, parts), 1) + Environment.NewLine + "]";
-                }
-            }
-
-            if (valType.IsDictionary())
-            {
-                var parts = new List<string>();
-
-                foreach (var kv in val)
-                {
-                    var dKey = (string)Call(kv.Key);
-                    var dVal = (string)Call(kv.Value);
-
-                    if (dKey.Contains(Environment.NewLine) || dVal.Contains(Environment.NewLine))
-                    {
-                        parts.Add("{" + Environment.NewLine + Indent(dKey, 2) + "" + Environment.NewLine + "   ->" + Environment.NewLine + Indent(dVal, 2) + Environment.NewLine + " }");
-                    }
-                    else
-                    {
-                        parts.Add("{" + dKey + " -> " + dVal + "}");
-                    }
-                }
-
-                parts = parts.OrderBy(o => o).ToList();
-
-                return "{" + Environment.NewLine + " " + string.Join("," + Environment.NewLine + " ", parts) + Environment.NewLine + "}";
-            }
-
-            var ret = new StringBuilder();
-            var first = true;
-
-            ret.AppendLine("{");
-            var inOrder = OrderDynamic(val);
-            foreach (var kv in inOrder)
-            {
-                var propName = (string)kv.Key;
-                var propVal = kv.Value;
-
-                if (!first)
-                {
-                    ret.AppendLine(",");
-                }
-
-                first = false;
-
-                ret.Append(" ");
-                ret.Append(propName);
-                ret.Append(": ");
-
-                var propValStr = Call(propVal);
-
-                if (propValStr.Contains(Environment.NewLine))
-                {
-                    ret.AppendLine();
-                    ret.Append(Indent(propValStr, 2));
-                }
-                else
-                {
-                    ret.Append(propValStr);
-                }
-            }
-
-            ret.AppendLine();
-            ret.Append("}");
-
-            return ret.ToString();
-        }
-    }
-
     [ProtoContract]
     internal class ClassTypeDescription : TypeDescription
     {
         static readonly ModuleBuilder ModuleBuilder;
         static readonly Type Enumerator;
+        static readonly Func<object, string> ToStringFunc;
 
         static ClassTypeDescription()
         {
@@ -201,6 +32,10 @@ namespace PublicBroadcasting.Impl
             ModuleBuilder = asmBuilder.DefineDynamicModule(asmName.Name);
 
             Enumerator = BuildEnumerator();
+
+            Expression<Func<object, string>> toString = obj => ToStringThunk.Call(obj);
+
+            ToStringFunc = toString.Compile();
         }
 
         // kind of a giant HACK here, since I can do this in normal c#... but I need the class to exist in the dynamic module for visibility purposes.
@@ -532,232 +367,28 @@ namespace PublicBroadcasting.Impl
             var toString = TypeBuilder.DefineMethod("ToString", MethodAttributes.Public | MethodAttributes.Virtual, typeof(string), Type.EmptyTypes);
             var objToString = typeof(object).GetMethod("ToString");
 
+            var thunkField = TypeBuilder.DefineField("__ToStringThunk", typeof(Func<object, string>), FieldAttributes.Static | FieldAttributes.Private);
+
+            var invoke = typeof(Func<object, string>).GetMethod("Invoke");
+
             il = toString.GetILGenerator();
 
-            var sbCons = typeof(StringBuilder).GetConstructor(Type.EmptyTypes);
-            var sbAppend = typeof(StringBuilder).GetMethod("Append", new [] { typeof(string) });
-            var sbToString = typeof(StringBuilder).GetMethod("ToString", Type.EmptyTypes);
-            var contains = typeof(string).GetMethod("Contains");
-            var replace = typeof(Regex).GetMethod("Replace", new[] { typeof(string), typeof(string), typeof(string), typeof(RegexOptions) });
-
-            var loc = il.DeclareLocal(typeof(StringBuilder));
-
-            il.Emit(OpCodes.Newobj, sbCons);        // [ret]
-            il.Emit(OpCodes.Stloc, loc);            // -----
-            il.Emit(OpCodes.Ldloc, loc);            // [ret]
-
-            il.Emit(OpCodes.Ldstr, "{" + Environment.NewLine);  // ["..."] [ret]
-            il.Emit(OpCodes.Call, sbAppend);                    // [ret]
-
-            var first = true;
-
-            foreach (var prop in Members.OrderBy(o => o.Key))
-            {
-                var field = fields[prop.Key];
-
-                if (!first)
-                {
-                    il.Emit(OpCodes.Ldstr, ","+Environment.NewLine);    // ["..."] [ret]
-                    il.Emit(OpCodes.Call, sbAppend);                    // [ret]
-                }
-
-                first = false;
-
-                il.Emit(OpCodes.Ldstr, " " + prop.Key + ": ");  // ["..."] [ret]
-                il.Emit(OpCodes.Call, sbAppend);                // [ret]
-
-                il.Emit(OpCodes.Ldarg_0);                   // [this] [ret]
-                il.Emit(OpCodes.Ldfld, field);              // [field] [ret]
-
-                if (field.FieldType.IsValueType)
-                {
-                    il.Emit(OpCodes.Box, field.FieldType);  // [field] [ret]
-                }
-
-                il.Emit(OpCodes.Dup);                       // [field] [field] [ret]
-                il.Emit(OpCodes.Ldnull);                    // [null] [field] [field] [ret]
-                il.Emit(OpCodes.Ceq);                       // [isNull] [field] [ret]
-
-                var contL = il.DefineLabel();
-                var end = il.DefineLabel();
-                var noIndent = il.DefineLabel();
-
-                il.Emit(OpCodes.Brfalse_S, contL);          // [field] [ret]
-
-                il.Emit(OpCodes.Pop);                       // [ret]
-                il.Emit(OpCodes.Ldstr, "null");             // ["null"] [ret]
-                il.Emit(OpCodes.Callvirt, sbAppend);        // [ret]
-                il.Emit(OpCodes.Br_S, end);                 // [ret]
-
-                il.MarkLabel(contL);                        // [field] [ret]
-
-                Type effectiveType = field.FieldType;
-
-                if (Nullable.GetUnderlyingType(effectiveType) != null)
-                {
-                    var getValue = effectiveType.GetProperty("Value").GetGetMethod();
-
-                    effectiveType = Nullable.GetUnderlyingType(effectiveType);
-
-                    il.Emit(OpCodes.Call, getValue);            // [field] [ret]
-                    il.Emit(OpCodes.Box, effectiveType);        // [field] [ret]
-                }
-
-                if (effectiveType == typeof(DateTime))
-                {
-                    var dtToString = typeof(DateTime).GetMethod("ToString", new[] { typeof(string) });
-
-                    il.Emit(OpCodes.Ldstr, "u");        // ["..."] [field] [ret]
-                    il.Emit(OpCodes.Call, dtToString);  // [string] [ret]
-                }
-                else
-                {
-                    if (effectiveType == typeof(Guid))
-                    {
-                        var gToString = typeof(Guid).GetMethod("ToString", new[] { typeof(string) });
-
-                        il.Emit(OpCodes.Ldstr, "D");        // ["..."] [field] [ret]
-                        il.Emit(OpCodes.Call, gToString);   // [string] [ret]
-                    }
-                    else
-                    {
-                        if (effectiveType == typeof(TimeSpan))
-                        {
-                            var tsToString = typeof(TimeSpan).GetMethod("ToString", new[] { typeof(string) });
-
-                            il.Emit(OpCodes.Ldstr, "c");        // ["..."] [field] [ret]
-                            il.Emit(OpCodes.Call, tsToString);  // ["..."] [ret]
-                        }
-                        else
-                        {
-                            if (effectiveType == typeof(Uri))
-                            {
-                                var isAbsolute = typeof(Uri).GetProperty("IsAbsoluteUri").GetGetMethod();
-                                var notAbsL = il.DefineLabel();
-                                var getAbs = typeof(Uri).GetProperty("AbsoluteUri").GetGetMethod();
-
-                                il.Emit(OpCodes.Dup);               // [field] [field] [ret]
-                                il.Emit(OpCodes.Call, isAbsolute);  // [bool] [field] [ret]
-                                il.Emit(OpCodes.Brfalse_S, notAbsL);// [field] [ret]
-
-                                il.Emit(OpCodes.Call, getAbs);      // [string] [ret]
-
-                                il.MarkLabel(notAbsL);              // [string/field] [ret]
-                                il.Emit(OpCodes.Callvirt, toString);// [string] [ret]
-
-                            }
-                            else
-                            {
-                                if (effectiveType.IsList())
-                                {
-                                    var containsType = effectiveType.GetListInterface().GetGenericArguments()[0];
-                                    var allStatic = typeof(string).GetMethods(BindingFlags.Public | BindingFlags.Static);
-                                    var joins = allStatic.Where(m => m.Name == "Join").ToList();
-                                    joins = joins.Where(w => w.GetParameters().Length == 2).ToList();
-                                    joins = joins.Where(w => w.GetParameters()[1].ParameterType.IsGenericType && w.GetParameters()[1].ParameterType.GetGenericTypeDefinition() == typeof(IEnumerable<>)).ToList();
-                                    var join = joins.Single(w => w.IsGenericMethod);
-                                    join = join.MakeGenericMethod(containsType);
-
-                                    var list = il.DeclareLocal(effectiveType);
-
-                                    if (containsType.IsSimple())
-                                    {
-                                        var tempLoc = il.DeclareLocal(typeof(StringBuilder));
-                                        il.Emit(OpCodes.Newobj, sbCons);        // [temp] [list] [ret]
-                                        il.Emit(OpCodes.Stloc, tempLoc);        // [list] [ret]
-                                        il.Emit(OpCodes.Ldloc, tempLoc);        // [temp] [list] [ret]
-
-                                        il.Emit(OpCodes.Ldstr, "[");            // ["..."] [temp] [list] [ret]
-                                        il.Emit(OpCodes.Callvirt, sbAppend);    // [temp] [list] [ret]
-                                        il.Emit(OpCodes.Pop);                   // [list] [ret]
-                                        il.Emit(OpCodes.Stloc, list);           // [ret]
-                                        il.Emit(OpCodes.Ldloc, tempLoc);        // [temp] [ret]
-                                        il.Emit(OpCodes.Ldstr, ", ");           // ["..."] [temp] [ret]
-                                        il.Emit(OpCodes.Ldloc, list);           // [list] ["..."] [temp] [ret]
-                                        il.Emit(OpCodes.Call, join);            // [string] [temp] [ret]
-                                        il.Emit(OpCodes.Callvirt, sbAppend);    // [temp] [ret]
-                                        il.Emit(OpCodes.Ldstr, "]");            // ["..."] [temp] [ret]
-                                        il.Emit(OpCodes.Callvirt, sbAppend);    // [temp] [ret]
-                                        il.Emit(OpCodes.Call, sbToString);      // [string] [ret]
-                                    }
-                                    else
-                                    {
-                                        var tempLoc = il.DeclareLocal(typeof(StringBuilder));
-                                        il.Emit(OpCodes.Newobj, sbCons);        // [temp] [list] [ret]
-                                        il.Emit(OpCodes.Stloc, tempLoc);        // [list] [ret]
-                                        il.Emit(OpCodes.Ldloc, tempLoc);        // [temp] [list] [ret]
-
-                                        il.Emit(OpCodes.Ldstr, "[" + Environment.NewLine);  // ["..."] [temp] [list] [ret]
-                                        il.Emit(OpCodes.Callvirt, sbAppend);                // [temp] [list] [ret]
-                                        il.Emit(OpCodes.Pop);                               // [list] [ret]
-                                        il.Emit(OpCodes.Stloc, list);                       // [ret]
-                                        il.Emit(OpCodes.Ldloc, tempLoc);                    // [temp] [ret]
-                                        il.Emit(OpCodes.Ldstr, "," + Environment.NewLine);  // ["..."] [temp] [ret]
-                                        il.Emit(OpCodes.Ldloc, list);                       // [list] ["..."] [temp] [ret]
-                                        il.Emit(OpCodes.Call, join);                        // [string] [temp] [ret]
-
-                                        // Regex.Replace
-                                        il.Emit(OpCodes.Ldstr, "^");                            // ["..."] [string] [temp] [ret]
-                                        il.Emit(OpCodes.Ldstr, " ");                            // ["..."] ["..."] [string] [temp] [ret]
-                                        il.Emit(OpCodes.Ldc_I4, (int)RegexOptions.Multiline);   // [Multiline] ["..."] ["..."] [string] [temp] [ret]
-                                        il.Emit(OpCodes.Call, replace);                         // [string] [temp] [ret]
-
-                                        il.Emit(OpCodes.Callvirt, sbAppend);                    // [temp] [ret]
-                                        il.Emit(OpCodes.Ldstr, Environment.NewLine + "]");      // ["..."] [temp] [ret]
-                                        il.Emit(OpCodes.Callvirt, sbAppend);                    // [temp] [ret]
-                                        il.Emit(OpCodes.Call, sbToString);                      // [string] [ret]
-                                    }
-
-                                    /*if (containsType.IsSimple())
-                                    {
-                                        return "[" + string.Join(", ", parts) + "]";
-                                    }
-                                    else
-                                    {
-                                        return "[" + Environment.NewLine + Indent(string.Join("," + Environment.NewLine, parts), 1) + Environment.NewLine + "]";
-                                    }*/
-                                }
-                                else
-                                {
-                                    il.Emit(OpCodes.Callvirt, toString);        // [string] [ret]
-                                }
-                            }
-                        }
-                    }
-                }
-
-                il.Emit(OpCodes.Dup);                       // [string] [string] [ret]
-                il.Emit(OpCodes.Ldstr, Environment.NewLine);// ["..."] [string] [string] [ret]
-                il.Emit(OpCodes.Call, contains);            // [bool] [string] [ret]
-                il.Emit(OpCodes.Brfalse_S, noIndent);       // [string] [ret]
-
-                //Regex.Replace(str, @"^", @byStr, RegexOptions.Multiline);
-
-                il.Emit(OpCodes.Ldloc, loc);                // [ret] [string] [ret]
-                il.Emit(OpCodes.Ldstr, Environment.NewLine);// ["..."] [ret] [string] [ret]
-                il.Emit(OpCodes.Call, sbAppend);            // [ret] [string] [ret]
-                il.Emit(OpCodes.Pop);                       // [string] [ret]
-
-                il.Emit(OpCodes.Ldstr, "^");                            // ["..."] [string] [ret]
-                il.Emit(OpCodes.Ldstr, "  ");                           // ["..."] ["..."] [string] [ret]
-                il.Emit(OpCodes.Ldc_I4, (int)RegexOptions.Multiline);   // [Multiline] ["..."] ["..."] [string] [ret]
-                il.Emit(OpCodes.Call, replace);                         // [string] [ret]
-
-                il.MarkLabel(noIndent);                     // [string] [ret]
-                il.Emit(OpCodes.Callvirt, sbAppend);        // [ret]
-
-                il.MarkLabel(end);                          // [ret]
-            }
-
-            il.Emit(OpCodes.Ldstr, Environment.NewLine + "}");  // ["..."] [ret]
-            il.Emit(OpCodes.Call, sbAppend);                    // [ret]
-
-            il.Emit(OpCodes.Call, sbToString);          // [ret as string]
-            il.Emit(OpCodes.Ret);                       // -----
+            il.Emit(OpCodes.Ldsfld, thunkField);    // [Func<object, string>]
+            il.Emit(OpCodes.Ldarg_0);               // [this] [Func<object, string>]
+            il.Emit(OpCodes.Callvirt, invoke);      // [string]
+            il.Emit(OpCodes.Ret);                   // -----
 
             TypeBuilder.DefineMethodOverride(toString, objToString);
 
             PocoType = TypeBuilder.CreateType();
+
+            // Set the ToStringCallback
+
+            var firstInst = PocoType.GetConstructor(Type.EmptyTypes).Invoke(new object[0]);
+
+            var setThunk = firstInst.GetType().GetField("__ToStringThunk", BindingFlags.NonPublic | BindingFlags.Static);
+
+            setThunk.SetValue(firstInst, ToStringFunc);
         }
 
         internal override Type GetPocoType(TypeDescription existing = null)

@@ -218,6 +218,7 @@
     <Compile Include="Impl\PassThroughList.cs" />
     <Compile Include="Impl\POCOBuilder.cs" />
     <Compile Include="Impl\POCOMapper.cs" />
+    <Compile Include="Impl\ToStringThunk.cs" />
     <Compile Include="Impl\TypeModelBuilder.cs" />
     <Compile Include="Impl\TypeReflectionCache.cs" />
     <Compile Include="Impl\Options.cs" />
