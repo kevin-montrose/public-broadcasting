@@ -1316,19 +1316,29 @@ namespace Tests
         {
             public string Hello { get; set; }
             public DCM Foo { get; set; }
-            public Dictionary<string, DCM> Bar { get; set; }
-            public Dictionary<string, Dictionary<string, DCM>> World { get; set; }
+        }
+
+        class DCM2
+        {
+            public string Hello { get; set; }
+            public Dictionary<string, object> Foo { get; set; }
         }
 
         [TestMethod]
         public void DictClassMap()
         {
-            var bytes = Serializer.Serialize(new DCM { Hello = "Yeah", Foo = new DCM() } );
-            var dict = Serializer.Deserialize<Dictionary<string, dynamic>>(bytes);
+            var bytes1 = Serializer.Serialize(new DCM { Hello = "Yeah", Foo = new DCM() } );
+            var dict1 = Serializer.Deserialize<Dictionary<string, dynamic>>(bytes1);
 
-            Assert.AreEqual("Yeah", dict["Hello"]);
-            Assert.IsNotNull(dict["Foo"]);
-            Assert.IsNull(dict["Foo"].Hello);
+            Assert.AreEqual("Yeah", dict1["Hello"]);
+            Assert.IsNotNull(dict1["Foo"]);
+            Assert.IsNull(dict1["Foo"].Hello);
+
+            var bytes2 = Serializer.Serialize(new DCM { Hello = "Nah", Foo = new DCM { Hello = "Indeed" } });
+            var dict2 = Serializer.Deserialize<Dictionary<string, dynamic>>(bytes2);
+
+            Assert.AreEqual("Nah", dict2["Hello"]);
+            Assert.AreEqual("Indeed", dict2["Foo"]["Hello"]);
         }
     }
 }
