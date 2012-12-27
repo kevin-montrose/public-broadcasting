@@ -1272,5 +1272,44 @@ namespace Tests
                 finished++;
             }
         }
+
+        class ClassToDict
+        {
+            public int A { get; set; }
+            public int __B { get; set; }
+        }
+
+        [TestMethod]
+        public void ClassToObjDict()
+        {
+            var bytes = Serializer.Serialize(new ClassToDict { A = 123, __B = 456 });
+            var obj = Serializer.Deserialize<Dictionary<string, object>>(bytes);
+
+            Assert.AreEqual(2, obj.Count);
+            Assert.AreEqual(123, obj["A"]);
+            Assert.AreEqual(456, obj["__B"]);
+        }
+
+        [TestMethod]
+        public void ClassToExactDict()
+        {
+            var bytes = Serializer.Serialize(new ClassToDict { A = 123, __B = 456 });
+            var obj = Serializer.Deserialize<Dictionary<string, int>>(bytes);
+
+            Assert.AreEqual(2, obj.Count);
+            Assert.AreEqual(123, obj["A"]);
+            Assert.AreEqual(456, obj["__B"]);
+        }
+
+        [TestMethod]
+        public void ClassToWidenDict()
+        {
+            var bytes = Serializer.Serialize(new ClassToDict { A = 123, __B = 456 });
+            var obj = Serializer.Deserialize<Dictionary<string, double>>(bytes);
+
+            Assert.AreEqual(2, obj.Count);
+            Assert.AreEqual(123, obj["A"]);
+            Assert.AreEqual(456, obj["__B"]);
+        }
     }
 }

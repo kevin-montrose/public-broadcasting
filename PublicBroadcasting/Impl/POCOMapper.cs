@@ -554,7 +554,7 @@ namespace PublicBroadcasting.Impl
             return new POCOMapper(retFunc);
         }
 
-        private static bool Widens(Type from, Type to, out Func<object, object> map)
+        internal static bool Widens(Type from, Type to, out Func<object, object> map)
         {
             if (!IsPrimitive(from) || !IsPrimitive(to) || from == to)
             {
@@ -778,6 +778,81 @@ namespace PublicBroadcasting.Impl
                 t == typeof(ushort) ||
                 t == typeof(uint) ||
                 t == typeof(ulong);
+        }
+
+        private static POCOMapper GetClassToDictMapper(Type fromClass, Type toDict)
+        {
+            var dictI = toDict.GetDictionaryInterface();
+            var valType = dictI.GetGenericArguments()[1];
+
+            var dictCons = toDict.GetConstructor(Type.EmptyTypes);
+            var dictAdd = toDict.GetMethod("Add");
+
+            var createDictDyn = new DynamicMethod("POCOMapper_GetClassToDictMapper_" + fromClass.FullName + "_" + toDict.FullName + "_createDict", typeof(object), Type.EmptyTypes, restrictedSkipVisibility: true);
+            var il = createDictDyn.GetILGenerator();
+
+            il.Emit(OpCodes.Newobj, dictCons);    // [ret]
+            il.Emit(OpCodes.Ret);               // -----
+
+            var createDict = (Func<object>)createDictDyn.CreateDelegate(typeof(Func<object>));
+
+            var dictBuilder = new Dictionary<string, Tuple<Func<object, object>, Func<object, object>>>();
+
+            foreach (var mem in fromClass.GetFields())
+            {
+                Func<object, object> get, map;
+
+                if (mem.FieldType != valType)
+                {
+                    if (valType == typeof(object))
+                    {
+                        map = null;
+                    }
+                    else
+                    {
+                        var mapper = (POCOMapper)((typeof(POCOMapper<,>).MakeGenericType(mem.FieldType, valType)).GetMethod("Get").Invoke(null, new object[0]));
+                        map = mapper.GetMapper();
+                    }
+                }
+                else
+                {
+                    map = null;
+                }
+
+                var dynGet = new DynamicMethod("POCOMapper_GetClassToDictMapper_" + fromClass.FullName + "_" + toDict.FullName + "_" + mem.Name + "_get", typeof(object), new[] { typeof(object) }, restrictedSkipVisibility: true);
+                il = dynGet.GetILGenerator();
+
+                il.Emit(OpCodes.Ldarg_0);               // [obj]
+                il.Emit(OpCodes.Castclass, fromClass);  // [obj]
+                il.Emit(OpCodes.Ldfld, mem);            // [field]
+                if (mem.FieldType.IsValueType)
+                {
+                    il.Emit(OpCodes.Box, mem.FieldType);// [field]
+                }
+                il.Emit(OpCodes.Ret);                   // -----
+
+                get = (Func<object, object>)dynGet.CreateDelegate(typeof(Func<object, object>));
+
+                dictBuilder[mem.Name] = Tuple.Create(get, map);
+            }
+
+            return
+                new POCOMapper(
+                    obj =>
+                    {
+                        var dict = createDict();
+
+                        foreach (var kv in dictBuilder)
+                        {
+                            var toMap = kv.Value.Item1(obj);
+                            var mapped = kv.Value.Item2 != null ? kv.Value.Item2(toMap) : toMap;
+
+                            ((IDictionary)dict).Add(kv.Key, mapped);
+                        }
+
+                        return dict;
+                    }
+                );
         }
 
         private static POCOMapper GetMapper()
@@ -1021,6 +1096,11 @@ namespace PublicBroadcasting.Impl
             if (tTo.IsAnonymouseClass())
             {
                 return GetAnonymouseClassMapper();
+            }
+
+            if (tTo.IsDictionary() && tFrom.IsMappableToDictionary(tTo))
+            {
+                return GetClassToDictMapper(tFrom, tTo);
             }
 
             return GetClassMapper();

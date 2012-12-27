@@ -203,6 +203,8 @@ namespace PublicBroadcasting.Impl
             var classD = description as ClassTypeDescription;
             if (classD != null)
             {
+                if (type.IsList() || type.IsDictionary()) return false;
+
                 // Assume they're equal for back ref purposes; a contradiction here is going to be blow up anyway
                 if(classD.Id != 0)
                 {

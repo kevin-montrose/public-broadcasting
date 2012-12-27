@@ -144,5 +144,32 @@ namespace PublicBroadcasting.Impl
                 t == typeof(TimeSpan) ||
                 t == typeof(DateTime);
         }
+
+        public static bool IsMappableToDictionary(this Type from, Type to)
+        {
+            var dictI = to.GetDictionaryInterface();
+
+            var valType = dictI.GetGenericArguments()[1];
+
+            if (dictI.GetGenericArguments()[0] != typeof(string)) return false;
+
+            if (valType == typeof(object)) return true;
+
+            var fields = from.GetFields();
+
+            var fieldTypes = fields.Select(f => f.FieldType).ToList();
+
+            return
+                fieldTypes.All(
+                    f =>
+                    {
+                        Func<object, object> ignored;
+
+                        return 
+                            valType == f ||
+                            POCOMapper<object, object>.Widens(f, valType, out ignored);
+                    }
+                );
+        }
     }
 }
