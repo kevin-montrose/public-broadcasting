@@ -1311,5 +1311,24 @@ namespace Tests
             Assert.AreEqual(123, obj["A"]);
             Assert.AreEqual(456, obj["__B"]);
         }
+
+        class DCM
+        {
+            public string Hello { get; set; }
+            public DCM Foo { get; set; }
+            public Dictionary<string, DCM> Bar { get; set; }
+            public Dictionary<string, Dictionary<string, DCM>> World { get; set; }
+        }
+
+        [TestMethod]
+        public void DictClassMap()
+        {
+            var bytes = Serializer.Serialize(new DCM { Hello = "Yeah", Foo = new DCM() } );
+            var dict = Serializer.Deserialize<Dictionary<string, dynamic>>(bytes);
+
+            Assert.AreEqual("Yeah", dict["Hello"]);
+            Assert.IsNotNull(dict["Foo"]);
+            Assert.IsNull(dict["Foo"].Hello);
+        }
     }
 }

@@ -401,6 +401,8 @@ namespace PublicBroadcasting.Impl
         {
             if (!DePromised)
             {
+                DePromised = true;
+
                 var postMembers = new List<Action>();
 
                 foreach (var key in Members.Keys.ToList())
@@ -416,8 +418,6 @@ namespace PublicBroadcasting.Impl
             {
                 afterPromise = () => { };
             }
-
-            DePromised = true;
 
             return this;
         }
