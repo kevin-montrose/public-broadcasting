@@ -546,7 +546,7 @@ namespace Tests
             {
                 while (e.InnerException != null) e = e.InnerException;
 
-                Assert.IsTrue(e.Message.EndsWith(" is not a valid deserialization target, expected an IDictionary<Key, Value>"));
+                Assert.IsTrue(e.Message.EndsWith(" is not a valid deserialization target, expected an IDictionary<Key, Value> or compatible class"));
             }
 
             Assert.AreEqual(2, d1.Count);
@@ -1347,14 +1347,24 @@ namespace Tests
             public int B { get; set; }
         }
 
+        class CDM2
+        {
+            public long B { get; set; }
+            public double A { get; set; } 
+        }
+
         [TestMethod]
         public void ClassDictMap()
         {
             var bytes = Serializer.Serialize(new Dictionary<string, int> { { "A", 1 }, { "B", 2 } });
-            var obj = Serializer.Deserialize<CDM>(bytes);
+            var obj1 = Serializer.Deserialize<CDM>(bytes);
+            var obj2 = Serializer.Deserialize<CDM2>(bytes);
 
-            Assert.AreEqual(1, obj.A);
-            Assert.AreEqual(2, obj.B);
+            Assert.AreEqual(1, obj1.A);
+            Assert.AreEqual(2, obj1.B);
+
+            Assert.AreEqual(1, obj2.A);
+            Assert.AreEqual(2, obj2.B);
         }
     }
 }

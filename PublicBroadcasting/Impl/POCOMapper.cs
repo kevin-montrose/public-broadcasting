@@ -855,6 +855,90 @@ namespace PublicBroadcasting.Impl
                 );
         }
 
+        private static bool IsCompatibleClassToDictionary(Type fromDict, Type toClass)
+        {
+            var dictI = fromDict.GetDictionaryInterface();
+
+            return dictI.GetGenericArguments()[0] == typeof(string);
+        }
+
+        private static POCOMapper GetDictionaryToClassMapper()
+        {
+            var fromDict = typeof(From);
+            var toClass = typeof(To);
+
+            var dictI = fromDict.GetDictionaryInterface();
+            var dictVal = dictI.GetGenericArguments()[1];
+
+            var fieldMap = new Dictionary<string, Tuple<FieldInfo, POCOMapper>>();
+            var propMap = new Dictionary<string, Tuple<PropertyInfo, POCOMapper>>();
+
+            foreach (var f in toClass.GetMembers(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+            {
+                var asField = f as FieldInfo;
+                var asProp = f as PropertyInfo;
+
+                if (asField != null)
+                {
+                    var gMap = typeof(POCOMapper<,>).MakeGenericType(dictVal, asField.FieldType);
+                    var fMapper = (POCOMapper)gMap.GetMethod("Get").Invoke(null, new object[0]);
+
+                    fieldMap[asField.Name] = Tuple.Create(asField, fMapper);
+                    continue;
+                }
+
+                if (asProp != null && asProp.CanWrite)
+                {
+                    var gMap = typeof(POCOMapper<,>).MakeGenericType(dictVal, asProp.PropertyType);
+                    var pMapper = (POCOMapper)gMap.GetMethod("Get").Invoke(null, new object[0]);
+
+                    propMap[asProp.Name] = Tuple.Create(asProp, pMapper);
+                    continue;
+                }
+            }
+
+            var newObj = toClass.GetConstructor(Type.EmptyTypes);
+
+            return
+                new POCOMapper(
+                    obj =>
+                    {
+                        if(obj == null) return null;
+
+                        var ret = (To)newObj.Invoke(new object[0]);
+
+                        var asDict = (IDictionary)obj;
+
+                        foreach (string key in asDict.Keys)
+                        {
+                            if (fieldMap.ContainsKey(key))
+                            {
+                                var mapper = fieldMap[key];
+                                var oldVal = asDict[key];
+                                var mapped = mapper.Item2.GetMapper()(oldVal);
+
+                                mapper.Item1.SetValue(ret, mapped);
+
+                                continue;
+                            }
+
+                            if (propMap.ContainsKey(key))
+                            {
+                                var mapper = propMap[key];
+                                var oldVal = asDict[key];
+                                var mapped = mapper.Item2.GetMapper()(oldVal);
+
+                                mapper.Item1.SetValue(ret, mapped);
+
+                                continue;
+                            }
+                        }
+
+                        return ret;
+                    }
+                );
+        }
+
         private static POCOMapper GetMapper()
         {
             var tFrom = typeof(From);
@@ -1069,16 +1153,19 @@ namespace PublicBroadcasting.Impl
                     );
             }
 
-            if ((tFrom.IsGenericType && tFrom.GetGenericTypeDefinition() == typeof(IDictionary<,>)) ||
-               tFrom.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>)))
+            if (tFrom.IsDictionary())
             {
-                if (!((tTo.IsGenericType && tTo.GetGenericTypeDefinition() == typeof(IDictionary<,>)) ||
-                    tTo.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>))))
+                if (tTo.IsDictionary())
                 {
-                    throw new Exception(tTo.FullName + " is not a valid deserialization target, expected an IDictionary<Key, Value>");
+                    return GetDictionaryMapper();
                 }
 
-                return GetDictionaryMapper();
+                if (IsCompatibleClassToDictionary(tFrom, tTo))
+                {
+                    return GetDictionaryToClassMapper();
+                }
+
+                throw new Exception(tTo.FullName + " is not a valid deserialization target, expected an IDictionary<Key, Value> or compatible class");
             }
 
             if ((tFrom.IsGenericType && tFrom.GetGenericTypeDefinition() == typeof(IList<>)) ||
