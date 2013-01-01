@@ -1340,5 +1340,21 @@ namespace Tests
             Assert.AreEqual("Nah", dict2["Hello"]);
             Assert.AreEqual("Indeed", dict2["Foo"]["Hello"]);
         }
+
+        class CDM
+        {
+            public int A { get; set; }
+            public int B { get; set; }
+        }
+
+        [TestMethod]
+        public void ClassDictMap()
+        {
+            var bytes = Serializer.Serialize(new Dictionary<string, int> { { "A", 1 }, { "B", 2 } });
+            var obj = Serializer.Deserialize<CDM>(bytes);
+
+            Assert.AreEqual(1, obj.A);
+            Assert.AreEqual(2, obj.B);
+        }
     }
 }
