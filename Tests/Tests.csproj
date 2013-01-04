@@ -52,6 +52,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="Async.cs" />
     <Compile Include="Compat.cs" />
     <Compile Include="Configs.cs" />
     <Compile Include="Describer.cs" />

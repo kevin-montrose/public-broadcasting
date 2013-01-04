@@ -35,6 +35,20 @@ namespace PublicBroadcasting
         }
 
         /// <summary>
+        /// Asynchronously, serializes public fields and properties of the given instance to a byte array.
+        /// </summary>
+        /// <typeparam name="T">The type being serialized.</typeparam>
+        /// <param name="obj">The existing instance to be serialized.</param>
+        /// <returns>A byte array representing the public fields and properties of obj.</returns>
+        /// <remarks>To specify a different collection of members to serialize, use one of the overrides of Serialize&lt;T&gt;.</remarks>
+        public static Task<byte[]> SerializeAsync<T>(T obj)
+        {
+            var task = Task.Factory.StartNew(() => Serialize(obj));
+
+            return task;
+        }
+
+        /// <summary>
         /// Serializes the specified public members of the given instance to a byte array.
         /// </summary>
         /// <typeparam name="T">The type being serialized.</typeparam>
@@ -48,6 +62,21 @@ namespace PublicBroadcasting
         }
 
         /// <summary>
+        /// Asynchronously, serializes the specified public members of the given instance to a byte array.
+        /// </summary>
+        /// <typeparam name="T">The type being serialized.</typeparam>
+        /// <param name="obj">The existing instance to be serialized.</param>
+        /// <param name="members">The members to serialize, either Fields, Properties, or both.</param>
+        /// <returns>A byte array representing the specified public members of obj.</returns>
+        /// <remarks>To specify a different collection of members to serialize, use one of the overrides of Serialize&lt;T&gt;.</remarks>
+        public static Task<byte[]> SerializeAsync<T>(T obj, IncludedMembers members)
+        {
+            var task = Task.Factory.StartNew(() => Serialize(obj, members));
+
+            return task;
+        }
+
+        /// <summary>
         /// Serializes the specified fields and properties of the given instance to a byte array.
         /// </summary>
         /// <typeparam name="T">The type being serialized.</typeparam>
@@ -58,6 +87,21 @@ namespace PublicBroadcasting
         public static byte[] Serialize<T>(T obj, IncludedVisibility visibility)
         {
             return Serialize(obj, IncludedMembers.Properties | IncludedMembers.Properties, visibility);
+        }
+
+        /// <summary>
+        /// Asynchronously, serializes the specified fields and properties of the given instance to a byte array.
+        /// </summary>
+        /// <typeparam name="T">The type being serialized.</typeparam>
+        /// <param name="obj">The existing instance to be serialized.</param>
+        /// <param name="visibility">The visibility of fields and properties to serialize, some combination of Public, Protected, Internal, and Private.</param>
+        /// <returns>A byte array representing the specified fields and properties of obj.</returns>
+        /// <remarks>To specify a different collection of members to serialize, use one of the overrides of Serialize&lt;T&gt;.</remarks>
+        public static Task<byte[]> SerializeAsync<T>(T obj, IncludedVisibility visibility)
+        {
+            var task = Task.Factory.StartNew(() => Serialize(obj, visibility));
+
+            return task;
         }
 
         /// <summary>
@@ -79,6 +123,21 @@ namespace PublicBroadcasting
         }
 
         /// <summary>
+        /// Asynchronously, serializes the specified members of the given instance to a byte array.
+        /// </summary>
+        /// <typeparam name="T">The type being serialized.</typeparam>
+        /// <param name="obj">The existing instance to be serialized.</param>
+        /// <param name="members">The members to serialize, either Fields, Properties, or both.</param>
+        /// <param name="visibility">The visibility of fields and properties to serialize, some combination of Public, Protected, Internal, and Private.</param>
+        /// <returns>A byte array representing the specified members of obj.</returns>
+        public static Task<byte[]> SerializeAsync<T>(T obj, IncludedMembers members, IncludedVisibility visibility)
+        {
+            var task = Task.Factory.StartNew(() => Serialize(obj, members, visibility));
+
+            return task;
+        }
+
+        /// <summary>
         /// Serializes public fields and properties of the given instance to the given Stream.
         /// </summary>
         /// <typeparam name="T">The type being serialized.</typeparam>
@@ -88,6 +147,20 @@ namespace PublicBroadcasting
         public static void Serialize<T>(Stream stream, T obj)
         {
             Serialize(stream, obj, IncludedMembers.Properties | IncludedMembers.Fields, IncludedVisibility.Public);
+        }
+
+        /// <summary>
+        /// Asynchronously, serializes public fields and properties of the given instance to the given Stream.
+        /// </summary>
+        /// <typeparam name="T">The type being serialized.</typeparam>
+        /// <param name="stream">The stream to serialize obj to.</param>
+        /// <param name="obj">The existing instance to be serialized.</param>
+        /// <remarks>To specify a different collection of members to serialize, use one of the overrides of Serialize&lt;T&gt;.</remarks>
+        public static Task SerializeAsync<T>(Stream stream, T obj)
+        {
+            var task = Task.Factory.StartNew(() => Serialize(stream, obj));
+
+            return task;
         }
 
         /// <summary>
@@ -104,6 +177,21 @@ namespace PublicBroadcasting
         }
 
         /// <summary>
+        /// Asynchronously, serializes the specified public members of the given instance to the given Stream.
+        /// </summary>
+        /// <typeparam name="T">The type being serialized.</typeparam>
+        /// <param name="stream">The stream to serialize obj to.</param>
+        /// <param name="obj">The existing instance to be serialized.</param>
+        /// <param name="members">The members to serialize, either Fields, Properties, or both.</param>
+        /// <remarks>To specify a different collection of members to serialize, use one of the overrides of Serialize&lt;T&gt;.</remarks>
+        public static Task SerializeAsync<T>(Stream stream, T obj, IncludedMembers members)
+        {
+            var task = Task.Factory.StartNew(() => Serialize(stream, obj, members));
+
+            return task;
+        }
+
+        /// <summary>
         /// Serializes the specified fields and properties of the given instance to the given Stream.
         /// </summary>
         /// <typeparam name="T">The type being serialized.</typeparam>
@@ -114,6 +202,21 @@ namespace PublicBroadcasting
         public static void Serialize<T>(Stream stream, T obj, IncludedVisibility visibility)
         {
             Serialize(stream, obj, IncludedMembers.Properties | IncludedMembers.Fields, visibility);
+        }
+
+        /// <summary>
+        /// Asynchronously, serializes the specified fields and properties of the given instance to the given Stream.
+        /// </summary>
+        /// <typeparam name="T">The type being serialized.</typeparam>
+        /// <param name="stream">The stream to serialize obj to.</param>
+        /// <param name="obj">The existing instance to be serialized.</param>
+        /// <param name="visibility">The visibility of fields and properties to serialize, some combination of Public, Protected, Internal, and Private.</param>
+        /// <remarks>To specify a different collection of members to serialize, use one of the overrides of Serialize&lt;T&gt;.</remarks>
+        public static Task SerializeAsync<T>(Stream stream, T obj, IncludedVisibility visibility)
+        {
+            var task = Task.Factory.StartNew(() => Serialize(stream, obj, visibility));
+
+            return task;
         }
 
         /// <summary>
@@ -145,6 +248,21 @@ namespace PublicBroadcasting
             var envelope = Envelope.Get(desc, builder, obj);
 
             ProtoBuf.Serializer.Serialize(stream, envelope);
+        }
+
+        /// <summary>
+        /// Asynchronously, serializes the specified members of the given instance to the given Stream.
+        /// </summary>
+        /// <typeparam name="T">The type being serialized.</typeparam>
+        /// <param name="stream">The stream to serialize obj to.</param>
+        /// <param name="obj">The existing instance to be serialized.</param>
+        /// <param name="members">The members to serialize, either Fields, Properties, or both.</param>
+        /// <param name="visibility">The visibility of fields and properties to serialize, some combination of Public, Protected, Internal, and Private.</param>
+        public static Task SerializeAsync<T>(Stream stream, T obj, IncludedMembers members, IncludedVisibility visibility)
+        {
+            var task = Task.Factory.StartNew(() => Serialize(stream, obj, members, visibility));
+
+            return task;
         }
 
         #region GetDescriptionAndBuilder
