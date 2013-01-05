@@ -1344,13 +1344,19 @@ namespace Tests
         class CDM
         {
             public int A { get; set; }
-            public int B { get; set; }
+            public int B;
         }
 
         class CDM2
         {
             public long B { get; set; }
-            public double A { get; set; } 
+            public double A;
+        }
+
+        class CDM3
+        {
+            public string Foo { get; set; }
+            public En Bar;
         }
 
         [TestMethod]
@@ -1365,6 +1371,12 @@ namespace Tests
 
             Assert.AreEqual(1, obj2.A);
             Assert.AreEqual(2, obj2.B);
+
+            var bytes2 = Serializer.Serialize(new Dictionary<string, string> { { "Foo", "Hello" }, { "Bar", "Bar" } });
+            var obj3 = Serializer.Deserialize<CDM3>(bytes2);
+
+            Assert.AreEqual("Hello", obj3.Foo);
+            Assert.AreEqual(En.Bar, obj3.Bar);
         }
     }
 }

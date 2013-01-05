@@ -870,31 +870,63 @@ namespace PublicBroadcasting.Impl
             var dictI = fromDict.GetDictionaryInterface();
             var dictVal = dictI.GetGenericArguments()[1];
 
-            var fieldMap = new Dictionary<string, Tuple<FieldInfo, POCOMapper>>();
-            var propMap = new Dictionary<string, Tuple<PropertyInfo, POCOMapper>>();
+            var members = new Dictionary<string, Tuple<Action<object, object>, POCOMapper>>();
 
-            foreach (var f in toClass.GetMembers(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+            foreach (var mem in toClass.GetMembers(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
             {
-                var asField = f as FieldInfo;
-                var asProp = f as PropertyInfo;
+                var asField = mem as FieldInfo;
+                var asProp = mem as PropertyInfo;
+                POCOMapper mapper = null;
+                Action<object, object> setter = null;
+
+                if (asField == null && asProp == null) continue;
+
+                var dyn = new DynamicMethod("POCOMapper_DictToClass_" + mem.Name, null, new[] { typeof(object), typeof(object) }, restrictedSkipVisibility: true);
+                var il = dyn.GetILGenerator();
+                
+                il.Emit(OpCodes.Ldarg_0);               // [ret]
+                il.Emit(OpCodes.Castclass, toClass);    // [ret]
+                il.Emit(OpCodes.Ldarg_1);               // [val] [ret]
 
                 if (asField != null)
                 {
                     var gMap = typeof(POCOMapper<,>).MakeGenericType(dictVal, asField.FieldType);
-                    var fMapper = (POCOMapper)gMap.GetMethod("Get").Invoke(null, new object[0]);
+                    mapper = (POCOMapper)gMap.GetMethod("Get").Invoke(null, new object[0]);
 
-                    fieldMap[asField.Name] = Tuple.Create(asField, fMapper);
-                    continue;
+                    if (asField.FieldType.IsValueType)
+                    {
+                        il.Emit(OpCodes.Unbox_Any, asField.FieldType);  // [val] [ret]
+                    }
+                    else
+                    {
+                        il.Emit(OpCodes.Castclass, asField.FieldType);  // [val] [ret]
+                    }
+
+                    il.Emit(OpCodes.Stfld, asField);                    // -----
                 }
 
                 if (asProp != null && asProp.CanWrite)
                 {
                     var gMap = typeof(POCOMapper<,>).MakeGenericType(dictVal, asProp.PropertyType);
-                    var pMapper = (POCOMapper)gMap.GetMethod("Get").Invoke(null, new object[0]);
+                    mapper = (POCOMapper)gMap.GetMethod("Get").Invoke(null, new object[0]);
 
-                    propMap[asProp.Name] = Tuple.Create(asProp, pMapper);
-                    continue;
+                    if (asProp.PropertyType.IsValueType)
+                    {
+                        il.Emit(OpCodes.Unbox_Any, asProp.PropertyType);// [val] [ret]
+                    }
+                    else
+                    {
+                        il.Emit(OpCodes.Castclass, asProp.PropertyType);// [val] [ret]
+                    }
+
+                    il.Emit(OpCodes.Callvirt, asProp.GetSetMethod());   // -----
                 }
+
+                il.Emit(OpCodes.Ret);
+
+                setter = (Action<object, object>)dyn.CreateDelegate(typeof(Action<object, object>));
+
+                members[mem.Name] = Tuple.Create(setter, mapper);
             }
 
             var newObj = toClass.GetConstructor(Type.EmptyTypes);
@@ -911,26 +943,13 @@ namespace PublicBroadcasting.Impl
 
                         foreach (string key in asDict.Keys)
                         {
-                            if (fieldMap.ContainsKey(key))
+                            if (members.ContainsKey(key))
                             {
-                                var mapper = fieldMap[key];
+                                var tuple = members[key];
                                 var oldVal = asDict[key];
-                                var mapped = mapper.Item2.GetMapper()(oldVal);
+                                var mapped = tuple.Item2.GetMapper()(oldVal);
 
-                                mapper.Item1.SetValue(ret, mapped);
-
-                                continue;
-                            }
-
-                            if (propMap.ContainsKey(key))
-                            {
-                                var mapper = propMap[key];
-                                var oldVal = asDict[key];
-                                var mapped = mapper.Item2.GetMapper()(oldVal);
-
-                                mapper.Item1.SetValue(ret, mapped);
-
-                                continue;
+                                tuple.Item1(ret, mapped);
                             }
                         }
 
