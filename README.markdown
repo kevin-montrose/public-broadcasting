@@ -86,6 +86,37 @@ but `sbyte -> uint` and `uint -> int` are not.  Widening conversions in collecti
 Public Broadcasting will ignore the distinction between user-defined ValueTypes and ReferenceTypes, conversion between any combination of them
 is legal.
 
+###Dictionary &lt;-&gt; Class Conversions
+
+Dictionaries with string keys can be mapped to classes, and vice versa, provided that the values in the dictionary can be safely converted.
+
+By way of example, 
+```
+class C
+{
+    public int Mem1;
+	public long Mem2;
+}
+```
+could be safely deserialized to `Dictionary<string, long>` or `Dictionary<string, double>` but a `Dictionary<string, byte>` would be empty.
+
+Likewise, `Dictionary<string, int>` could be safely deserialized to either of:
+```
+class D
+{
+	public int Mem1;
+	public int Mem2;
+}
+
+class E
+{
+	public long Mem1;
+	public long Mem2;
+}
+```
+
+When deserializing dictionaries to classes, any keys in the dictionary but not found on the class will be ignored.
+
 ###Enumerations
 
 Enumerations are encoded as their string equivalents, underlying types (`int`, `byte`, etc.) and values are discarded during serialization.
