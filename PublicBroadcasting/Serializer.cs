@@ -729,6 +729,20 @@ namespace PublicBroadcasting
         }
 
         /// <summary>
+        /// Asynchronously, creates a new instance from a byte array previously generated with Public Broadcasting.
+        /// </summary>
+        /// <typeparam name="T">The type to be created.</typeparam>
+        /// <param name="bytes">The byte array to deserialize from.</param>
+        /// <returns>A new, initialized instance.</returns>
+        /// <remarks>T does not need to be the same type used to generate bytes, Public Broadcasting will map
+        /// types based on their structure.  In short, members with the same names and compatible types will be mapped to
+        /// each other.</remarks>
+        public static Task<T> DeserializeAsync<T>(byte[] bytes)
+        {
+            return Task.Factory.StartNew(() => Deserialize<T>(bytes));
+        }
+
+        /// <summary>
         /// Creates a new instance from a Stream previously generated with Public Broadcasting.
         /// </summary>
         /// <typeparam name="T">The type to be created.</typeparam>
@@ -742,6 +756,20 @@ namespace PublicBroadcasting
             if (stream == null) throw new ArgumentNullException("stream");
 
             return Deserializer.Deserialize<T>(stream);
+        }
+
+        /// <summary>
+        /// Asynchronously, creates a new instance from a Stream previously generated with Public Broadcasting.
+        /// </summary>
+        /// <typeparam name="T">The type to be created.</typeparam>
+        /// <param name="stream">The Stream to deserialize from.</param>
+        /// <returns>A new, initialized instance.</returns>
+        /// <remarks>T does not need to be the same type used to generate stream, Public Broadcasting will map
+        /// types based on their structure.  In short, members with the same names and compatible types will be mapped to
+        /// each other.</remarks>
+        public static Task<T> DeserializeAsync<T>(Stream stream)
+        {
+            return Task.Factory.StartNew(() => Deserialize<T>(stream));
         }
 
         /// <summary>
@@ -763,6 +791,21 @@ namespace PublicBroadcasting
         }
 
         /// <summary>
+        /// Asynchronously, creates a dynamically bound object from a byte array previously generated with Public Broadcasting.
+        /// </summary>
+        /// <param name="bytes">The byte array to deserialize from.</param>
+        /// <returns>A new, initialized instance.</returns>
+        /// <remarks>Public Broadcasting will not map the type returned to the type used to generate bytes, even if
+        /// it is available in theory.  Also be aware that the underlying types of enumerations and the Value/Reference Type distinction
+        /// of any serialized types will be lost.
+        /// 
+        /// In short, dynamically typed returns will have the correct member names and values but nothing else is guaranteed.</remarks>
+        public static Task<dynamic> DeserializeAsync(byte[] bytes)
+        {
+            return Task.Factory.StartNew(() => Deserialize(bytes));
+        }
+
+        /// <summary>
         /// Creates a dynamically bound object from a Stream previously generated with Public Broadcasting.
         /// </summary>
         /// <param name="stream">The Stream to deserialize from.</param>
@@ -775,6 +818,21 @@ namespace PublicBroadcasting
         public static dynamic Deserialize(Stream stream)
         {
             return Deserializer.Deserialize(stream);
+        }
+
+        /// <summary>
+        /// Asynchronously, creates a dynamically bound object from a Stream previously generated with Public Broadcasting.
+        /// </summary>
+        /// <param name="stream">The Stream to deserialize from.</param>
+        /// <returns>A new, initialized instance.</returns>
+        /// <remarks>Public Broadcasting will not map the type returned to the type used to generate bytes, even if
+        /// it is available in theory.  Also be aware that the underlying types of enumerations and the Value/Reference Type distinction
+        /// of any serialized types will be lost.
+        /// 
+        /// In short, dynamically typed returns will have the correct member names and values but nothing else is guaranteed.</remarks>
+        public static Task<dynamic> DeserializeAsync(Stream stream)
+        {
+            return Task.Factory.StartNew(() => Deserialize(stream));
         }
     }
 }

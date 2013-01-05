@@ -54,5 +54,26 @@ namespace Tests
                 Assert.IsNotNull(sub);
             }
         }
+
+        [TestMethod]
+        public void AwaitDeBatches()
+        {
+            var bytes = Serializer.Serialize(new A { C = 1234567, B = true });
+
+            var tasks = new List<Task<A>>();
+            for (var i = 0; i < 10000; i++)
+            {
+                tasks.Add(Serializer.DeserializeAsync<A>(bytes));
+            }
+
+            Task.WaitAll(tasks.ToArray());
+
+            foreach (var t in tasks)
+            {
+                Assert.IsNotNull(t.Result);
+                Assert.AreEqual(1234567, t.Result.C);
+                Assert.IsTrue(t.Result.B);
+            }
+        }
     }
 }
