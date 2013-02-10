@@ -173,7 +173,6 @@ namespace PublicBroadcasting.Impl
                 .Ldc(0)
                 .Ldc(0)
                 .Ldnull()
-                .Castclass<string>()
                 .Call(createArgInfo)
                 .Stelem();
 
@@ -181,7 +180,6 @@ namespace PublicBroadcasting.Impl
                 .Ldc(1)
                 .Ldc(3)
                 .Ldnull()
-                .Castclass<string>()
                 .Call(createArgInfo)
                 .Stelem();
 

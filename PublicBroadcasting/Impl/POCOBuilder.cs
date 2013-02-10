@@ -190,76 +190,74 @@ namespace PublicBroadcasting.Impl
             var name = "POCOBuilder_RefRef";
             name += "_" + typeof(From).FullName + "_" + typeof(Describer).FullName;
 
-            var dynMethod = new DynamicMethod(name, typeof(object), new[] { tFrom, typeof(Dictionary<string, POCOBuilder>) }, restrictedSkipVisibility: true);
-            var il = dynMethod.GetILGenerator();
-            var retLoc = il.DeclareLocal(tTo);
+            var funcEmit = Sigil.Emit<Func<From, Dictionary<string, POCOBuilder>, object>>.NewDynamicMethod(name);
+            var retLoc = funcEmit.DeclareLocal(tTo, "retLoc");
 
-            il.Emit(OpCodes.Newobj, cons);                      // [ret]
-            il.Emit(OpCodes.Stloc, retLoc);                     // ----
+            funcEmit.NewObject(cons);
+            funcEmit.StoreLocal(retLoc);
 
             foreach (var mem in members)
             {
-                il.Emit(OpCodes.Ldloc, retLoc);                 // [ret]
+                funcEmit.LoadLocal(retLoc);
+                funcEmit.LoadArgument(1);
+                funcEmit.LoadConstant(mem.Key);
+                funcEmit.Call(lookup);
 
-                il.Emit(OpCodes.Ldarg_1);                       // [members] [ret]
-                il.Emit(OpCodes.Ldstr, mem.Key);                // [memKey] [members] [ret]
-                il.Emit(OpCodes.Call, lookup);                  // [Func<object, object>] [ret]
-
-                il.Emit(OpCodes.Ldarg_0);                       // [from] [Func<object, object>] [ret]
+                funcEmit.LoadArgument(0);
 
                 var fromMember = tFrom.GetMember(mem.Key, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).Where(m => m is FieldInfo || m is PropertyInfo).Single();
 
                 if (fromMember is PropertyInfo)
                 {
                     var fromProp = (PropertyInfo)fromMember;
-                    il.Emit(OpCodes.Callvirt, fromProp.GetMethod);  // [fromVal] [Func<object, object>] [ret]
+                    funcEmit.CallVirtual(fromProp.GetMethod);
 
                     if (fromProp.PropertyType.IsValueType)
                     {
-                        il.Emit(OpCodes.Box, fromProp.PropertyType);// [fromVal] [Func<object, object>] [ret]
+                        funcEmit.Box(fromProp.PropertyType);
                     }
 
-                    il.Emit(OpCodes.Call, invoke);                  // [toVal (as object)] [ret]
+                    funcEmit.Call(invoke);
                 }
                 else
                 {
                     var fromField = (FieldInfo)fromMember;
-                    il.Emit(OpCodes.Ldfld, fromField);              // [fromVal] [Func<object, object>] [ret]
+                    funcEmit.LoadField(fromField);
 
-                    if (fromField.FieldType.IsValueType)
+                    if(fromField.FieldType.IsValueType)
                     {
-                        il.Emit(OpCodes.Box, fromField.FieldType);  // [fromVal] [Func<object, object>] [ret]
+                        funcEmit.Box(fromField.FieldType);
                     }
 
-                    il.Emit(OpCodes.Call, invoke);                  // [toVal (as object)] [ret]
+                    funcEmit.Call(invoke);
                 }
 
                 var toMember = tTo.GetField(mem.Key);
 
-                if (toMember.FieldType.IsValueType)
+                if(toMember.FieldType.IsValueType)
                 {
-                    if (!toMember.FieldType.IsEnum)
+                    if(!toMember.FieldType.IsEnum)
                     {
-                        il.Emit(OpCodes.Unbox_Any, toMember.FieldType);// [toVal] [ret]
+                        funcEmit.UnboxAny(toMember.FieldType);
                     }
                     else
                     {
                         var parse = parseEnum.MakeGenericMethod(toMember.FieldType);
-                        il.Emit(OpCodes.Call, parse);                       // [toVal as object] [ret]
+                        funcEmit.Call(parse);
                     }
                 }
                 else
                 {
-                    il.Emit(OpCodes.Castclass, toMember.FieldType);     // [toVal] [ret]
+                    funcEmit.CastClass(toMember.FieldType);
                 }
 
-                il.Emit(OpCodes.Stfld, toMember);                       // -----
+                funcEmit.StoreField(toMember);
             }
 
-            il.Emit(OpCodes.Ldloc, retLoc);
-            il.Emit(OpCodes.Ret);
+            funcEmit.LoadLocal(retLoc);
+            funcEmit.Return();
 
-            var func = (Func<From, Dictionary<string, POCOBuilder>, object>)dynMethod.CreateDelegate(typeof(Func<From, Dictionary<string, POCOBuilder>, object>));
+            var func = funcEmit.CreateDelegate();
 
             return func;
         }
