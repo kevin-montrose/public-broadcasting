@@ -16,6 +16,8 @@ using System.Threading.Tasks;
 
 namespace PublicBroadcasting.Impl
 {
+    internal delegate bool TryGetIndexerDelegate(GetIndexBinder gib, object[] os, ref object oref);
+
     [ProtoContract]
     internal class ClassTypeDescription : TypeDescription
     {
@@ -66,19 +68,21 @@ namespace PublicBroadcasting.Impl
             var index = enumerator.DefineField("Index", typeof(int), FieldAttributes.Private);
             var members = enumerator.DefineField("Members", typeof(List<string>), FieldAttributes.Private);
             var values = enumerator.DefineField("Values", typeof(object), FieldAttributes.Private);
-            var cons = enumerator.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis, new[] { typeof(List<string>), typeof(object) });
-            
-            il = cons.GetILGenerator();
-            il.Emit(OpCodes.Ldarg_0);       // [this]
-            il.Emit(OpCodes.Ldarg_1);       // [List<string>] [this]
-            il.Emit(OpCodes.Stfld, members);// -----
-            il.Emit(OpCodes.Ldarg_0);       // [this]
-            il.Emit(OpCodes.Ldarg_2);       // [object] [this]
-            il.Emit(OpCodes.Stfld, values); // -----
-            il.Emit(OpCodes.Ldarg_0);       // [this]
-            il.Emit(OpCodes.Ldc_I4_M1);     // [-1] [this]
-            il.Emit(OpCodes.Stfld, index);  // -----
-            il.Emit(OpCodes.Ret);
+
+            var consEmit = Sigil.Emit<Action<List<string>, object>>.BuildConstructor(enumerator, MethodAttributes.Public, CallingConventions.Standard | CallingConventions.HasThis);
+            consEmit
+                .LoadArgument(0)
+                .LoadArgument(1)
+                .StoreField(members)
+                .LoadArgument(0)
+                .LoadArgument(2)
+                .StoreField(values)
+                .LoadArgument(0)
+                .LoadConstant(-1)
+                .StoreField(index)
+                .Return();
+
+            var cons = consEmit.CreateConstructor();
 
             // void Reset()
 
@@ -279,9 +283,9 @@ namespace PublicBroadcasting.Impl
             TypeBuilder.SetCustomAttribute(contractAttrBuilder);
 
             // Define indexer
-            var strEq = typeof(string).GetMethod("Equals", new[] { typeof(string) });
+            var strEq = typeof(object).GetMethod("Equals", new[] { typeof(object) });
 
-            var tryGetIndex = TypeBuilder.DefineMethod("TryGetIndex", MethodAttributes.Public | MethodAttributes.Virtual, typeof(bool), new[] { typeof(GetIndexBinder), typeof(object[]), Type.GetType("System.Object&") });
+            /*var tryGetIndex = TypeBuilder.DefineMethod("TryGetIndex", MethodAttributes.Public | MethodAttributes.Virtual, typeof(bool), new[] { typeof(GetIndexBinder), typeof(object[]), Type.GetType("System.Object&") });
             var il = tryGetIndex.GetILGenerator();
 
             il.Emit(OpCodes.Ldarg_2);       // object[]
@@ -354,7 +358,93 @@ namespace PublicBroadcasting.Impl
 
             il.Emit(OpCodes.Stind_Ref);     // ----
             il.Emit(OpCodes.Ldc_I4_1);      // 1
-            il.Emit(OpCodes.Ret);           // ----
+            il.Emit(OpCodes.Ret);           // ----*/
+
+            var tryGetIndexEmit = Sigil.Emit<TryGetIndexerDelegate>.BuildMethod(TypeBuilder, "TryGetIndex", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.Standard | CallingConventions.HasThis);
+
+            tryGetIndexEmit.LoadArgument(2);
+
+            var invalid = tryGetIndexEmit.DefineLabel("invalid");
+            tryGetIndexEmit
+                .Duplicate()
+                .LoadLength()
+                .LoadConstant(1)
+                .UnsignedBranchIfNotEqual(invalid)
+                .LoadConstant(0)
+                .LoadElement()
+                .IsInstance<string>();
+
+            var valid = tryGetIndexEmit.DefineLabel("valid");
+            tryGetIndexEmit
+                .BranchIfTrue(valid)
+                .LoadConstant(0);
+
+            tryGetIndexEmit
+                .MarkLabel(invalid)
+                .Pop();
+
+            tryGetIndexEmit
+                .LoadArgument(3)
+                .LoadNull()
+                .StoreIndirect(typeof(object));
+
+            tryGetIndexEmit
+                .LoadConstant(0)
+                .Return();
+
+            tryGetIndexEmit.MarkLabel(valid);
+
+            tryGetIndexEmit.LoadArgument(3);
+
+            tryGetIndexEmit
+                .LoadArgument(2)
+                .LoadConstant(0)
+                .LoadElement();
+
+            Sigil.Label next;
+            var done = tryGetIndexEmit.DefineLabel("done");
+            foreach (var mem in Members)
+            {
+                next = tryGetIndexEmit.DefineLabel("next_" + mem.Key);
+
+                var memKey = mem.Key;
+                var field = fields[memKey];
+
+                tryGetIndexEmit
+                    .Duplicate()
+                    .LoadConstant(memKey);
+
+                tryGetIndexEmit.CallVirtual(strEq);
+
+                tryGetIndexEmit.BranchIfFalse(next);
+
+                tryGetIndexEmit
+                    .Pop()
+                    .LoadArgument(0)
+                    .LoadField(field);
+
+                if (field.FieldType.IsValueType)
+                {
+                    tryGetIndexEmit.Box(field.FieldType);
+                }
+
+                tryGetIndexEmit.Branch(done);
+
+                tryGetIndexEmit.MarkLabel(next);
+            }
+
+            tryGetIndexEmit
+                .Pop()
+                .LoadNull();
+
+            tryGetIndexEmit.MarkLabel(done);
+
+            tryGetIndexEmit
+                .StoreIndirect(typeof(object))
+                .LoadConstant(1)
+                .Return();
+
+            var tryGetIndex = tryGetIndexEmit.CreateMethod();
 
             TypeBuilder.DefineMethodOverride(tryGetIndex, typeof(DynamicObject).GetMethod("TryGetIndex"));
 
