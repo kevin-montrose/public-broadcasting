@@ -52,12 +52,12 @@ namespace PublicBroadcasting.Impl
             var currentField = enumerator.DefineField("_Current", typeof(object), FieldAttributes.Private);
 
             // Current { get; }
-            var getCurrent = enumerator.DefineMethod("get_Current", MethodAttributes.Public | MethodAttributes.Virtual, typeof(object), Type.EmptyTypes);
-            
-            il = getCurrent.GetILGenerator();
-            il.Emit(OpCodes.Ldarg_0);               // [this]
-            il.Emit(OpCodes.Ldfld, currentField);   // [ret]
-            il.Emit(OpCodes.Ret);                   // -----
+            var getCurrentEmit = Sigil.Emit<Func<object>>.BuildMethod(enumerator, "get_Current", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.Standard | CallingConventions.HasThis);
+            getCurrentEmit.LoadArgument(0);
+            getCurrentEmit.LoadField(currentField);
+            getCurrentEmit.Return();
+
+            var getCurrent = getCurrentEmit.CreateMethod();
 
             currentProp.SetGetMethod(getCurrent);
             enumerator.DefineMethodOverride(getCurrent, typeof(IEnumerator).GetProperty("Current").GetGetMethod());
@@ -81,58 +81,26 @@ namespace PublicBroadcasting.Impl
             il.Emit(OpCodes.Ret);
 
             // void Reset()
-            var reset = enumerator.DefineMethod("Reset", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.HasThis, null, Type.EmptyTypes);
-            
-            il = reset.GetILGenerator();
-            il.Emit(OpCodes.Ldarg_0);               // [this]
-            il.Emit(OpCodes.Ldc_I4_M1);             // [-1] [this]
-            il.Emit(OpCodes.Stfld, index);          // -----
-            il.Emit(OpCodes.Ldarg_0);               // [this]
-            il.Emit(OpCodes.Ldnull);                // [null] [this]
-            il.Emit(OpCodes.Stfld, currentField);   // -----
-            il.Emit(OpCodes.Ret);                   // -----
+
+            var resetEmit = Sigil.Emit<Action>.BuildMethod(enumerator, "Reset", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.Standard | CallingConventions.HasThis);
+            resetEmit.LoadArgument(0);
+            resetEmit.LoadConstant(-1);
+            resetEmit.StoreField(index);
+            resetEmit.LoadArgument(0);
+            resetEmit.LoadNull();
+            resetEmit.StoreField(currentField);
+            resetEmit.Return();
+
+            var reset = resetEmit.CreateMethod();
 
             enumerator.DefineMethodOverride(reset, typeof(IEnumerator).GetMethod("Reset"));
 
             // bool MoveNext()
-            var moveNext = enumerator.DefineMethod("MoveNext", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.HasThis, typeof(bool), Type.EmptyTypes);
+            var moveNextEmit = Sigil.Emit<Func<bool>>.BuildMethod(enumerator, "MoveNext", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.Standard | CallingConventions.HasThis).AsShorthand();
             var getCount = typeof(List<string>).GetProperty("Count").GetGetMethod();
             var getItem = typeof(List<string>).GetProperty("Item").GetGetMethod();
             var entry = typeof(DictionaryEntry);
             var entryCons = entry.GetConstructor(new[] { typeof(object), typeof(object) });
-
-            il = moveNext.GetILGenerator();
-            il.Emit(OpCodes.Ldarg_0);               // [this]
-            il.Emit(OpCodes.Dup);                   // [this] [this]
-            il.Emit(OpCodes.Ldfld, index);          // [index] [this]
-            il.Emit(OpCodes.Ldc_I4_1);              // [1] [index] [this]
-            il.Emit(OpCodes.Add);                   // [index+1] [this]
-            il.Emit(OpCodes.Stfld, index);          // -----
-
-            il.Emit(OpCodes.Ldarg_0);               // [this]
-            il.Emit(OpCodes.Ldfld, index);          // [index]
-            il.Emit(OpCodes.Ldarg_0);               // [this] [index]
-            il.Emit(OpCodes.Ldfld, members);        // [members] [index]
-            il.Emit(OpCodes.Callvirt, getCount);    // [count] [index]
-
-            var good = il.DefineLabel();
-            il.Emit(OpCodes.Blt_S, good);           // -----
-
-            il.Emit(OpCodes.Ldarg_0);               // [this]
-            il.Emit(OpCodes.Ldnull);                // [null] [this]
-            il.Emit(OpCodes.Stfld, currentField);   // -----
-            il.Emit(OpCodes.Ldc_I4_0);              // 0
-            il.Emit(OpCodes.Ret);                   // -----
-
-            il.MarkLabel(good);                     // -----
-            il.Emit(OpCodes.Ldarg_0);               // [this] 
-            il.Emit(OpCodes.Dup);                   // [this] [this]
-            il.Emit(OpCodes.Ldfld, members);        // [members] [this]
-            il.Emit(OpCodes.Ldarg_0);               // [this] [members] [this]
-            il.Emit(OpCodes.Ldfld, index);          // [index] [members] [this]
-            il.Emit(OpCodes.Callvirt, getItem);     // [key] [this]
-
-            // --- begin dynamic
             var argInfo = typeof(CSharpArgumentInfo);
             var createArgInfo = argInfo.GetMethod("Create");
             var getIndex = typeof(Microsoft.CSharp.RuntimeBinder.Binder).GetMethod("GetIndex");
@@ -141,59 +109,112 @@ namespace PublicBroadcasting.Impl
             var callSiteInvoke = typeof(Func<System.Runtime.CompilerServices.CallSite, object, string, object>).GetMethod("Invoke");
             var typeFromHandle = typeof(Type).GetMethod("GetTypeFromHandle");
 
-            var keyLocal = il.DeclareLocal(typeof(string));
-            
-            il.Emit(OpCodes.Dup);                                   // [key] [key] [this]
-            il.Emit(OpCodes.Stloc, keyLocal);                       // [key] [this]
+            Sigil.Label good, ready;
+            Sigil.Local keyLocal;
 
-            var ready = il.DefineLabel();
-            il.Emit(OpCodes.Ldsfld, callSiteField);                 // [CallSite<T>] [key] [this]
-            il.Emit(OpCodes.Brtrue_S, ready);                       // [key] [this]
+            moveNextEmit
+                .Ldarg(0)
+                .Dup()
+                .Ldfld(index)
+                .Ldc(1)
+                .Add()
+                .Stfld(index);
 
-            il.Emit(OpCodes.Ldc_I4_0);                              // [0] [key] [this]
-            il.Emit(OpCodes.Ldtoken, enumerator);                   // [ClassEnumerator token] [0] [key] [this]
-            il.Emit(OpCodes.Call, typeFromHandle);                  // [typeof(ClassEnumerator)] [0] [key] [this]
+            moveNextEmit
+                .Ldarg(0)
+                .Ldfld(index)
+                .Ldarg(0)
+                .Ldfld(members)
+                .Callvirt(getCount);
 
-            il.Emit(OpCodes.Ldc_I4_2);                              // [2] [typeof(ClassEnumerator)] [0] [key] [this]
-            il.Emit(OpCodes.Newarr, argInfo);                       // [CSharpArgumentInfo[]] [typeof(ClassEnumerator)] [0] [key] [this]
-            il.Emit(OpCodes.Dup);                                   // [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [typeof(ClassEnumerator)] [0] [key] [this]
-            il.Emit(OpCodes.Dup);                                   // [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [typeof(ClassEnumerator)] [0] [key] [this]
-            il.Emit(OpCodes.Ldc_I4_0);                              // [0] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [typeof(ClassEnumerator)] [0] [key] [this]
-            il.Emit(OpCodes.Ldc_I4_0);                              // [0] [0] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [typeof(ClassEnumerator)] [0] [key] [this]
-            il.Emit(OpCodes.Ldnull);                                // [null] [0] [0] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [typeof(ClassEnumerator)] [0] [key] [this]
-            il.Emit(OpCodes.Call, createArgInfo);                   // [CSharpArgumentInfo] [0] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [typeof(ClassEnumerator)] [0] [key] [this]
-            il.Emit(OpCodes.Stelem_Ref);                            // [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [typeof(ClassEnumerator)] [0] [key] [this]
+            moveNextEmit
+                .DefineLabel(out good, "Good")
+                .Blt(good);
 
-            il.Emit(OpCodes.Ldc_I4_1);                              // [1] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [typeof(ClassEnumerator)] [0] [key] [this]
-            il.Emit(OpCodes.Ldc_I4_3);                              // [3] [1] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [typeof(ClassEnumerator)] [0] [key] [this]
-            il.Emit(OpCodes.Ldnull);                                // [null] [3] [1] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [typeof(ClassEnumerator)] [0] [key] [this]
-            il.Emit(OpCodes.Call, createArgInfo);                   // [CSharpArgumentInfo] [1] [CSharpArgumentInfo[]] [CSharpArgumentInfo[]] [typeof(ClassEnumerator)] [0] [key] [this]
-            il.Emit(OpCodes.Stelem_Ref);                            // [CSharpArgumentInfo[]] [typeof(ClassEnumerator)] [0] [key] [this]
+            moveNextEmit
+                .Ldarg(0)
+                .Ldnull()
+                .Stfld(currentField)
+                .Ldc(0)
+                .Ret();
 
-            il.Emit(OpCodes.Call, getIndex);                        // [CallSiteBinder] [key] [this]
+            moveNextEmit
+                .MarkLabel(good)
+                .Ldarg(0)
+                .Dup()
+                .Ldfld(members)
+                .Ldarg(0)
+                .Ldfld(index)
+                .Callvirt(getItem);
 
-            il.Emit(OpCodes.Call, createCallSite);                  // [CallSite<T>] [key] [this]
-            il.Emit(OpCodes.Stsfld, callSiteField);                 // [key] [this]
+            // --- begin dynamic
+            moveNextEmit.DeclareLocal<string>(out keyLocal, "keyLocal");
 
-            il.MarkLabel(ready);
-            il.Emit(OpCodes.Ldsfld, callSiteField);                 // [CallSite<T>] [key] [this]
-            il.Emit(OpCodes.Ldfld, callSiteTarget);                 // [CallSite<T>.Target] [key] [this]
+            moveNextEmit
+                .Dup()
+                .Stloc(keyLocal);
 
-            il.Emit(OpCodes.Ldsfld, callSiteField);                 // [CallSite<T>] [CallSite<T>.Target] [key] [this]
-            il.Emit(OpCodes.Ldarg_0);                               // [this] [CallSite<T>] [CallSite<T>.Target] [key] [this]
-            il.Emit(OpCodes.Ldfld, values);                         // [Values] [CallSite<T>] [CallSite<T>.Target] [key] [this]
-            il.Emit(OpCodes.Ldloc, keyLocal);                       // [key] [Values] [CallSite<T>] [CallSite<T>.Target] [key] [this]
+            moveNextEmit.DefineLabel(out ready, "ready");
 
-            il.Emit(OpCodes.Callvirt, callSiteInvoke);              // [value] [key] [this]
+            moveNextEmit
+                .Ldfld(callSiteField)
+                .Brtrue(ready);
 
+            moveNextEmit
+                .Ldc(0)
+                .Ldtoken(enumerator)
+                .Call(typeFromHandle);
+
+            moveNextEmit
+                .Ldc(2)
+                .Newarr(argInfo)
+                .Dup()
+                .Dup()
+                .Ldc(0)
+                .Ldc(0)
+                .Ldnull()
+                .Castclass<string>()
+                .Call(createArgInfo)
+                .Stelem();
+
+            moveNextEmit
+                .Ldc(1)
+                .Ldc(3)
+                .Ldnull()
+                .Castclass<string>()
+                .Call(createArgInfo)
+                .Stelem();
+
+            moveNextEmit.Call(getIndex);
+
+            moveNextEmit
+                .Call(createCallSite)
+                .Stfld(callSiteField);
+
+            moveNextEmit
+                .MarkLabel(ready)
+                .Ldfld(callSiteField)
+                .Ldfld(callSiteTarget);
+
+            moveNextEmit
+                .Ldfld(callSiteField)
+                .Ldarg(0)
+                .Ldfld(values)
+                .Ldloc(keyLocal);
+
+            moveNextEmit.Callvirt(callSiteInvoke);
             // --- end dynamic
 
-            il.Emit(OpCodes.Newobj, entryCons);     // [entry] [this]
-            il.Emit(OpCodes.Box, entry);            // [entry as object] [this]
-            il.Emit(OpCodes.Stfld, currentField);   // -----
+            moveNextEmit
+                .Newobj(entryCons)
+                .Box(entry)
+                .Stfld(currentField);
 
-            il.Emit(OpCodes.Ldc_I4_1);              // 1
-            il.Emit(OpCodes.Ret);                   // -----
+            moveNextEmit
+                .Ldc(1)
+                .Ret();
+
+            var moveNext = moveNextEmit.CreateMethod();
 
             enumerator.DefineMethodOverride(moveNext, typeof(IEnumerator).GetMethod("MoveNext"));
 
@@ -340,43 +361,42 @@ namespace PublicBroadcasting.Impl
             TypeBuilder.DefineMethodOverride(tryGetIndex, typeof(DynamicObject).GetMethod("TryGetIndex"));
 
             // Implement IEnumerable
-            var getEnumerator = TypeBuilder.DefineMethod("GetEnumerator", MethodAttributes.Public | MethodAttributes.Virtual, typeof(IEnumerator), Type.EmptyTypes);
-            il = getEnumerator.GetILGenerator();
-
+            var getEnumeratorEmit = Sigil.Emit<Func<IEnumerator>>.BuildMethod(TypeBuilder, "GetEnumerator", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.Standard | CallingConventions.HasThis);
             var newStrList = typeof(List<string>).GetConstructor(new[] { typeof(int) });
             var newEnumerator = Enumerator.GetConstructor(new[] { typeof(List<string>), typeof(object) });
             var add = typeof(List<string>).GetMethod("Add");
 
-            il.Emit(OpCodes.Ldc_I4, Members.Count); // [count]
-            il.Emit(OpCodes.Newobj, newStrList);    // [mems]
+            getEnumeratorEmit.LoadConstant(Members.Count);
+            getEnumeratorEmit.NewObject(newStrList);
 
             foreach (var mem in Members)
             {
-                il.Emit(OpCodes.Dup);               // [mems] [mems]
-                il.Emit(OpCodes.Ldstr, mem.Key);    // [key] [mems] [mems]
-                il.Emit(OpCodes.Call, add);         // [mems]
+                getEnumeratorEmit.Duplicate();
+                getEnumeratorEmit.LoadConstant(mem.Key);
+                getEnumeratorEmit.Call(add);
             }
 
-            il.Emit(OpCodes.Ldarg_0);               // [this] [mems]
-            il.Emit(OpCodes.Newobj, newEnumerator); // [ret]
-            il.Emit(OpCodes.Ret);                   // -----
+            getEnumeratorEmit.LoadArgument(0);
+            getEnumeratorEmit.NewObject(newEnumerator);
+            getEnumeratorEmit.Return();
+
+            var getEnumerator = getEnumeratorEmit.CreateMethod();
 
             TypeBuilder.DefineMethodOverride(getEnumerator, typeof(IEnumerable).GetMethod("GetEnumerator"));
 
             // Define ToString()
-            var toString = TypeBuilder.DefineMethod("ToString", MethodAttributes.Public | MethodAttributes.Virtual, typeof(string), Type.EmptyTypes);
+            var toStringEmit = Sigil.Emit<Func<string>>.BuildMethod(TypeBuilder, "ToString", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.Standard | CallingConventions.HasThis);
             var objToString = typeof(object).GetMethod("ToString");
-
             var thunkField = TypeBuilder.DefineField("__ToStringThunk", typeof(Func<object, string>), FieldAttributes.Static | FieldAttributes.Private);
-
             var invoke = typeof(Func<object, string>).GetMethod("Invoke");
 
-            il = toString.GetILGenerator();
+            toStringEmit
+                .LoadField(thunkField)
+                .LoadArgument(0)
+                .CallVirtual(invoke)
+                .Return();
 
-            il.Emit(OpCodes.Ldsfld, thunkField);    // [Func<object, string>]
-            il.Emit(OpCodes.Ldarg_0);               // [this] [Func<object, string>]
-            il.Emit(OpCodes.Callvirt, invoke);      // [string]
-            il.Emit(OpCodes.Ret);                   // -----
+            var toString = toStringEmit.CreateMethod();
 
             TypeBuilder.DefineMethodOverride(toString, objToString);
 

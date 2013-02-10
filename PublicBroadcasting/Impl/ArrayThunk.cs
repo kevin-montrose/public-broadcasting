@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Sigil;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -23,32 +24,27 @@ namespace PublicBroadcasting.Impl
 
             var passThroughCons = passThroughType.GetConstructor(new[] { arrayType });
 
-            var dynPassthrough = new DynamicMethod("PublicBroadcasting_ArrayThunk_CreatePassthrough_" + memberType.FullName, typeof(object), new[] { typeof(object) }, restrictedSkipVisibility: true);
-            var il = dynPassthrough.GetILGenerator();
+            var passthrough = Emit<Func<object, object>>.NewDynamicMethod("PublicBroadcasting_ArrayThunk_CreatePassthrough_" + memberType.FullName);
+            passthrough.LoadArgument(0);
+            passthrough.CastClass(arrayType);
+            passthrough.NewObject(passThroughCons);
+            passthrough.Return();
 
-            il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Castclass, arrayType);
-            il.Emit(OpCodes.Newobj, passThroughCons);
-            il.Emit(OpCodes.Ret);
-
-            CreatePassthrough = (Func<object, object>)dynPassthrough.CreateDelegate(typeof(Func<object, object>));
+            CreatePassthrough = passthrough.CreateDelegate();
 
             var serialize = typeof(Serializer).GetMethods().Single(m => m.Name == "Serialize" && m.GetParameters().Length == 4);
-
             var invoke = serialize.MakeGenericMethod(passThroughType);
 
-            var dynSerial = new DynamicMethod("PublicBroadcasting_ArrayThunk_SerializeDelegate_" + memberType.FullName, null, new[] { typeof(Stream), typeof(object), typeof(IncludedMembers), typeof(IncludedVisibility) }, restrictedSkipVisibility: true);
-            il = dynSerial.GetILGenerator();
+            var serializer = Emit<Action<Stream, object, IncludedMembers, IncludedVisibility>>.NewDynamicMethod("PublicBroadcasting_ArrayThunk_SerializeDelegate_" + memberType.FullName);
+            serializer.LoadArgument(0);
+            serializer.LoadArgument(1);
+            serializer.CastClass(passThroughType);
+            serializer.LoadArgument(2);
+            serializer.LoadArgument(3);
+            serializer.Call(invoke);
+            serializer.Return();
 
-            il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Ldarg_1);
-            il.Emit(OpCodes.Castclass, passThroughType);
-            il.Emit(OpCodes.Ldarg_2);
-            il.Emit(OpCodes.Ldarg_3);
-            il.Emit(OpCodes.Call, invoke);
-            il.Emit(OpCodes.Ret);
-
-            SerializeDelegate = (Action<Stream, object, IncludedMembers, IncludedVisibility>)dynSerial.CreateDelegate(typeof(Action<Stream, object, IncludedMembers, IncludedVisibility>));
+            SerializeDelegate = serializer.CreateDelegate();
         }
 
         public static void Serialize(Stream stream, object array, IncludedMembers members, IncludedVisibility visibility)
