@@ -95,13 +95,12 @@ namespace PublicBroadcasting.Impl
 
             Func<IDictionary> newDictDyn;
 
-            var dyn = new DynamicMethod("POCOMapper_NewDict_" + typeof(From).FullName + "_" + typeof(To).FullName, typeof(IDictionary), Type.EmptyTypes, restrictedSkipVisibility: true);
-            var il = dyn.GetILGenerator();
+            var dynEmit = Sigil.Emit<Func<IDictionary>>.NewDynamicMethod("POCOMapper_NewDict_" + typeof(From).FullName + "_" + typeof(To).FullName);
+            dynEmit
+                .NewObject(newDictCons)
+                .Return();
 
-            il.Emit(OpCodes.Newobj, newDictCons);   // [ret]
-            il.Emit(OpCodes.Ret);                   // -----
-
-            newDictDyn = (Func<IDictionary>)dyn.CreateDelegate(typeof(Func<IDictionary>));
+            newDictDyn = dynEmit.CreateDelegate();
 
             return
                 new POCOMapper(
@@ -187,13 +186,12 @@ namespace PublicBroadcasting.Impl
 
             Func<IList> newListDyn;
 
-            var dyn = new DynamicMethod("POCOMapper_NewList_" + typeof(From).FullName + "_" + typeof(To).FullName, typeof(IList), Type.EmptyTypes, restrictedSkipVisibility: true);
-            var il = dyn.GetILGenerator();
+            var dynEmit = Sigil.Emit<Func<IList>>.NewDynamicMethod("POCOMapper_NewList_" + typeof(From).FullName + "_" + typeof(To).FullName);
+            dynEmit
+                .NewObject(newListCons)
+                .Return();
 
-            il.Emit(OpCodes.Newobj, newListCons);   // [ret]
-            il.Emit(OpCodes.Ret);                   // ----
-
-            newListDyn = (Func<IList>)dyn.CreateDelegate(typeof(Func<IList>));
+            newListDyn = dynEmit.CreateDelegate();
 
             return
                 new POCOMapper(
@@ -788,13 +786,12 @@ namespace PublicBroadcasting.Impl
             var dictCons = toDict.GetConstructor(Type.EmptyTypes);
             var dictAdd = toDict.GetMethod("Add");
 
-            var createDictDyn = new DynamicMethod("POCOMapper_GetClassToDictMapper_" + fromClass.FullName + "_" + toDict.FullName + "_createDict", typeof(object), Type.EmptyTypes, restrictedSkipVisibility: true);
-            var il = createDictDyn.GetILGenerator();
+            var createDictDynEmit = Sigil.Emit<Func<object>>.NewDynamicMethod("POCOMapper_GetClassToDictMapper_" + fromClass.FullName + "_" + toDict.FullName + "_createDict");
+            createDictDynEmit
+                .NewObject(dictCons)
+                .Return();
 
-            il.Emit(OpCodes.Newobj, dictCons);    // [ret]
-            il.Emit(OpCodes.Ret);               // -----
-
-            var createDict = (Func<object>)createDictDyn.CreateDelegate(typeof(Func<object>));
+            var createDict = createDictDynEmit.CreateDelegate();
 
             var dictBuilder = new Dictionary<string, Tuple<Func<object, object>, Func<object, object>>>();
 
@@ -819,19 +816,20 @@ namespace PublicBroadcasting.Impl
                     map = null;
                 }
 
-                var dynGet = new DynamicMethod("POCOMapper_GetClassToDictMapper_" + fromClass.FullName + "_" + toDict.FullName + "_" + mem.Name + "_get", typeof(object), new[] { typeof(object) }, restrictedSkipVisibility: true);
-                il = dynGet.GetILGenerator();
+                var dynGetEmit = Sigil.Emit<Func<object, object>>.NewDynamicMethod("POCOMapper_GetClassToDictMapper_" + fromClass.FullName + "_" + toDict.FullName + "_" + mem.Name + "_get");
+                dynGetEmit
+                    .LoadArgument(0)
+                    .CastClass(fromClass)
+                    .LoadField(mem);
 
-                il.Emit(OpCodes.Ldarg_0);               // [obj]
-                il.Emit(OpCodes.Castclass, fromClass);  // [obj]
-                il.Emit(OpCodes.Ldfld, mem);            // [field]
                 if (mem.FieldType.IsValueType)
                 {
-                    il.Emit(OpCodes.Box, mem.FieldType);// [field]
+                    dynGetEmit.Box(mem.FieldType);
                 }
-                il.Emit(OpCodes.Ret);                   // -----
 
-                get = (Func<object, object>)dynGet.CreateDelegate(typeof(Func<object, object>));
+                dynGetEmit.Return();
+
+                get = dynGetEmit.CreateDelegate();
 
                 dictBuilder[mem.Name] = Tuple.Create(get, map);
             }

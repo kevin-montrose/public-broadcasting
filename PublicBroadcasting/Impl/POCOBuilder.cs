@@ -277,75 +277,6 @@ namespace PublicBroadcasting.Impl
             name += "_" + typeof(From).FullName + "_" + typeof(Describer).FullName;
 
             var dynMethod = new DynamicMethod(name, typeof(object), new[] { tFrom, typeof(Dictionary<string, POCOBuilder>) }, restrictedSkipVisibility: true);
-            /*var il = dynMethod.GetILGenerator();
-            var retLoc = il.DeclareLocal(tTo);
-
-            il.Emit(OpCodes.Newobj, cons);                      // [ret]
-            il.Emit(OpCodes.Stloc, retLoc);                     // ----
-
-            foreach (var mem in members)
-            {
-                il.Emit(OpCodes.Ldloc, retLoc);                 // [ret]
-
-                il.Emit(OpCodes.Ldarg_1);                       // [members] [ret]
-                il.Emit(OpCodes.Ldstr, mem.Key);                // [memKey] [members] [ret]
-                il.Emit(OpCodes.Call, lookup);                  // [Func<object, object>] [ret]
-
-                il.Emit(OpCodes.Ldarga, 0);                       // [from] [Func<object, object>] [ret]
-
-                var fromMember = tFrom.GetMember(mem.Key, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).Where(m => m is FieldInfo || m is PropertyInfo).Single();
-
-                if (fromMember is PropertyInfo)
-                {
-                    var fromProp = (PropertyInfo)fromMember;
-                    il.Emit(OpCodes.Call, fromProp.GetMethod);  // [fromVal] [Func<object, object>] [ret]
-
-                    if (fromProp.PropertyType.IsValueType)
-                    {
-                        il.Emit(OpCodes.Box, fromProp.PropertyType);// [fromVal] [Func<object, object>] [ret]
-                    }
-
-                    il.Emit(OpCodes.Call, invoke);                  // [toVal (as object)] [ret]
-                }
-                else
-                {
-                    var fromField = (FieldInfo)fromMember;
-                    il.Emit(OpCodes.Ldfld, fromField);              // [fromVal] [Func<object, object>] [ret]
-
-                    if (fromField.FieldType.IsValueType)
-                    {
-                        il.Emit(OpCodes.Box, fromField.FieldType);  // [fromVal] [Func<object, object>] [ret]
-                    }
-
-                    il.Emit(OpCodes.Call, invoke);                  // [toVal (as object)] [ret]
-                }
-
-                var toField = tTo.GetField(mem.Key);
-
-                if (toField.FieldType.IsValueType)
-                {
-                    if (!toField.FieldType.IsEnum)
-                    {
-                        il.Emit(OpCodes.Unbox_Any, toField.FieldType);// [toVal] [ret]
-                    }
-                    else
-                    {
-                        var parse = parseEnum.MakeGenericMethod(toField.FieldType);
-                        il.Emit(OpCodes.Call, parse);                       // [toVal as object] [ret]
-                    }
-                }
-                else
-                {
-                    il.Emit(OpCodes.Castclass, toField.FieldType);    // [toVal] [ret]
-                }
-
-                il.Emit(OpCodes.Stfld, toField);                        // ----
-            }
-
-            il.Emit(OpCodes.Ldloc, retLoc);
-            il.Emit(OpCodes.Ret);
-
-            var func = (Func<From, Dictionary<string, POCOBuilder>, object>)dynMethod.CreateDelegate(typeof(Func<From, Dictionary<string, POCOBuilder>, object>));*/
 
             var funcEmit = Sigil.Emit<Func<From, Dictionary<string, POCOBuilder>, object>>.NewDynamicMethod(name);
             var retLoc = funcEmit.DeclareLocal(tTo, "retLoc");
@@ -503,15 +434,14 @@ namespace PublicBroadcasting.Impl
 
             Func<IList, Func<object, object>, object> mapperListDyn;
             var cons = typeof(OnDemandList<,>).MakeGenericType(typeof(From), itemMapper.To).GetConstructor(new[] { typeof(IList), typeof(Func<object, object>) });
-            var dyn = new DynamicMethod("POCOBuilder_NewList_" + itemMapper.To.FullName, typeof(object), new[] { typeof(IList), typeof(Func<object, object>) }, restrictedSkipVisibility: true);
-            var il = dyn.GetILGenerator();
 
-            il.Emit(OpCodes.Ldarg_0);       // [ilist]
-            il.Emit(OpCodes.Ldarg_1);       // [func<object, object>] [ilist]
-            il.Emit(OpCodes.Newobj, cons);  // [ret]
-            il.Emit(OpCodes.Ret);           // -----
+            var dynEmit = Sigil.Emit<Func<IList, Func<object, object>, object>>.NewDynamicMethod("POCOBuilder_NewList_" + itemMapper.To.FullName);
+            dynEmit.LoadArgument(0);
+            dynEmit.LoadArgument(1);
+            dynEmit.NewObject(cons);
+            dynEmit.Return();
 
-            mapperListDyn = (Func<IList, Func<object, object>, object>)dyn.CreateDelegate(typeof(Func<IList, Func<object, object>, object>));
+            mapperListDyn = dynEmit.CreateDelegate();
 
             return
                 new POCOBuilder(
@@ -554,16 +484,16 @@ namespace PublicBroadcasting.Impl
 
             Func<IDictionary, Func<object, object>, Func<object, object>, object> mapperDictDyn;
             var cons = typeof(OnDemandDictionary<,,,>).MakeGenericType(keyType, valType, keyMapper.To, valMapper.To).GetConstructor(new[] { typeof(IDictionary), typeof(Func<object, object>), typeof(Func<object, object>) });
-            var dyn = new DynamicMethod("POCOBuilder_NewDict_" + keyType.FullName + "_" + valType.FullName + "_" + keyMapper.To.FullName + "_" + valMapper.To.FullName, typeof(object), new[] { typeof(IDictionary), typeof(Func<object, object>), typeof(Func<object, object>) }, restrictedSkipVisibility: true);
-            var il = dyn.GetILGenerator();
 
-            il.Emit(OpCodes.Ldarg_0);       // [IDictionary]
-            il.Emit(OpCodes.Ldarg_1);       // [Func<object, object>] [IDictionary]
-            il.Emit(OpCodes.Ldarg_2);       // [Func<object, object>] [Func<object, object>] [IDictionary]
-            il.Emit(OpCodes.Newobj, cons);  // [ret]
-            il.Emit(OpCodes.Ret);           // -----
+            var dynEmit = Sigil.Emit<Func<IDictionary, Func<object, object>, Func<object, object>, object>>.NewDynamicMethod("POCOBuilder_NewDict_" + keyType.FullName + "_" + valType.FullName + "_" + keyMapper.To.FullName + "_" + valMapper.To.FullName);
+            dynEmit
+                .LoadArgument(0)
+                .LoadArgument(1)
+                .LoadArgument(2)
+                .NewObject(cons)
+                .Return();
 
-            mapperDictDyn = (Func<IDictionary, Func<object, object>, Func<object, object>, object>)dyn.CreateDelegate(typeof(Func<IDictionary, Func<object, object>, Func<object, object>, object>));
+            mapperDictDyn = dynEmit.CreateDelegate();
 
             return
                 new POCOBuilder(
