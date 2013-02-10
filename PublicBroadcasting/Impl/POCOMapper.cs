@@ -244,49 +244,49 @@ namespace PublicBroadcasting.Impl
             var name = "POCOMapper_RefRef";
             name += "_" + typeof(From).FullName + "_" + typeof(To).FullName;
 
-            var dynMethod = new DynamicMethod(name, typeof(To), new[] { tFrom, typeof(Dictionary<string, POCOMapper>) }, restrictedSkipVisibility: true);
-            var il = dynMethod.GetILGenerator();
-            var retLoc = il.DeclareLocal(tTo);
+            var funcEmit = Sigil.Emit<Func<From, Dictionary<string, POCOMapper>, To>>.NewDynamicMethod(name);
+            var retLoc = funcEmit.DeclareLocal(tTo, "retLoc");
 
-            il.Emit(OpCodes.Newobj, cons);                      // [ret]
-            il.Emit(OpCodes.Stloc, retLoc);                     // ----
+            funcEmit
+                .NewObject(cons)
+                .StoreLocal(retLoc);
 
             foreach (var mem in members)
             {
-                il.Emit(OpCodes.Ldloc, retLoc);                 // [ret]
+                funcEmit.LoadLocal(retLoc);
 
-                il.Emit(OpCodes.Ldarg_1);                       // [members] [ret]
-                il.Emit(OpCodes.Ldstr, mem.Key);                // [memKey] [members] [ret]
-                il.Emit(OpCodes.Call, lookup);                  // [Func<object, object>] [ret]
+                funcEmit
+                    .LoadArgument(1)
+                    .LoadConstant(mem.Key)
+                    .Call(lookup);
 
-                il.Emit(OpCodes.Ldarg_0);                       // [from] [Func<object, object>] [ret]
+                funcEmit.LoadArgument(0);
 
                 var fromField = tFrom.GetField(mem.Key);
-                il.Emit(OpCodes.Ldfld, fromField);              // [fromVal] [Func<object, object>] [ret]
+                funcEmit.LoadField(fromField);
 
                 if (fromField.FieldType.IsValueType)
                 {
-                    il.Emit(OpCodes.Box, fromField.FieldType);// [fromVal] [Func<object, object>] [ret]
+                    funcEmit.Box(fromField.FieldType);
                 }
 
-                il.Emit(OpCodes.Call, invoke);                  // [toVal (as object)] [ret]
+                funcEmit.Call(invoke);
 
                 var toMember = tTo.GetMember(mem.Key, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).Where(m => m is FieldInfo || m is PropertyInfo).Single();
-
                 if (toMember is FieldInfo)
                 {
                     var asField = (FieldInfo)toMember;
 
                     if (asField.FieldType.IsValueType)
                     {
-                        il.Emit(OpCodes.Unbox_Any, asField.FieldType);  // [toVal] [ret]
+                        funcEmit.UnboxAny(asField.FieldType);
                     }
                     else
                     {
-                        il.Emit(OpCodes.Castclass, asField.FieldType);  // [toVal] [ret]
+                        funcEmit.CastClass(asField.FieldType);
                     }
 
-                    il.Emit(OpCodes.Stfld, asField);                // ----
+                    funcEmit.StoreField(asField);
                 }
                 else
                 {
@@ -294,21 +294,22 @@ namespace PublicBroadcasting.Impl
 
                     if (asProp.PropertyType.IsValueType)
                     {
-                        il.Emit(OpCodes.Unbox_Any, asProp.PropertyType);// [toVal] [ret]
+                        funcEmit.UnboxAny(asProp.PropertyType);
                     }
                     else
                     {
-                        il.Emit(OpCodes.Castclass, asProp.PropertyType);    // [toVal] [ret]
+                        funcEmit.CastClass(asProp.PropertyType);
                     }
 
-                    il.Emit(OpCodes.Callvirt, asProp.SetMethod);        // ----
+                    funcEmit.CallVirtual(asProp.SetMethod);
                 }
             }
 
-            il.Emit(OpCodes.Ldloc, retLoc);
-            il.Emit(OpCodes.Ret);
+            funcEmit
+                .LoadLocal(retLoc)
+                .Return();
 
-            var func = (Func<From, Dictionary<string, POCOMapper>, To>)dynMethod.CreateDelegate(typeof(Func<From, Dictionary<string, POCOMapper>, To>));
+            var func = funcEmit.CreateDelegate();
 
             return func;
         }
@@ -879,12 +880,12 @@ namespace PublicBroadcasting.Impl
 
                 if (asField == null && asProp == null) continue;
 
-                var dyn = new DynamicMethod("POCOMapper_DictToClass_" + mem.Name, null, new[] { typeof(object), typeof(object) }, restrictedSkipVisibility: true);
-                var il = dyn.GetILGenerator();
-                
-                il.Emit(OpCodes.Ldarg_0);               // [ret]
-                il.Emit(OpCodes.Castclass, toClass);    // [ret]
-                il.Emit(OpCodes.Ldarg_1);               // [val] [ret]
+                var setterEmit = Sigil.Emit<Action<object, object>>.NewDynamicMethod("POCOMapper_DictToClass_" + mem.Name);
+
+                setterEmit
+                    .LoadArgument(0)
+                    .CastClass(toClass)
+                    .LoadArgument(1);
 
                 if (asField != null)
                 {
@@ -893,14 +894,14 @@ namespace PublicBroadcasting.Impl
 
                     if (asField.FieldType.IsValueType)
                     {
-                        il.Emit(OpCodes.Unbox_Any, asField.FieldType);  // [val] [ret]
+                        setterEmit.UnboxAny(asField.FieldType);
                     }
                     else
                     {
-                        il.Emit(OpCodes.Castclass, asField.FieldType);  // [val] [ret]
+                        setterEmit.CastClass(asField.FieldType);
                     }
 
-                    il.Emit(OpCodes.Stfld, asField);                    // -----
+                    setterEmit.StoreField(asField);
                 }
 
                 if (asProp != null && asProp.CanWrite)
@@ -910,19 +911,19 @@ namespace PublicBroadcasting.Impl
 
                     if (asProp.PropertyType.IsValueType)
                     {
-                        il.Emit(OpCodes.Unbox_Any, asProp.PropertyType);// [val] [ret]
+                        setterEmit.UnboxAny(asProp.PropertyType);
                     }
                     else
                     {
-                        il.Emit(OpCodes.Castclass, asProp.PropertyType);// [val] [ret]
+                        setterEmit.CastClass(asProp.PropertyType);
                     }
 
-                    il.Emit(OpCodes.Callvirt, asProp.GetSetMethod());   // -----
+                    setterEmit.CallVirtual(asProp.GetSetMethod());
                 }
 
-                il.Emit(OpCodes.Ret);
+                setterEmit.Return();
 
-                setter = (Action<object, object>)dyn.CreateDelegate(typeof(Action<object, object>));
+                setter = setterEmit.CreateDelegate();
 
                 members[mem.Name] = Tuple.Create(setter, mapper);
             }
