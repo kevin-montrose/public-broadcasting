@@ -326,32 +326,33 @@ namespace PublicBroadcasting.Impl
             var name = "POCOMapper_RefValue";
             name += "_" + typeof(From).FullName + "_" + typeof(To).FullName;
 
-            var dynMethod = new DynamicMethod(name, typeof(To), new[] { tFrom, typeof(Dictionary<string, POCOMapper>) }, restrictedSkipVisibility: true);
-            var il = dynMethod.GetILGenerator();
-            var retLoc = il.DeclareLocal(tTo);
+            var funcEmit = Sigil.Emit<Func<From, Dictionary<string, POCOMapper>, To>>.NewDynamicMethod(name);
+            var retLoc = funcEmit.DeclareLocal(tTo, "retLoc");
 
-            il.Emit(OpCodes.Ldloca, retLoc);                    // [*ret]
-            il.Emit(OpCodes.Initobj, tTo);                      // ----
+            funcEmit
+                .LoadLocalAddress(retLoc)
+                .InitializeObject(tTo);
 
             foreach (var mem in members)
             {
-                il.Emit(OpCodes.Ldloca, retLoc);                 // [ret]
+                funcEmit.LoadLocalAddress(retLoc);
 
-                il.Emit(OpCodes.Ldarg_1);                       // [members] [ret]
-                il.Emit(OpCodes.Ldstr, mem.Key);                // [memKey] [members] [ret]
-                il.Emit(OpCodes.Call, lookup);                  // [Func<object, object>] [ret]
+                funcEmit
+                    .LoadArgument(1)
+                    .LoadConstant(mem.Key)
+                    .Call(lookup);
 
-                il.Emit(OpCodes.Ldarg_0);                       // [from] [Func<object, object>] [ret]
+                funcEmit.LoadArgument(0);
 
                 var fromField = tFrom.GetField(mem.Key);
-                il.Emit(OpCodes.Ldfld, fromField);              // [fromVal] [Func<object, object>] [ret]
+                funcEmit.LoadField(fromField);
 
                 if (fromField.FieldType.IsValueType)
                 {
-                    il.Emit(OpCodes.Box, fromField.FieldType);// [fromVal] [Func<object, object>] [ret]
+                    funcEmit.Box(fromField.FieldType);
                 }
 
-                il.Emit(OpCodes.Callvirt, invoke);                  // [toVal (as object)] [ret]
+                funcEmit.CallVirtual(invoke);
 
                 var toMember = tTo.GetMember(mem.Key, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).Where(m => m is FieldInfo || m is PropertyInfo).Single();
 
@@ -361,14 +362,14 @@ namespace PublicBroadcasting.Impl
 
                     if (asField.FieldType.IsValueType)
                     {
-                        il.Emit(OpCodes.Unbox_Any, asField.FieldType);  // [toVal] [ret]
+                        funcEmit.UnboxAny(asField.FieldType);
                     }
                     else
                     {
-                        il.Emit(OpCodes.Castclass, asField.FieldType);  // [toVal] [ret]
+                        funcEmit.CastClass(asField.FieldType);
                     }
 
-                    il.Emit(OpCodes.Stfld, asField);                // ----
+                    funcEmit.StoreField(asField);
                 }
                 else
                 {
@@ -376,21 +377,21 @@ namespace PublicBroadcasting.Impl
 
                     if (asProp.PropertyType.IsValueType)
                     {
-                        il.Emit(OpCodes.Unbox_Any, asProp.PropertyType);// [toVal] [ret]
+                        funcEmit.UnboxAny(asProp.PropertyType);
                     }
                     else
                     {
-                        il.Emit(OpCodes.Castclass, asProp.PropertyType);    // [toVal] [ret]
+                        funcEmit.CastClass(asProp.PropertyType);
                     }
 
-                    il.Emit(OpCodes.Call, asProp.SetMethod);        // ----
+                    funcEmit.CallVirtual(asProp.SetMethod);
                 }
             }
 
-            il.Emit(OpCodes.Ldloc, retLoc);
-            il.Emit(OpCodes.Ret);
+            funcEmit.LoadLocal(retLoc);
+            funcEmit.Return();
 
-            var func = (Func<From, Dictionary<string, POCOMapper>, To>)dynMethod.CreateDelegate(typeof(Func<From, Dictionary<string, POCOMapper>, To>));
+            var func = funcEmit.CreateDelegate();
 
             return func;
         }
@@ -491,9 +492,7 @@ namespace PublicBroadcasting.Impl
 
             var consParams = cons.GetParameters();
 
-            var dyn = new DynamicMethod("POCOMapperAnon_" + typeof(From).FullName + "_" + typeof(To).FullName, typeof(To), new[] { typeof(From), typeof(Dictionary<string, POCOMapper>) }, restrictedSkipVisibility: true);
-            var il = dyn.GetILGenerator();
-
+            var funcEmit = Sigil.Emit<Func<From, Dictionary<string, POCOMapper>, To>>.NewDynamicMethod("POCOMapperAnon_" + typeof(From).FullName + "_" + typeof(To).FullName);
             var createInstance = typeof(Activator).GetMethod("CreateInstance", Type.EmptyTypes);
             var lookup = typeof(POCOMapper<From, To>).GetMethod("Lookup", BindingFlags.Static | BindingFlags.NonPublic);
             var invoke = typeof(Func<object, object>).GetMethod("Invoke");
@@ -506,37 +505,37 @@ namespace PublicBroadcasting.Impl
                 //       This isn't guaranteed, so we may be boned randomly.
                 var memKey = consParams[i].Name;
 
-                il.Emit(OpCodes.Ldarg_1);                       // [members]
-                il.Emit(OpCodes.Ldstr, memKey);                 // [memKey] [members]
-                il.Emit(OpCodes.Call, lookup);                  // [Func<object, objet>]
+                funcEmit
+                    .LoadArgument(1)
+                    .LoadConstant(memKey)
+                    .Call(lookup);
 
-                il.Emit(OpCodes.Ldarg_0);                       // [from] [Func<object, object>]
+                funcEmit.LoadArgument(0);
 
                 var fromField = tFrom.GetField(memKey);
-                il.Emit(OpCodes.Ldfld, fromField);              // [fromVal] [Func<object, object>]
+                funcEmit.LoadField(fromField);
 
                 if (fromField.FieldType.IsValueType)
                 {
-                    il.Emit(OpCodes.Box, fromField.FieldType);// [fromVal] [Func<object, object>]
+                    funcEmit.Box(fromField.FieldType);
                 }
 
-                il.Emit(OpCodes.Call, invoke);                  // [toVal (as object)]
+                funcEmit.Call(invoke);
 
                 if (type.IsValueType)
                 {
-                    il.Emit(OpCodes.Unbox_Any, type);           // [toVal]
+                    funcEmit.UnboxAny(type);
                 }
                 else
                 {
-                    il.Emit(OpCodes.Castclass, type);           // [toVal]
+                    funcEmit.CastClass(type);
                 }
             }
 
-            // Stack is: [params for consParams]
-            il.Emit(OpCodes.Newobj, cons);                  // [ret]
-            il.Emit(OpCodes.Ret);                           // ----
+            funcEmit.NewObject(cons);
+            funcEmit.Return();
 
-            var func = (Func<From, Dictionary<string, POCOMapper>, To>)dyn.CreateDelegate(typeof(Func<From, Dictionary<string, POCOMapper>, To>));
+            var func = funcEmit.CreateDelegate();
 
             Func<object, object> retFunc =
                 x =>
