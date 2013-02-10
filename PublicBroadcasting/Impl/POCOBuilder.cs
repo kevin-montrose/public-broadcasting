@@ -277,7 +277,7 @@ namespace PublicBroadcasting.Impl
             name += "_" + typeof(From).FullName + "_" + typeof(Describer).FullName;
 
             var dynMethod = new DynamicMethod(name, typeof(object), new[] { tFrom, typeof(Dictionary<string, POCOBuilder>) }, restrictedSkipVisibility: true);
-            var il = dynMethod.GetILGenerator();
+            /*var il = dynMethod.GetILGenerator();
             var retLoc = il.DeclareLocal(tTo);
 
             il.Emit(OpCodes.Newobj, cons);                      // [ret]
@@ -345,7 +345,79 @@ namespace PublicBroadcasting.Impl
             il.Emit(OpCodes.Ldloc, retLoc);
             il.Emit(OpCodes.Ret);
 
-            var func = (Func<From, Dictionary<string, POCOBuilder>, object>)dynMethod.CreateDelegate(typeof(Func<From, Dictionary<string, POCOBuilder>, object>));
+            var func = (Func<From, Dictionary<string, POCOBuilder>, object>)dynMethod.CreateDelegate(typeof(Func<From, Dictionary<string, POCOBuilder>, object>));*/
+
+            var funcEmit = Sigil.Emit<Func<From, Dictionary<string, POCOBuilder>, object>>.NewDynamicMethod(name);
+            var retLoc = funcEmit.DeclareLocal(tTo, "retLoc");
+
+            funcEmit
+                .NewObject(cons)
+                .StoreLocal(retLoc);
+
+            foreach (var mem in members)
+            {
+                funcEmit.LoadLocal(retLoc);
+
+                funcEmit
+                    .LoadArgument(1)
+                    .LoadConstant(mem.Key)
+                    .Call(lookup);
+
+                funcEmit.LoadArgument(0);
+
+                var fromMember = tFrom.GetMember(mem.Key, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).Where(m => m is FieldInfo || m is PropertyInfo).Single();
+
+                if (fromMember is PropertyInfo)
+                {
+                    var fromProp = (PropertyInfo)fromMember;
+                    funcEmit.Call(fromProp.GetMethod);
+
+                    if (fromProp.PropertyType.IsValueType)
+                    {
+                        funcEmit.Box(fromProp.PropertyType);
+                    }
+
+                    funcEmit.Call(invoke);
+                }
+                else
+                {
+                    var fromField = (FieldInfo)fromMember;
+                    funcEmit.LoadField(fromField);
+
+                    if (fromField.FieldType.IsValueType)
+                    {
+                        funcEmit.Box(fromField.FieldType);
+                    }
+
+                    funcEmit.Call(invoke);
+                }
+
+                var toField = tTo.GetField(mem.Key);
+
+                if (toField.FieldType.IsValueType)
+                {
+                    if (!toField.FieldType.IsEnum)
+                    {
+                        funcEmit.UnboxAny(toField.FieldType);
+                    }
+                    else
+                    {
+                        var parse = parseEnum.MakeGenericMethod(toField.FieldType);
+                        funcEmit.Call(parse);
+                    }
+                }
+                else
+                {
+                    funcEmit.CastClass(toField.FieldType);
+                }
+
+                funcEmit.StoreField(toField);
+            }
+
+            funcEmit.LoadLocal(retLoc);
+            funcEmit.Return();
+
+            var func = funcEmit.CreateDelegate();
 
             return func;
         }
