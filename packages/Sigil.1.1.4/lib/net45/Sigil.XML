@@ -526,6 +526,18 @@
             This method is meant for debugging purposes only.
             </summary>
         </member>
+        <member name="M:Sigil.Emit`1.ILOffset">
+            <summary>
+            Returns the current instruction offset (effectively, the length of the CIL stream to date).
+            
+            This does not necessarily increase monotonically, as rewrites can cause it to shrink.
+            
+            Likewise the effect of any given call is not guaranteed to be the same under all circumstance, as current and future
+            state may influence opcode choice.
+            
+            This method is meant for debugging purposes only.
+            </summary>
+        </member>
         <member name="M:Sigil.Emit`1.CreateDelegate(System.String@)">
             <summary>
             Converts the CIL stream into a delegate.
@@ -623,9 +635,32 @@
         </member>
         <member name="M:Sigil.Emit`1.BuildMethod(System.Reflection.Emit.TypeBuilder,System.String,System.Reflection.MethodAttributes,System.Reflection.CallingConventions,System.Boolean)">
             <summary>
-            Creates a new Emit, suitable for building a method on the given MethodBuilder.
+            Creates a new Emit, suitable for building a method on the given TypeBuilder.
             
-            The DelegateType and MethodBuilder must agree on return types, parameter types (including `this`), and parameter counts.
+            The DelegateType and MethodBuilder must agree on return types, parameter types, and parameter counts.
+            
+            If you intend to use unveriable code, you must set allowUnverifiableCode to true.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.BuildStaticMethod(System.Reflection.Emit.TypeBuilder,System.String,System.Reflection.MethodAttributes,System.Boolean)">
+            <summary>
+            Convenience method for creating static methods.
+            
+            Equivalent to calling to BuildMethod, but with MethodAttributes.Static set and CallingConventions.Standard.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.BuildInstanceMethod(System.Reflection.Emit.TypeBuilder,System.String,System.Reflection.MethodAttributes,System.Boolean)">
+            <summary>
+            Convenience method for creating instance methods.
+            
+            Equivalent to calling to BuildMethod, but with CallingConventions.HasThis.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.BuildConstructor(System.Reflection.Emit.TypeBuilder,System.Reflection.MethodAttributes,System.Reflection.CallingConventions,System.Boolean)">
+            <summary>
+            Creates a new Emit, suitable for building a constructo on the given TypeBuilder.
+            
+            The DelegateType and TypeBuilder must agree on parameter types and parameter counts.
             
             If you intend to use unveriable code, you must set allowUnverifiableCode to true.
             </summary>
@@ -715,12 +750,12 @@
             This instruction empties the stack.
             </summary>
         </member>
-        <member name="M:Sigil.Emit`1.LoadArgument(System.Int32)">
+        <member name="M:Sigil.Emit`1.LoadArgument(System.UInt16)">
             <summary>
             Loads the argument at the given index (starting at 0) for the current method onto the stack.
             </summary>
         </member>
-        <member name="M:Sigil.Emit`1.LoadArgumentAddress(System.Int32)">
+        <member name="M:Sigil.Emit`1.LoadArgumentAddress(System.UInt16)">
             <summary>
             Loads a pointer to the argument at index (starting at zero) onto the stack.
             </summary>
@@ -1062,7 +1097,7 @@
             Pushes the size of the given value type onto the stack.
             </summary>
         </member>
-        <member name="M:Sigil.Emit`1.StoreArgument(System.Int32)">
+        <member name="M:Sigil.Emit`1.StoreArgument(System.UInt16)">
             <summary>
             Pops a value off the stack and stores it into the argument to the current method identified by index.
             </summary>
@@ -1267,6 +1302,13 @@
         <member name="P:Sigil.Emit`1.AllowsUnverifiableCIL">
             <summary>
             Returns true if this Emit can make use of unverifiable instructions.
+            </summary>
+        </member>
+        <member name="P:Sigil.Emit`1.MaxStackSize">
+            <summary>
+            Returns the maxmimum number of items on the stack for the IL stream created with the current emit.
+            
+            This is not the maximum that *can be placed*, but the maximum that actually are.
             </summary>
         </member>
         <member name="T:Sigil.CatchBlock">
@@ -1528,10 +1570,10 @@
         <member name="M:Sigil.EmitShorthand`1.Jmp(System.Reflection.MethodInfo)">
             <summary cref="M:Sigil.Emit`1.Jump(System.Reflection.MethodInfo)" />
         </member>
-        <member name="M:Sigil.EmitShorthand`1.Ldarg(System.Int32)">
+        <member name="M:Sigil.EmitShorthand`1.Ldarg(System.UInt16)">
             <summary cref="M:Sigil.Emit`1.LoadArgument(System.Int32)" />
         </member>
-        <member name="M:Sigil.EmitShorthand`1.Ldarga(System.Int32)">
+        <member name="M:Sigil.EmitShorthand`1.Ldarga(System.UInt16)">
             <summary cref="M:Sigil.Emit`1.LoadArgumentAddress(System.Int32)" />
         </member>
         <member name="M:Sigil.EmitShorthand`1.Ldc(System.Boolean)">
@@ -1678,7 +1720,7 @@
         <member name="M:Sigil.EmitShorthand`1.Sizeof(System.Type)">
             <summary cref="M:Sigil.Emit`1.SizeOf(System.Type)" />
         </member>
-        <member name="M:Sigil.EmitShorthand`1.Starg(System.Int32)">
+        <member name="M:Sigil.EmitShorthand`1.Starg(System.UInt16)">
             <summary cref="M:Sigil.Emit`1.StoreArgument(System.Int32)" />
         </member>
         <member name="M:Sigil.EmitShorthand`1.Stelem">
