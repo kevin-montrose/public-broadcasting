@@ -633,6 +633,15 @@
             If module is not defined, a module with the same trust as the executing assembly is used instead.
             </summary>
         </member>
+        <member name="M:Sigil.Emit`1.NewDynamicMethod(System.Type,System.String)">
+            <summary>
+            Creates a new Emit, optionally using the provided name and owner for the inner DynamicMethod.
+            
+            If name is not defined, a sane default is generated.
+            
+            If owner is not defined, a module with the same trust as the executing assembly is used instead.
+            </summary>
+        </member>
         <member name="M:Sigil.Emit`1.BuildMethod(System.Reflection.Emit.TypeBuilder,System.String,System.Reflection.MethodAttributes,System.Reflection.CallingConventions,System.Boolean)">
             <summary>
             Creates a new Emit, suitable for building a method on the given TypeBuilder.
@@ -734,13 +743,20 @@
             A label must be marked exactly once after being defined, using the MarkLabel() method.        
             </summary>
         </member>
-        <member name="M:Sigil.Emit`1.MarkLabel(Sigil.Label)">
+        <member name="M:Sigil.Emit`1.MarkLabel(Sigil.Label,System.Collections.Generic.IEnumerable{System.Type})">
             <summary>
             Marks a label in the instruction stream.
             
             When branching, leaving, or switching with a label control will be transfered to where it was *marked* not defined.
             
             Label's can only be marked once, and *must* be marked before creating a delegate.
+            
+            Logically after a Branch or Leave instruction, a stack assertion is required to continue emiting.  The stack
+            is assumed to match that state in these cases.
+            
+            In all other cases, a stack assertion is merely checked (and if failing, a verification exception is thrown).
+            
+            In the assertion, the top of the stack is the first (0-indexed, left-most) parameter.
             </summary>
         </member>
         <member name="M:Sigil.Emit`1.Leave(Sigil.Label)">
@@ -841,7 +857,7 @@
             Pops both, and pushes the address of the element at the given index.
             </summary>
         </member>
-        <member name="M:Sigil.Emit`1.LoadField(System.Reflection.FieldInfo,System.Boolean,System.Nullable{System.Int32})">
+        <member name="M:Sigil.Emit`1.LoadField(System.Reflection.FieldInfo,System.Nullable{System.Boolean},System.Nullable{System.Int32})">
             <summary>
             Loads a field onto the stack.
             
@@ -1375,7 +1391,7 @@
         <member name="M:Sigil.EmitShorthand`1.DefineLabel(Sigil.Label@,System.String)">
             <summary cref="M:Sigil.Emit`1.DefineLabel(System.String)" />
         </member>
-        <member name="M:Sigil.EmitShorthand`1.MarkLabel(Sigil.Label)">
+        <member name="M:Sigil.EmitShorthand`1.MarkLabel(Sigil.Label,System.Collections.Generic.IEnumerable{System.Type})">
             <summary cref="M:Sigil.Emit`1.MarkLabel(Sigil.Label)" />
         </member>
         <member name="M:Sigil.EmitShorthand`1.BeginExceptionBlock">
@@ -1603,7 +1619,7 @@
         <member name="M:Sigil.EmitShorthand`1.Ldelema">
             <summary cref="M:Sigil.Emit`1.LoadElementAddress" />
         </member>
-        <member name="M:Sigil.EmitShorthand`1.Ldfld(System.Reflection.FieldInfo,System.Boolean,System.Nullable{System.Int32})">
+        <member name="M:Sigil.EmitShorthand`1.Ldfld(System.Reflection.FieldInfo,System.Nullable{System.Boolean},System.Nullable{System.Int32})">
             <summary cref="M:Sigil.Emit`1.LoadField(System.Reflection.FieldInfo, System.Boolean, System.Nullable&lt;int&gt;)" />
         </member>
         <member name="M:Sigil.EmitShorthand`1.Ldflda(System.Reflection.FieldInfo)">

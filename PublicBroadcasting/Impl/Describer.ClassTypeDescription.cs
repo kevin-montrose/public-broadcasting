@@ -353,7 +353,7 @@ namespace PublicBroadcasting.Impl
 
                 tryGetIndexEmit.Branch(done);
 
-                tryGetIndexEmit.MarkLabel(next);
+                tryGetIndexEmit.MarkLabel(next, new[] { typeof(object), typeof(object).MakeByRefType() });
             }
 
             tryGetIndexEmit

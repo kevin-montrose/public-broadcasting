@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>Sigil</id>
-    <version>1.1.4</version>
+    <version>1.2.1</version>
     <title />
     <authors>Kevin Montrose</authors>
     <owners>Kevin Montrose</owners>
@@ -10,7 +10,7 @@
     <projectUrl>https://github.com/kevin-montrose/Sigil</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>A fail-fast validation helper for .NET CIL generation.</description>
-    <releaseNotes>Fixing incorrectly sized operands to a number of opcodes; calculating offsets in a safer manner.</releaseNotes>
+    <releaseNotes>Fixing a bug where attempting to infer volatile on FieldBuilders made LoadField unusable when building a type.</releaseNotes>
     <copyright>2013 Kevin Montrose</copyright>
     <tags>cil msil il bytecode</tags>
     <references>
