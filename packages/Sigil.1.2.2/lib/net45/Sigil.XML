@@ -316,6 +316,12 @@
             Unconditionally branches to the given label.
             </summary>
         </member>
+        <member name="M:Sigil.Emit`1.GetStack(System.Int32)">
+            <summary>
+            Returns the information currently on the stack, ignoring the top "skip" items; the types are returned
+            top-to-bottom, making this directly usable from MarkLabel.
+            </summary>
+        </member>
         <member name="M:Sigil.Emit`1.BranchIfEqual(Sigil.Label)">
             <summary>
             Pops two arguments from the stack, if both are equal branches to the given label.
@@ -1871,6 +1877,12 @@
         <member name="T:Sigil.Impl.StackState">
             <summary>
             Keeps track of the types on the stack, allowing for type checking.
+            </summary>
+        </member>
+        <member name="M:Sigil.Impl.TypeOnStack.ReplacedWith(Sigil.Impl.TypeOnStack)">
+            <summary>
+            When a type is replaced (without an opcode) on the stack, call this to keep
+            any mark tracking working.
             </summary>
         </member>
         <member name="M:Sigil.Impl.TypeOnStack.Mark(System.Reflection.Emit.OpCode,System.Int32,System.Boolean)">
