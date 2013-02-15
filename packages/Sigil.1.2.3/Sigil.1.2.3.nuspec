@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>Sigil</id>
-    <version>1.2.2</version>
+    <version>1.2.3</version>
     <title />
     <authors>Kevin Montrose</authors>
     <owners>Kevin Montrose</owners>
@@ -10,7 +10,9 @@
     <projectUrl>https://github.com/kevin-montrose/Sigil</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>A fail-fast validation helper for .NET CIL generation.</description>
-    <releaseNotes>Strong name, eliding trivial casts, exposing stack state.</releaseNotes>
+    <releaseNotes>Exposing native int and null types for assertions.
+Local reuse via IDisposable.
+Lookups for Labels and Locals on Emit.</releaseNotes>
     <copyright>2013 Kevin Montrose</copyright>
     <tags>cil msil il bytecode</tags>
     <references>
