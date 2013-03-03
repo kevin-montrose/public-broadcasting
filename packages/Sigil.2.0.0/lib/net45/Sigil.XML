@@ -4,33 +4,6 @@
         <name>Sigil</name>
     </assembly>
     <members>
-        <member name="T:Sigil.CatchBlock">
-            <summary>
-            Represents a catch block which appears in an ExceptionBlock.
-            
-            To create a CatchBlock, call BeginCatchBlock(Type) or BeginCatchAllBlock().
-            </summary>
-        </member>
-        <member name="P:Sigil.CatchBlock.ExceptionBlock">
-            <summary>
-            The ExceptionBlock this CatchBlock appears in.
-            </summary>
-        </member>
-        <member name="P:Sigil.CatchBlock.IsCatchAll">
-            <summary>
-            Returns true if this CatchBlock will catch all exceptions.
-            
-            This is equivalent to `catch(Exception e)` in C#.
-            </summary>
-        </member>
-        <member name="P:Sigil.CatchBlock.ExceptionType">
-            <summary>
-            The type of exception being caught by this CatchBlock.
-            
-            When the CatchBlock is entered, an exception of this type will
-            be pushed onto the stack.
-            </summary>
-        </member>
         <member name="T:Sigil.Emit`1">
             <summary>
             Helper for CIL generation that fails as soon as a sequence of instructions
@@ -159,105 +132,9 @@
             Acts as if the value were unsigned, zeros always coming in from the left.
             </summary>
         </member>
-        <member name="M:Sigil.Emit`1.Box``1">
-            <summary>
-            Boxes the given value type on the stack, converting it into a reference.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.Box(System.Type)">
-            <summary>
-            Boxes the given value type on the stack, converting it into a reference.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.Branch(Sigil.Label)">
-            <summary>
-            Unconditionally branches to the given label.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.GetStack(System.Int32)">
-            <summary>
-            Returns the information currently on the stack, ignoring the top "skip" items; the types are returned
-            top-to-bottom, making this directly usable from MarkLabel.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.BranchIfEqual(Sigil.Label)">
-            <summary>
-            Pops two arguments from the stack, if both are equal branches to the given label.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.UnsignedBranchIfNotEqual(Sigil.Label)">
-            <summary>
-            Pops two arguments from the stack, if they are not equal (when treated as unsigned values) branches to the given label.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.BranchIfGreaterOrEqual(Sigil.Label)">
-            <summary>
-            Pops two arguments from the stack, branches to the given label if the second value is greater than or equal to the first value.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.UnsignedBranchIfGreaterOrEqual(Sigil.Label)">
-            <summary>
-            Pops two arguments from the stack, branches to the given label if the second value is greater than or equal to the first value (when treated as unsigned values).
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.BranchIfGreater(Sigil.Label)">
-            <summary>
-            Pops two arguments from the stack, branches to the given label if the second value is greater than the first value.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.UnsignedBranchIfGreater(Sigil.Label)">
-            <summary>
-            Pops two arguments from the stack, branches to the given label if the second value is greater than the first value (when treated as unsigned values).
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.BranchIfLessOrEqual(Sigil.Label)">
-            <summary>
-            Pops two arguments from the stack, branches to the given label if the second value is less than or equal to the first value.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.UnsignedBranchIfLessOrEqual(Sigil.Label)">
-            <summary>
-            Pops two arguments from the stack, branches to the given label if the second value is less than or equal to the first value (when treated as unsigned values).
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.BranchIfLess(Sigil.Label)">
-            <summary>
-            Pops two arguments from the stack, branches to the given label if the second value is less than the first value.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.UnsignedBranchIfLess(Sigil.Label)">
-            <summary>
-            Pops two arguments from the stack, branches to the given label if the second value is less than the first value (when treated as unsigned values).
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.BranchIfFalse(Sigil.Label)">
-            <summary>
-            Pops one argument from the stack, branches to the given label if the value is false.
-            
-            A value is false if it is zero or null.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.BranchIfTrue(Sigil.Label)">
-            <summary>
-            Pops one argument from the stack, branches to the given label if the value is true.
-            
-            A value is true if it is non-zero or non-null.
-            </summary>
-        </member>
         <member name="M:Sigil.Emit`1.Break">
             <summary>
             Emits a break instruction for use with a debugger.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.Call(System.Reflection.MethodInfo)">
-            <summary>
-            Calls the given method.  Pops its arguments in reverse order (left-most deepest in the stack), and pushes the return value if it is non-void.
-            
-            If the given method is an instance method, the `this` reference should appear before any parameters.
-            
-            Call does not respect overrides, the implementation defined by the given MethodInfo is what will be called at runtime.
-            
-            To call overrides of instance methods, use CallVirtual.
             </summary>
         </member>
         <member name="M:Sigil.Emit`1.CallIndirect(System.Reflection.CallingConventions)">
@@ -410,17 +287,6 @@
             invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
             </summary>
         </member>
-        <member name="M:Sigil.Emit`1.CallVirtual(System.Reflection.MethodInfo,System.Type)">
-            <summary>
-            Calls the given method virtually.  Pops its arguments in reverse order (left-most deepest in the stack), and pushes the return value if it is non-void.
-            
-            The `this` reference should appear before any arguments (deepest in the stack).
-            
-            The method invoked at runtime is determined by the type of the `this` reference.
-            
-            If the method invoked shouldn't vary (or if the method is static), use Call instead.
-            </summary>
-        </member>
         <member name="M:Sigil.Emit`1.CastClass``1">
             <summary>
             Cast a reference on the stack to the given reference type.
@@ -435,11 +301,174 @@
             If the cast is not legal, a CastClassException will be thrown at runtime.
             </summary>
         </member>
-        <member name="M:Sigil.Emit`1.CheckFinite">
+        <member name="M:Sigil.Emit`1.Box``1">
             <summary>
-            Throws an ArithmeticException on runtime if the value on the stack is not a finite number.
+            Boxes the given value type on the stack, converting it into a reference.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.Box(System.Type)">
+            <summary>
+            Boxes the given value type on the stack, converting it into a reference.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.Branch(Sigil.Label)">
+            <summary>
+            Unconditionally branches to the given label.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.Branch(System.String)">
+            <summary>
+            Unconditionally branches to the label with the given name.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.BranchIfEqual(Sigil.Label)">
+            <summary>
+            Pops two arguments from the stack, if both are equal branches to the given label.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.BranchIfEqual(System.String)">
+            <summary>
+            Pops two arguments from the stack, if both are equal branches to the label with the given name.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.UnsignedBranchIfNotEqual(Sigil.Label)">
+            <summary>
+            Pops two arguments from the stack, if they are not equal (when treated as unsigned values) branches to the given label.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.UnsignedBranchIfNotEqual(System.String)">
+            <summary>
+            Pops two arguments from the stack, if they are not equal (when treated as unsigned values) branches to the label with the given name.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.BranchIfGreaterOrEqual(Sigil.Label)">
+            <summary>
+            Pops two arguments from the stack, branches to the given label if the second value is greater than or equal to the first value.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.BranchIfGreaterOrEqual(System.String)">
+            <summary>
+            Pops two arguments from the stack, branches to the label with the given name if the second value is greater than or equal to the first value.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.UnsignedBranchIfGreaterOrEqual(Sigil.Label)">
+            <summary>
+            Pops two arguments from the stack, branches to the given label if the second value is greater than or equal to the first value (when treated as unsigned values).
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.UnsignedBranchIfGreaterOrEqual(System.String)">
+            <summary>
+            Pops two arguments from the stack, branches to the label with the given name if the second value is greater than or equal to the first value (when treated as unsigned values).
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.BranchIfGreater(Sigil.Label)">
+            <summary>
+            Pops two arguments from the stack, branches to the given label if the second value is greater than the first value.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.BranchIfGreater(System.String)">
+            <summary>
+            Pops two arguments from the stack, branches to the label with the given name if the second value is greater than the first value.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.UnsignedBranchIfGreater(Sigil.Label)">
+            <summary>
+            Pops two arguments from the stack, branches to the given label if the second value is greater than the first value (when treated as unsigned values).
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.UnsignedBranchIfGreater(System.String)">
+            <summary>
+            Pops two arguments from the stack, branches to the label with the given name if the second value is greater than the first value (when treated as unsigned values).
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.BranchIfLessOrEqual(Sigil.Label)">
+            <summary>
+            Pops two arguments from the stack, branches to the given label if the second value is less than or equal to the first value.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.BranchIfLessOrEqual(System.String)">
+            <summary>
+            Pops two arguments from the stack, branches to the label with the given name if the second value is less than or equal to the first value.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.UnsignedBranchIfLessOrEqual(Sigil.Label)">
+            <summary>
+            Pops two arguments from the stack, branches to the given label if the second value is less than or equal to the first value (when treated as unsigned values).
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.UnsignedBranchIfLessOrEqual(System.String)">
+            <summary>
+            Pops two arguments from the stack, branches to the label with the given name if the second value is less than or equal to the first value (when treated as unsigned values).
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.BranchIfLess(Sigil.Label)">
+            <summary>
+            Pops two arguments from the stack, branches to the given label if the second value is less than the first value.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.BranchIfLess(System.String)">
+            <summary>
+            Pops two arguments from the stack, branches to the label with the given name if the second value is less than the first value.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.UnsignedBranchIfLess(Sigil.Label)">
+            <summary>
+            Pops two arguments from the stack, branches to the given label if the second value is less than the first value (when treated as unsigned values).
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.UnsignedBranchIfLess(System.String)">
+            <summary>
+            Pops two arguments from the stack, branches to the label with the given name if the second value is less than the first value (when treated as unsigned values).
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.BranchIfFalse(Sigil.Label)">
+            <summary>
+            Pops one argument from the stack, branches to the given label if the value is false.
             
-            This leaves the value checked on the stack, rather than popping it as might be expected.
+            A value is false if it is zero or null.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.BranchIfFalse(System.String)">
+            <summary>
+            Pops one argument from the stack, branches to the label with the given name if the value is false.
+            
+            A value is false if it is zero or null.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.BranchIfTrue(Sigil.Label)">
+            <summary>
+            Pops one argument from the stack, branches to the given label if the value is true.
+            
+            A value is true if it is non-zero or non-null.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.BranchIfTrue(System.String)">
+            <summary>
+            Pops one argument from the stack, branches to the label with the given name if the value is true.
+            
+            A value is true if it is non-zero or non-null.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.Call(System.Reflection.MethodInfo)">
+            <summary>
+            Calls the given method.  Pops its arguments in reverse order (left-most deepest in the stack), and pushes the return value if it is non-void.
+            
+            If the given method is an instance method, the `this` reference should appear before any parameters.
+            
+            Call does not respect overrides, the implementation defined by the given MethodInfo is what will be called at runtime.
+            
+            To call overrides of instance methods, use CallVirtual.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.CallVirtual(System.Reflection.MethodInfo,System.Type)">
+            <summary>
+            Calls the given method virtually.  Pops its arguments in reverse order (left-most deepest in the stack), and pushes the return value if it is non-void.
+            
+            The `this` reference should appear before any arguments (deepest in the stack).
+            
+            The method invoked at runtime is determined by the type of the `this` reference.
+            
+            If the method invoked shouldn't vary (or if the method is static), use Call instead.
             </summary>
         </member>
         <member name="M:Sigil.Emit`1.CompareEqual">
@@ -578,7 +607,7 @@
             This method is meant for debugging purposes only.
             </summary>
         </member>
-        <member name="M:Sigil.Emit`1.CreateDelegate(System.String@)">
+        <member name="M:Sigil.Emit`1.CreateDelegate(System.String@,Sigil.OptimizationOptions)">
             <summary>
             Converts the CIL stream into a delegate.
             
@@ -594,7 +623,7 @@
             behaves unexpectedly (indicative of a logic bug in the consumer code).
             </summary>
         </member>
-        <member name="M:Sigil.Emit`1.CreateDelegate">
+        <member name="M:Sigil.Emit`1.CreateDelegate(Sigil.OptimizationOptions)">
             <summary>
             Converts the CIL stream into a delegate.
             
@@ -604,7 +633,7 @@
             Once this method is called the Emit may no longer be modified.
             </summary>
         </member>
-        <member name="M:Sigil.Emit`1.CreateMethod(System.String@)">
+        <member name="M:Sigil.Emit`1.CreateMethod(System.String@,Sigil.OptimizationOptions)">
             <summary>
             Writes the CIL stream out to the MethodBuilder used to create this Emit.
             
@@ -622,7 +651,7 @@
             behaves unexpectedly (indicative of a logic bug in the consumer code).
             </summary>
         </member>
-        <member name="M:Sigil.Emit`1.CreateMethod">
+        <member name="M:Sigil.Emit`1.CreateMethod(Sigil.OptimizationOptions)">
             <summary>
             Writes the CIL stream out to the MethodBuilder used to create this Emit.
             
@@ -634,7 +663,7 @@
             Returns a MethodBuilder, which can be used to define overrides or for further inspection.
             </summary>
         </member>
-        <member name="M:Sigil.Emit`1.CreateConstructor(System.String@)">
+        <member name="M:Sigil.Emit`1.CreateConstructor(System.String@,Sigil.OptimizationOptions)">
             <summary>
             Writes the CIL stream out to the ConstructorBuilder used to create this Emit.
             
@@ -652,7 +681,7 @@
             behaves unexpectedly (indicative of a logic bug in the consumer code).
             </summary>
         </member>
-        <member name="M:Sigil.Emit`1.CreateConstructor">
+        <member name="M:Sigil.Emit`1.CreateConstructor(Sigil.OptimizationOptions)">
             <summary>
             Writes the CIL stream out to the ConstructorBuilder used to create this Emit.
             
@@ -664,7 +693,7 @@
             Returns a ConstructorBuilder, which can be used to define overrides or for further inspection.
             </summary>
         </member>
-        <member name="M:Sigil.Emit`1.NewDynamicMethod(System.String,System.Reflection.Emit.ModuleBuilder)">
+        <member name="M:Sigil.Emit`1.NewDynamicMethod(System.String,System.Reflection.Emit.ModuleBuilder,Sigil.ValidationOptions)">
             <summary>
             Creates a new Emit, optionally using the provided name and module for the inner DynamicMethod.
             
@@ -673,7 +702,7 @@
             If module is not defined, a module with the same trust as the executing assembly is used instead.
             </summary>
         </member>
-        <member name="M:Sigil.Emit`1.NewDynamicMethod(System.Type,System.String)">
+        <member name="M:Sigil.Emit`1.NewDynamicMethod(System.Type,System.String,Sigil.ValidationOptions)">
             <summary>
             Creates a new Emit, optionally using the provided name and owner for the inner DynamicMethod.
             
@@ -682,7 +711,7 @@
             If owner is not defined, a module with the same trust as the executing assembly is used instead.
             </summary>
         </member>
-        <member name="M:Sigil.Emit`1.BuildMethod(System.Reflection.Emit.TypeBuilder,System.String,System.Reflection.MethodAttributes,System.Reflection.CallingConventions,System.Boolean)">
+        <member name="M:Sigil.Emit`1.BuildMethod(System.Reflection.Emit.TypeBuilder,System.String,System.Reflection.MethodAttributes,System.Reflection.CallingConventions,System.Boolean,Sigil.ValidationOptions)">
             <summary>
             Creates a new Emit, suitable for building a method on the given TypeBuilder.
             
@@ -691,21 +720,21 @@
             If you intend to use unveriable code, you must set allowUnverifiableCode to true.
             </summary>
         </member>
-        <member name="M:Sigil.Emit`1.BuildStaticMethod(System.Reflection.Emit.TypeBuilder,System.String,System.Reflection.MethodAttributes,System.Boolean)">
+        <member name="M:Sigil.Emit`1.BuildStaticMethod(System.Reflection.Emit.TypeBuilder,System.String,System.Reflection.MethodAttributes,System.Boolean,Sigil.ValidationOptions)">
             <summary>
             Convenience method for creating static methods.
             
             Equivalent to calling to BuildMethod, but with MethodAttributes.Static set and CallingConventions.Standard.
             </summary>
         </member>
-        <member name="M:Sigil.Emit`1.BuildInstanceMethod(System.Reflection.Emit.TypeBuilder,System.String,System.Reflection.MethodAttributes,System.Boolean)">
+        <member name="M:Sigil.Emit`1.BuildInstanceMethod(System.Reflection.Emit.TypeBuilder,System.String,System.Reflection.MethodAttributes,System.Boolean,Sigil.ValidationOptions)">
             <summary>
             Convenience method for creating instance methods.
             
             Equivalent to calling to BuildMethod, but with CallingConventions.HasThis.
             </summary>
         </member>
-        <member name="M:Sigil.Emit`1.BuildConstructor(System.Reflection.Emit.TypeBuilder,System.Reflection.MethodAttributes,System.Reflection.CallingConventions,System.Boolean)">
+        <member name="M:Sigil.Emit`1.BuildConstructor(System.Reflection.Emit.TypeBuilder,System.Reflection.MethodAttributes,System.Reflection.CallingConventions,System.Boolean,Sigil.ValidationOptions)">
             <summary>
             Creates a new Emit, suitable for building a constructo on the given TypeBuilder.
             
@@ -783,13 +812,29 @@
             A label must be marked exactly once after being defined, using the MarkLabel() method.        
             </summary>
         </member>
-        <member name="M:Sigil.Emit`1.MarkLabel(Sigil.Label,System.Collections.Generic.IEnumerable{System.Type})">
+        <member name="M:Sigil.Emit`1.MarkLabel(Sigil.Label)">
             <summary>
             Marks a label in the instruction stream.
             
             When branching, leaving, or switching with a label control will be transfered to where it was *marked* not defined.
             
-            Label's can only be marked once, and *must* be marked before creating a delegate.
+            Labels can only be marked once, and *must* be marked before creating a delegate.
+            
+            Logically after a Branch or Leave instruction, a stack assertion is required to continue emiting.  The stack
+            is assumed to match that state in these cases.
+            
+            In all other cases, a stack assertion is merely checked (and if failing, a verification exception is thrown).
+            
+            In the assertion, the top of the stack is the first (0-indexed, left-most) parameter.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.MarkLabel(System.String)">
+            <summary>
+            Marks a label with the given name in the instruction stream.
+            
+            When branching, leaving, or switching with a label control will be transfered to where it was *marked* not defined.
+            
+            Labels can only be marked once, and *must* be marked before creating a delegate.
             
             Logically after a Branch or Leave instruction, a stack assertion is required to continue emiting.  The stack
             is assumed to match that state in these cases.
@@ -802,6 +847,13 @@
         <member name="M:Sigil.Emit`1.Leave(Sigil.Label)">
             <summary>
             Leave an exception or catch block, branching to the given label.
+            
+            This instruction empties the stack.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.Leave(System.String)">
+            <summary>
+            Leave an exception or catch block, branching to the label with the given name.
             
             This instruction empties the stack.
             </summary>
@@ -883,14 +935,28 @@
             Loads a null reference onto the stack.
             </summary>
         </member>
-        <member name="M:Sigil.Emit`1.LoadElement">
+        <member name="M:Sigil.Emit`1.LoadElement``1">
             <summary>
             Expects a reference to an array and an index on the stack.
             
             Pops both, and pushes the element in the array at the index onto the stack.
             </summary>
         </member>
-        <member name="M:Sigil.Emit`1.LoadElementAddress">
+        <member name="M:Sigil.Emit`1.LoadElement(System.Type)">
+            <summary>
+            Expects a reference to an array and an index on the stack.
+            
+            Pops both, and pushes the element in the array at the index onto the stack.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.LoadElementAddress``1">
+            <summary>
+            Expects a reference to an array of the given element type and an index on the stack.
+            
+            Pops both, and pushes the address of the element at the given index.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.LoadElementAddress(System.Type)">
             <summary>
             Expects a reference to an array of the given element type and an index on the stack.
             
@@ -928,16 +994,14 @@
             Pops a pointer from the stack and pushes the value (of the given type) at that address onto the stack.
             </summary>
         </member>
-        <member name="M:Sigil.Emit`1.LoadLength">
+        <member name="M:Sigil.Emit`1.LoadLength``1">
             <summary>
             Pops a reference to a rank 1 array off the stack, and pushes it's length onto the stack.
             </summary>
         </member>
-        <member name="M:Sigil.Emit`1.LoadLocal(Sigil.Local)">
+        <member name="M:Sigil.Emit`1.LoadLength(System.Type)">
             <summary>
-            Loads the value in the given local onto the stack.
-            
-            To create a local, use DeclareLocal().
+            Pops a reference to a rank 1 array off the stack, and pushes it's length onto the stack.
             </summary>
         </member>
         <member name="M:Sigil.Emit`1.LoadLocalAddress(Sigil.Local)">
@@ -945,6 +1009,11 @@
             Pushes a pointer to the given local onto the stack.
             
             To create a local, use DeclareLocal.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.LoadLocalAddress(System.String)">
+            <summary>
+            Pushes a pointer to the local with the given name onto the stack.
             </summary>
         </member>
         <member name="M:Sigil.Emit`1.LoadObject``1(System.Boolean,System.Nullable{System.Int32})">
@@ -1165,7 +1234,12 @@
             Pops a value off the stack and stores it into the argument to the current method identified by index.
             </summary>
         </member>
-        <member name="M:Sigil.Emit`1.StoreElement">
+        <member name="M:Sigil.Emit`1.StoreElement``1">
+            <summary>
+            Pops a value, an index, and a reference to an array off the stack.  Places the given value into the given array at the given index.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.StoreElement(System.Type)">
             <summary>
             Pops a value, an index, and a reference to an array off the stack.  Places the given value into the given array at the given index.
             </summary>
@@ -1194,6 +1268,11 @@
             To create a local, use DeclareLocal().
             </summary>
         </member>
+        <member name="M:Sigil.Emit`1.StoreLocal(System.String)">
+            <summary>
+            Pops a value off the stack and stores it in the local with the given name.
+            </summary>
+        </member>
         <member name="M:Sigil.Emit`1.StoreObject``1(System.Boolean,System.Nullable{System.Int32})">
             <summary>
             Pops a value type and a pointer off of the stack and copies the given value to the given address.
@@ -1211,6 +1290,13 @@
         <member name="M:Sigil.Emit`1.Switch(Sigil.Label[])">
             <summary>
             Pops a value off the stack and branches to the label at the index of that value in the given labels.
+            
+            If the value is out of range, execution falls through to the next instruction.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.Switch(System.String[])">
+            <summary>
+            Pops a value off the stack and branches to the label at the index of that value in the given label names.
             
             If the value is out of range, execution falls through to the next instruction.
             </summary>
@@ -1313,6 +1399,14 @@
             Ends the given finally block.
             </summary>
         </member>
+        <member name="M:Sigil.Emit`1.WriteLine(System.String,Sigil.Local[])">
+            <summary>
+            Emits IL that calls Console.WriteLine(string) for the given string if no locals are passed.
+            
+            If any locals are passed, line is treated as a format string and local values are used in a call
+            to Console.WriteLine(string, object[]).
+            </summary>
+        </member>
         <member name="M:Sigil.Emit`1.Unbox``1">
             <summary>
             Pops a boxed value from the stack and pushes a pointer to it's unboxed value.
@@ -1348,6 +1442,25 @@
             Checks that the stack is empty, that all paths returns, that all labels are marked, etc. etc.
             </summary>
         </member>
+        <member name="M:Sigil.Emit`1.CheckFinite">
+            <summary>
+            Throws an ArithmeticException on runtime if the value on the stack is not a finite number.
+            
+            This leaves the value checked on the stack, rather than popping it as might be expected.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.LoadLocal(Sigil.Local)">
+            <summary>
+            Loads the value in the given local onto the stack.
+            
+            To create a local, use DeclareLocal().
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.LoadLocal(System.String)">
+            <summary>
+            Loads the value in the local with the given name onto the stack.
+            </summary>
+        </member>
         <member name="P:Sigil.Emit`1.AllowsUnverifiableCIL">
             <summary>
             Returns true if this Emit can make use of unverifiable instructions.
@@ -1360,17 +1473,141 @@
             This is not the maximum that *can be placed*, but the maximum that actually are.
             </summary>
         </member>
+        <member name="P:Sigil.Emit`1.ValidationOptions">
+            <summary>
+            Returns the validation options that were used when creating this emit.
+            
+            These control when certain validation steps are run.
+            </summary>
+        </member>
         <member name="P:Sigil.Emit`1.Locals">
             <summary>
             Lookup for the locals currently in scope by name.
             
-            Locals go out of scode when released (by calling Dispose() directly, or via  using) and go into scope
+            Locals go out of scope when released (by calling Dispose() directly, or via using) and go into scope
             immediately after a DeclareLocal()
             </summary>
         </member>
         <member name="P:Sigil.Emit`1.Labels">
             <summary>
             Lookup for declared labels by name.
+            </summary>
+        </member>
+        <member name="T:Sigil.Impl.NullType">
+            <summary>
+            This type represents a provably null value on the stack.
+            
+            Nulls typically arrive on the stack via LoadNull.
+            
+            Null can be assigned to any reference type safely, without the need for a CastClass.
+            
+            This type is exposed to allow for stack assertions containing null via Emit.MarkLabel.
+            </summary>
+        </member>
+        <member name="T:Sigil.Impl.NativeIntType">
+            <summary>
+            This type represents a "native int" on the stack.
+            
+            The size of native int varies depending on the architecture an assembly is executed on.
+            Raw pointers are often of type native int.
+            
+            This type is exposed to allow for stack assertions containing native int via Emit.MarkLabel.
+            </summary>
+        </member>
+        <member name="T:Sigil.LabelLookup">
+            <summary>
+            Provides a way to lookup labels declared with an emit.
+            </summary>
+        </member>
+        <member name="P:Sigil.LabelLookup.Item(System.String)">
+            <summary>
+            Returns the label with the given name.
+            
+            Throws KeyNotFoundException if no label by that name is found".
+            </summary>
+        </member>
+        <member name="P:Sigil.LabelLookup.Count">
+            <summary>
+            Returns the number of labels declared
+            </summary>
+        </member>
+        <member name="P:Sigil.LabelLookup.Names">
+            <summary>
+            Returns the names of all the declared labels
+            </summary>
+        </member>
+        <member name="T:Sigil.LocalLookup">
+            <summary>
+            Provides a way to lookup locals in scope by name.
+            </summary>
+        </member>
+        <member name="P:Sigil.LocalLookup.Item(System.String)">
+            <summary>
+            Returns the local with the given name.
+            
+            Throws KeyNotFoundException if no local by that name is found".
+            </summary>
+        </member>
+        <member name="P:Sigil.LocalLookup.Count">
+            <summary>
+            Returns the number of locals in scope
+            </summary>
+        </member>
+        <member name="P:Sigil.LocalLookup.Names">
+            <summary>
+            Returns the names of all the locals in scope
+            </summary>
+        </member>
+        <member name="T:Sigil.OptimizationOptions">
+            <summary>
+            Sigil can perform optimizations to the emitted IL. This enum tells Sigil which optimizations to perform.
+            </summary>
+        </member>
+        <member name="F:Sigil.OptimizationOptions.None">
+            <summary>
+            Perform no optional optimizations.
+            </summary>
+        </member>
+        <member name="F:Sigil.OptimizationOptions.EnableBranchPatching">
+            <summary>
+            Choose optimal branch instructions.
+            </summary>
+        </member>
+        <member name="F:Sigil.OptimizationOptions.EnableTrivialCastEliding">
+            <summary>
+            Elide CastClass instructions which are no-ops, such as casting a System.String to a System.Object.
+            </summary>
+        </member>
+        <member name="F:Sigil.OptimizationOptions.All">
+            <summary>
+            Perform all optimizations.
+            </summary>
+        </member>
+        <member name="T:Sigil.CatchBlock">
+            <summary>
+            Represents a catch block which appears in an ExceptionBlock.
+            
+            To create a CatchBlock, call BeginCatchBlock(Type) or BeginCatchAllBlock().
+            </summary>
+        </member>
+        <member name="P:Sigil.CatchBlock.ExceptionBlock">
+            <summary>
+            The ExceptionBlock this CatchBlock appears in.
+            </summary>
+        </member>
+        <member name="P:Sigil.CatchBlock.IsCatchAll">
+            <summary>
+            Returns true if this CatchBlock will catch all exceptions.
+            
+            This is equivalent to `catch(Exception e)` in C#.
+            </summary>
+        </member>
+        <member name="P:Sigil.CatchBlock.ExceptionType">
+            <summary>
+            The type of exception being caught by this CatchBlock.
+            
+            When the CatchBlock is entered, an exception of this type will
+            be pushed onto the stack.
             </summary>
         </member>
         <member name="T:Sigil.EmitShorthand`1">
@@ -1410,8 +1647,11 @@
         <member name="M:Sigil.EmitShorthand`1.DefineLabel(Sigil.Label@,System.String)">
             <summary cref="M:Sigil.Emit`1.DefineLabel(System.String)" />
         </member>
-        <member name="M:Sigil.EmitShorthand`1.MarkLabel(Sigil.Label,System.Collections.Generic.IEnumerable{System.Type})">
-            <summary cref="M:Sigil.Emit`1.MarkLabel(Sigil.Label)" />
+        <member name="M:Sigil.EmitShorthand`1.MarkLabel(Sigil.Label)">
+            <summary cref="M:Sigil.Emit`1.MarkLabel(Sigil.Label, IEnumerable``1)" />
+        </member>
+        <member name="M:Sigil.EmitShorthand`1.MarkLabel(System.String)">
+            <summary cref="M:Sigil.Emit`1.MarkLabel(System.String, IEnumerable``1)" />
         </member>
         <member name="M:Sigil.EmitShorthand`1.BeginExceptionBlock">
             <summary cref="M:Sigil.Emit`1.BeginExceptionBlock" />
@@ -1470,32 +1710,62 @@
         <member name="M:Sigil.EmitShorthand`1.Beq(Sigil.Label)">
             <summary cref="M:Sigil.Emit`1.BranchIfEqual(Sigil.Label)" />
         </member>
+        <member name="M:Sigil.EmitShorthand`1.Beq(System.String)">
+            <summary cref="M:Sigil.Emit`1.BranchIfEqual(System.String)" />
+        </member>
         <member name="M:Sigil.EmitShorthand`1.Bge(Sigil.Label)">
             <summary cref="M:Sigil.Emit`1.BranchIfGreaterOrEqual(Sigil.Label)" />
+        </member>
+        <member name="M:Sigil.EmitShorthand`1.Bge(System.String)">
+            <summary cref="M:Sigil.Emit`1.BranchIfGreaterOrEqual(System.String)" />
         </member>
         <member name="M:Sigil.EmitShorthand`1.Bge_Un(Sigil.Label)">
             <summary cref="M:Sigil.Emit`1.UnsignedBranchIfGreaterOrEqual(Sigil.Label)" />
         </member>
+        <member name="M:Sigil.EmitShorthand`1.Bge_Un(System.String)">
+            <summary cref="M:Sigil.Emit`1.UnsignedBranchIfGreaterOrEqual(System.String)" />
+        </member>
         <member name="M:Sigil.EmitShorthand`1.Bgt(Sigil.Label)">
             <summary cref="M:Sigil.Emit`1.BranchIfGreater(Sigil.Label)" />
+        </member>
+        <member name="M:Sigil.EmitShorthand`1.Bgt(System.String)">
+            <summary cref="M:Sigil.Emit`1.BranchIfGreater(System.String)" />
         </member>
         <member name="M:Sigil.EmitShorthand`1.Bgt_Un(Sigil.Label)">
             <summary cref="M:Sigil.Emit`1.UnsignedBranchIfGreater(Sigil.Label)" />
         </member>
+        <member name="M:Sigil.EmitShorthand`1.Bgt_Un(System.String)">
+            <summary cref="M:Sigil.Emit`1.UnsignedBranchIfGreater(System.String)" />
+        </member>
         <member name="M:Sigil.EmitShorthand`1.Ble(Sigil.Label)">
             <summary cref="M:Sigil.Emit`1.BranchIfLessOrEqual(Sigil.Label)" />
+        </member>
+        <member name="M:Sigil.EmitShorthand`1.Ble(System.String)">
+            <summary cref="M:Sigil.Emit`1.BranchIfLessOrEqual(System.String)" />
         </member>
         <member name="M:Sigil.EmitShorthand`1.Ble_Un(Sigil.Label)">
             <summary cref="M:Sigil.Emit`1.UnsignedBranchIfLessOrEqual(Sigil.Label)" />
         </member>
+        <member name="M:Sigil.EmitShorthand`1.Ble_Un(System.String)">
+            <summary cref="M:Sigil.Emit`1.UnsignedBranchIfLessOrEqual(System.String)" />
+        </member>
         <member name="M:Sigil.EmitShorthand`1.Blt(Sigil.Label)">
             <summary cref="M:Sigil.Emit`1.BranchIfLess(Sigil.Label)" />
+        </member>
+        <member name="M:Sigil.EmitShorthand`1.Blt(System.String)">
+            <summary cref="M:Sigil.Emit`1.BranchIfLess(System.String)" />
         </member>
         <member name="M:Sigil.EmitShorthand`1.Blt_Un(Sigil.Label)">
             <summary cref="M:Sigil.Emit`1.UnsignedBranchIfLess(Sigil.Label)" />
         </member>
+        <member name="M:Sigil.EmitShorthand`1.Blt_Un(System.String)">
+            <summary cref="M:Sigil.Emit`1.UnsignedBranchIfLess(System.String)" />
+        </member>
         <member name="M:Sigil.EmitShorthand`1.Bne_Un(Sigil.Label)">
             <summary cref="M:Sigil.Emit`1.UnsignedBranchIfNotEqual(Sigil.Label)" />
+        </member>
+        <member name="M:Sigil.EmitShorthand`1.Bne_Un(System.String)">
+            <summary cref="M:Sigil.Emit`1.UnsignedBranchIfNotEqual(System.String)" />
         </member>
         <member name="M:Sigil.EmitShorthand`1.Box``1">
             <summary cref="M:Sigil.Emit`1.Box``1()" />
@@ -1506,14 +1776,23 @@
         <member name="M:Sigil.EmitShorthand`1.Br(Sigil.Label)">
             <summary cref="M:Sigil.Emit`1.Branch(Sigil.Label)" />
         </member>
+        <member name="M:Sigil.EmitShorthand`1.Br(System.String)">
+            <summary cref="M:Sigil.Emit`1.Branch(System.String)" />
+        </member>
         <member name="M:Sigil.EmitShorthand`1.Break">
             <summary cref="M:Sigil.Emit`1.Break" />
         </member>
         <member name="M:Sigil.EmitShorthand`1.Brfalse(Sigil.Label)">
             <summary cref="M:Sigil.Emit`1.BranchIfFalse(Sigil.Label)" />
         </member>
+        <member name="M:Sigil.EmitShorthand`1.Brfalse(System.String)">
+            <summary cref="M:Sigil.Emit`1.BranchIfFalse(System.String)" />
+        </member>
         <member name="M:Sigil.EmitShorthand`1.Brtrue(Sigil.Label)">
             <summary cref="M:Sigil.Emit`1.BranchIfTrue(Sigil.Label)" />
+        </member>
+        <member name="M:Sigil.EmitShorthand`1.Brtrue(System.String)">
+            <summary cref="M:Sigil.Emit`1.BranchIfTrue(System.String)" />
         </member>
         <member name="M:Sigil.EmitShorthand`1.Call(System.Reflection.MethodInfo)">
             <summary cref="M:Sigil.Emit`1.Call(System.Reflection.MethodInfo)" />
@@ -1632,11 +1911,17 @@
         <member name="M:Sigil.EmitShorthand`1.Ldc(System.UInt64)">
             <summary cref="M:Sigil.Emit`1.LoadConstant(System.UInt64)" />
         </member>
-        <member name="M:Sigil.EmitShorthand`1.Ldelem">
-            <summary cref="M:Sigil.Emit`1.LoadElement" />
+        <member name="M:Sigil.EmitShorthand`1.Ldelem``1">
+            <summary cref="M:Sigil.Emit`1.LoadElement``1" />
         </member>
-        <member name="M:Sigil.EmitShorthand`1.Ldelema">
-            <summary cref="M:Sigil.Emit`1.LoadElementAddress" />
+        <member name="M:Sigil.EmitShorthand`1.Ldelem(System.Type)">
+            <summary cref="M:Sigil.Emit`1.LoadElement(System.Type)" />
+        </member>
+        <member name="M:Sigil.EmitShorthand`1.Ldelema``1">
+            <summary cref="M:Sigil.Emit`1.LoadElementAddress``1" />
+        </member>
+        <member name="M:Sigil.EmitShorthand`1.Ldelema(System.Type)">
+            <summary cref="M:Sigil.Emit`1.LoadElementAddress(System.Type)" />
         </member>
         <member name="M:Sigil.EmitShorthand`1.Ldfld(System.Reflection.FieldInfo,System.Nullable{System.Boolean},System.Nullable{System.Int32})">
             <summary cref="M:Sigil.Emit`1.LoadField(System.Reflection.FieldInfo, System.Boolean, System.Nullable&lt;int&gt;)" />
@@ -1653,14 +1938,23 @@
         <member name="M:Sigil.EmitShorthand`1.Ldind(System.Type,System.Boolean,System.Nullable{System.Int32})">
             <summary cref="M:Sigil.Emit`1.LoadIndirect(System.Type, System.Boolean, System.Nullable&lt;int&gt;)" />
         </member>
-        <member name="M:Sigil.EmitShorthand`1.Ldlen">
-            <summary cref="M:Sigil.Emit`1.LoadLength" />
+        <member name="M:Sigil.EmitShorthand`1.Ldlen``1">
+            <summary cref="M:Sigil.Emit`1.LoadLength``1" />
+        </member>
+        <member name="M:Sigil.EmitShorthand`1.Ldlen(System.Type)">
+            <summary cref="M:Sigil.Emit`1.LoadLength(System.Type)" />
         </member>
         <member name="M:Sigil.EmitShorthand`1.Ldloc(Sigil.Local)">
             <summary cref="M:Sigil.Emit`1.LoadLocal(Sigil.Local)" />
         </member>
+        <member name="M:Sigil.EmitShorthand`1.Ldloc(System.String)">
+            <summary cref="M:Sigil.Emit`1.LoadLocal(System.String)" />
+        </member>
         <member name="M:Sigil.EmitShorthand`1.Ldloca(Sigil.Local)">
             <summary cref="M:Sigil.Emit`1.LoadLocalAddress(Sigil.Local)" />
+        </member>
+        <member name="M:Sigil.EmitShorthand`1.Ldloca(System.String)">
+            <summary cref="M:Sigil.Emit`1.LoadLocalAddress(System.String)" />
         </member>
         <member name="M:Sigil.EmitShorthand`1.Ldnull">
             <summary cref="M:Sigil.Emit`1.LoadNull" />
@@ -1691,6 +1985,9 @@
         </member>
         <member name="M:Sigil.EmitShorthand`1.Leave(Sigil.Label)">
             <summary cref="M:Sigil.Emit`1.Leave(Sigil.Label)" />
+        </member>
+        <member name="M:Sigil.EmitShorthand`1.Leave(System.String)">
+            <summary cref="M:Sigil.Emit`1.Leave(System.String)" />
         </member>
         <member name="M:Sigil.EmitShorthand`1.Localloc">
             <summary cref="M:Sigil.Emit`1.LocalAllocate" />
@@ -1758,8 +2055,11 @@
         <member name="M:Sigil.EmitShorthand`1.Starg(System.UInt16)">
             <summary cref="M:Sigil.Emit`1.StoreArgument(System.Int32)" />
         </member>
-        <member name="M:Sigil.EmitShorthand`1.Stelem">
-            <summary cref="M:Sigil.Emit`1.StoreElement" />
+        <member name="M:Sigil.EmitShorthand`1.Stelem``1">
+            <summary cref="M:Sigil.Emit`1.StoreElement``1" />
+        </member>
+        <member name="M:Sigil.EmitShorthand`1.Stelem(System.Type)">
+            <summary cref="M:Sigil.Emit`1.StoreElement(System.Type)" />
         </member>
         <member name="M:Sigil.EmitShorthand`1.Stfld(System.Reflection.FieldInfo,System.Boolean,System.Nullable{System.Int32})">
             <summary cref="M:Sigil.Emit`1.StoreField(System.Reflection.FieldInfo, System.Boolean, System.Nullable&lt;int&gt;)" />
@@ -1772,6 +2072,9 @@
         </member>
         <member name="M:Sigil.EmitShorthand`1.Stloc(Sigil.Local)">
             <summary cref="M:Sigil.Emit`1.StoreLocal(Sigil.Local)" />
+        </member>
+        <member name="M:Sigil.EmitShorthand`1.Stloc(System.String)">
+            <summary cref="M:Sigil.Emit`1.StoreLocal(System.String)" />
         </member>
         <member name="M:Sigil.EmitShorthand`1.Stobj``1(System.Boolean,System.Nullable{System.Int32})">
             <summary cref="M:Sigil.Emit`1.StoreObject(System.Type, System.Boolean, System.Nullable&lt;int&gt;)" />
@@ -1791,6 +2094,9 @@
         <member name="M:Sigil.EmitShorthand`1.Switch(Sigil.Label[])">
             <summary cref="M:Sigil.Emit`1.Switch(Sigil.Label[])" />
         </member>
+        <member name="M:Sigil.EmitShorthand`1.Switch(System.String[])">
+            <summary cref="M:Sigil.Emit`1.Switch(System.String[])" />
+        </member>
         <member name="M:Sigil.EmitShorthand`1.Throw">
             <summary cref="M:Sigil.Emit`1.Throw" />
         </member>
@@ -1806,8 +2112,36 @@
         <member name="M:Sigil.EmitShorthand`1.Unbox_Any(System.Type)">
             <summary cref="M:Sigil.Emit`1.UnboxAny(System.Type)" />
         </member>
+        <member name="M:Sigil.EmitShorthand`1.WriteLine(System.String,Sigil.Local[])">
+            <summary cref="M:Sigil.Emit`1.WriteLine(System.String)" />
+        </member>
         <member name="M:Sigil.EmitShorthand`1.Xor">
             <summary cref="M:Sigil.Emit`1.Xor" />
+        </member>
+        <member name="P:Sigil.EmitShorthand`1.AllowsUnverifiableCIL">
+            <summary>
+            Returns true if this Emit can make use of unverifiable instructions.
+            </summary>
+        </member>
+        <member name="P:Sigil.EmitShorthand`1.MaxStackSize">
+            <summary>
+            Returns the maxmimum number of items on the stack for the IL stream created with the current emit.
+            
+            This is not the maximum that *can be placed*, but the maximum that actually are.
+            </summary>
+        </member>
+        <member name="P:Sigil.EmitShorthand`1.Locals">
+            <summary>
+            Lookup for the locals currently in scope by name.
+            
+            Locals go out of scope when released (by calling Dispose() directly, or via using) and go into scope
+            immediately after a DeclareLocal()
+            </summary>
+        </member>
+        <member name="P:Sigil.EmitShorthand`1.Labels">
+            <summary>
+            Lookup for declared labels by name.
+            </summary>
         </member>
         <member name="T:Sigil.ExceptionBlock">
             <summary>
@@ -1838,34 +2172,6 @@
             The ExceptionBlock this FinallyBlock appears as part of.
             </summary>
         </member>
-        <member name="T:Sigil.Impl.StackState">
-            <summary>
-            Keeps track of the types on the stack, allowing for type checking.
-            </summary>
-        </member>
-        <member name="M:Sigil.Impl.TypeOnStack.ReplacedWith(Sigil.Impl.TypeOnStack)">
-            <summary>
-            When a type is replaced (without an opcode) on the stack, call this to keep
-            any mark tracking working.
-            </summary>
-        </member>
-        <member name="M:Sigil.Impl.TypeOnStack.Mark(System.Reflection.Emit.OpCode,System.Int32,System.Boolean)">
-            <summary>
-            Call to indicate that something on the stack was used
-            as the #{index}'d (starting at 0) parameter to the {code} 
-            opcode.
-            </summary>
-        </member>
-        <member name="M:Sigil.Impl.TypeOnStack.CountMarks(System.Reflection.Emit.OpCode,System.Int32,System.Boolean)">
-            <summary>
-            Returns the # of times this value was used as the given #{index}'d parameter to the {code} instruction.
-            </summary>
-        </member>
-        <member name="M:Sigil.Impl.TypeOnStack.CountMarks">
-            <summary>
-            Returns the total number of times this value was marked.
-            </summary>
-        </member>
         <member name="T:Sigil.Label">
             <summary>
             Represents a Label in a CIL stream, and thus a Leave and Branch target.
@@ -1889,28 +2195,6 @@
             Names are purely for debugging aid, and will not appear in the generated delegate.
             </summary>
         </member>
-        <member name="T:Sigil.LabelLookup">
-            <summary>
-            Provides a way to lookup labels declared with an emit.
-            </summary>
-        </member>
-        <member name="P:Sigil.LabelLookup.Item(System.String)">
-            <summary>
-            Returns the label with the given name.
-            
-            Throws KeyNotFoundException if no label by that name is found".
-            </summary>
-        </member>
-        <member name="P:Sigil.LabelLookup.Count">
-            <summary>
-            Returns the number of labels declared
-            </summary>
-        </member>
-        <member name="P:Sigil.LabelLookup.Names">
-            <summary>
-            Returns the names of all the declared labels
-            </summary>
-        </member>
         <member name="T:Sigil.Local">
             <summary>
             Represents a variable local to the delegate being created.
@@ -1929,7 +2213,7 @@
             
             While not strictly required, freeing a local allows it's index to be reused.
             
-            Locals are only elligible for reuse when the new local is exactly the same type.
+            Locals are only eligible for reuse when the new local is exactly the same type.
             </summary>
         </member>
         <member name="P:Sigil.Local.Name">
@@ -1946,47 +2230,21 @@
             The type stored in this local.
             </summary>
         </member>
-        <member name="T:Sigil.LocalLookup">
+        <member name="M:Sigil.Impl.TypeOnStack.Mark(System.Reflection.Emit.OpCode,System.Int32)">
             <summary>
-            Provides a way to lookup locals in scope by name.
+            Call to indicate that something on the stack was used
+            as the #{index}'d (starting at 0) parameter to the {code} 
+            opcode.
             </summary>
         </member>
-        <member name="P:Sigil.LocalLookup.Item(System.String)">
+        <member name="M:Sigil.Impl.TypeOnStack.CountMarks(System.Reflection.Emit.OpCode,System.Int32)">
             <summary>
-            Returns the local with the given name.
-            
-            Throws KeyNotFoundException if no local by that name is found".
+            Returns the # of times this value was used as the given #{index}'d parameter to the {code} instruction.
             </summary>
         </member>
-        <member name="P:Sigil.LocalLookup.Count">
+        <member name="M:Sigil.Impl.TypeOnStack.CountMarks">
             <summary>
-            Returns the number of locals in scope
-            </summary>
-        </member>
-        <member name="P:Sigil.LocalLookup.Names">
-            <summary>
-            Returns the names of all the locals in scope
-            </summary>
-        </member>
-        <member name="T:Sigil.NativeIntType">
-            <summary>
-            This type represents a "native int" on the stack.
-            
-            The size of native int varies depending on the architecture an assembly is executed on.
-            Raw pointers are often of type native int.
-            
-            This type is exposed to allow for stack assertions containing native int via Emit.MarkLabel.
-            </summary>
-        </member>
-        <member name="T:Sigil.NullType">
-            <summary>
-            This type represents a provably null value on the stack.
-            
-            Nulls typically arrive on the stack via LoadNull.
-            
-            Null can be assigned to any reference type safely, without the need for a CastClass.
-            
-            This type is exposed to allow for stack assertions containing null via Emit.MarkLabel.
+            Returns the total number of times this value was marked.
             </summary>
         </member>
         <member name="T:Sigil.SigilVerificationException">
@@ -2015,6 +2273,36 @@
         <member name="M:Sigil.SigilVerificationException.ToString">
             <summary>
             Returns the message and stacks on this exception, in string form.
+            </summary>
+        </member>
+        <member name="T:Sigil.ValidationOptions">
+            <summary>
+            Sigil performs validation on IL as it is emitted.
+            
+            This can sometimes be costly, this enumeration is used to indicate what kind of validation should be
+            performed.
+            
+            By default, Sigil performs all available validation.  It is recommended that all validation be enabled
+            when debugging code.
+            
+            Note that all validation will still be performed when a delegate, method, or constructor is created.
+            </summary>
+        </member>
+        <member name="F:Sigil.ValidationOptions.None">
+            <summary>
+            Defers all validation that can be deferred
+            </summary>
+        </member>
+        <member name="F:Sigil.ValidationOptions.ControlFlowImmediately">
+            <summary>
+            Validates all control flow whenever a new control transfer or label is introduced
+            </summary>
+        </member>
+        <member name="F:Sigil.ValidationOptions.All">
+            <summary>
+            Performs all validation immediately.
+            
+            This is the default
             </summary>
         </member>
     </members>

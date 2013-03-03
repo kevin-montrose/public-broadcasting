@@ -190,7 +190,7 @@ namespace PublicBroadcasting.Impl
             var name = "POCOBuilder_RefRef";
             name += "_" + typeof(From).FullName + "_" + typeof(Describer).FullName;
 
-            var funcEmit = Sigil.Emit<Func<From, Dictionary<string, POCOBuilder>, object>>.NewDynamicMethod(name);
+            var funcEmit = Sigil.Emit<Func<From, Dictionary<string, POCOBuilder>, object>>.NewDynamicMethod(name, validationOptions: SigilConfig.ValidationOptions);
             var retLoc = funcEmit.DeclareLocal(tTo, "retLoc");
 
             funcEmit.NewObject(cons);
@@ -278,7 +278,7 @@ namespace PublicBroadcasting.Impl
 
             var dynMethod = new DynamicMethod(name, typeof(object), new[] { tFrom, typeof(Dictionary<string, POCOBuilder>) }, restrictedSkipVisibility: true);
 
-            var funcEmit = Sigil.Emit<Func<From, Dictionary<string, POCOBuilder>, object>>.NewDynamicMethod(name);
+            var funcEmit = Sigil.Emit<Func<From, Dictionary<string, POCOBuilder>, object>>.NewDynamicMethod(name, validationOptions: SigilConfig.ValidationOptions);
             var retLoc = funcEmit.DeclareLocal(tTo, "retLoc");
 
             funcEmit
@@ -435,7 +435,7 @@ namespace PublicBroadcasting.Impl
             Func<IList, Func<object, object>, object> mapperListDyn;
             var cons = typeof(OnDemandList<,>).MakeGenericType(typeof(From), itemMapper.To).GetConstructor(new[] { typeof(IList), typeof(Func<object, object>) });
 
-            var dynEmit = Sigil.Emit<Func<IList, Func<object, object>, object>>.NewDynamicMethod("POCOBuilder_NewList_" + itemMapper.To.FullName);
+            var dynEmit = Sigil.Emit<Func<IList, Func<object, object>, object>>.NewDynamicMethod("POCOBuilder_NewList_" + itemMapper.To.FullName, validationOptions: SigilConfig.ValidationOptions);
             dynEmit.LoadArgument(0);
             dynEmit.LoadArgument(1);
             dynEmit.NewObject(cons);
@@ -485,7 +485,7 @@ namespace PublicBroadcasting.Impl
             Func<IDictionary, Func<object, object>, Func<object, object>, object> mapperDictDyn;
             var cons = typeof(OnDemandDictionary<,,,>).MakeGenericType(keyType, valType, keyMapper.To, valMapper.To).GetConstructor(new[] { typeof(IDictionary), typeof(Func<object, object>), typeof(Func<object, object>) });
 
-            var dynEmit = Sigil.Emit<Func<IDictionary, Func<object, object>, Func<object, object>, object>>.NewDynamicMethod("POCOBuilder_NewDict_" + keyType.FullName + "_" + valType.FullName + "_" + keyMapper.To.FullName + "_" + valMapper.To.FullName);
+            var dynEmit = Sigil.Emit<Func<IDictionary, Func<object, object>, Func<object, object>, object>>.NewDynamicMethod("POCOBuilder_NewDict_" + keyType.FullName + "_" + valType.FullName + "_" + keyMapper.To.FullName + "_" + valMapper.To.FullName, validationOptions: SigilConfig.ValidationOptions);
             dynEmit
                 .LoadArgument(0)
                 .LoadArgument(1)

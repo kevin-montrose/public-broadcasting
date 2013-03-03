@@ -25,16 +25,23 @@ namespace Tests
         [TestMethod]
         public void Anon()
         {
-            var bytes = Serializer.Serialize(new { A = "Foo", B = "Bar", C = "Bazz", D = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 } });
-            dynamic dynAnon = Serializer.Deserialize(bytes);
-
-            Assert.AreEqual("Foo", dynAnon.A);
-            Assert.AreEqual("Bar", dynAnon.B);
-            Assert.AreEqual("Bazz", dynAnon.C);
-            Assert.AreEqual(10, dynAnon.D.Count);
-            for (var i = 0; i < 10; i++)
+            try
             {
-                Assert.AreEqual(i + 1, dynAnon.D[i]);
+                var bytes = Serializer.Serialize(new { A = "Foo", B = "Bar", C = "Bazz", D = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 } });
+                dynamic dynAnon = Serializer.Deserialize(bytes);
+
+                Assert.AreEqual("Foo", dynAnon.A);
+                Assert.AreEqual("Bar", dynAnon.B);
+                Assert.AreEqual("Bazz", dynAnon.C);
+                Assert.AreEqual(10, dynAnon.D.Count);
+                for (var i = 0; i < 10; i++)
+                {
+                    Assert.AreEqual(i + 1, dynAnon.D[i]);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
             }
         }
 

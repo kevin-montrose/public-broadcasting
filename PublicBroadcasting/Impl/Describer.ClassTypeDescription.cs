@@ -67,7 +67,7 @@ namespace PublicBroadcasting.Impl
             var members = enumerator.DefineField("Members", typeof(List<string>), FieldAttributes.Private);
             var values = enumerator.DefineField("Values", typeof(object), FieldAttributes.Private);
 
-            var consEmit = Sigil.Emit<Action<List<string>, object>>.BuildConstructor(enumerator, MethodAttributes.Public, CallingConventions.Standard | CallingConventions.HasThis);
+            var consEmit = Sigil.Emit<Action<List<string>, object>>.BuildConstructor(enumerator, MethodAttributes.Public, CallingConventions.Standard | CallingConventions.HasThis, validationOptions: SigilConfig.ValidationOptions);
             consEmit
                 .LoadArgument(0)
                 .LoadArgument(1)
@@ -84,7 +84,7 @@ namespace PublicBroadcasting.Impl
 
             // void Reset()
 
-            var resetEmit = Sigil.Emit<Action>.BuildMethod(enumerator, "Reset", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.Standard | CallingConventions.HasThis);
+            var resetEmit = Sigil.Emit<Action>.BuildMethod(enumerator, "Reset", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.Standard | CallingConventions.HasThis, validationOptions: SigilConfig.ValidationOptions);
             resetEmit.LoadArgument(0);
             resetEmit.LoadConstant(-1);
             resetEmit.StoreField(index);
@@ -98,7 +98,7 @@ namespace PublicBroadcasting.Impl
             enumerator.DefineMethodOverride(reset, typeof(IEnumerator).GetMethod("Reset"));
 
             // bool MoveNext()
-            var moveNextEmit = Sigil.Emit<Func<bool>>.BuildMethod(enumerator, "MoveNext", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.Standard | CallingConventions.HasThis).AsShorthand();
+            var moveNextEmit = Sigil.Emit<Func<bool>>.BuildMethod(enumerator, "MoveNext", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.Standard | CallingConventions.HasThis, validationOptions: SigilConfig.ValidationOptions).AsShorthand();
             var getCount = typeof(List<string>).GetProperty("Count").GetGetMethod();
             var getItem = typeof(List<string>).GetProperty("Item").GetGetMethod();
             var entry = typeof(DictionaryEntry);
@@ -176,14 +176,14 @@ namespace PublicBroadcasting.Impl
                 .Ldc(0)
                 .Ldnull()
                 .Call(createArgInfo)
-                .Stelem();
+                .Stelem<CSharpArgumentInfo>();
 
             moveNextEmit
                 .Ldc(1)
                 .Ldc(3)
                 .Ldnull()
                 .Call(createArgInfo)
-                .Stelem();
+                .Stelem<CSharpArgumentInfo>();
 
             moveNextEmit.Call(getIndex);
 
@@ -210,9 +210,8 @@ namespace PublicBroadcasting.Impl
                 .Box(entry)
                 .Stfld(currentField);
 
-            moveNextEmit
-                .Ldc(1)
-                .Ret();
+            moveNextEmit.Ldc(1);
+            moveNextEmit.Ret();
 
             var moveNext = moveNextEmit.CreateMethod();
 
@@ -283,46 +282,48 @@ namespace PublicBroadcasting.Impl
             // Define indexer
             var strEq = typeof(object).GetMethod("Equals", new[] { typeof(object) });
 
-            var tryGetIndexEmit = Sigil.Emit<TryGetIndexerDelegate>.BuildMethod(TypeBuilder, "TryGetIndex", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.Standard | CallingConventions.HasThis);
+            var tryGetIndexEmit = Sigil.Emit<TryGetIndexerDelegate>.BuildMethod(TypeBuilder, "TryGetIndex", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.Standard | CallingConventions.HasThis, validationOptions: SigilConfig.ValidationOptions);
 
-            tryGetIndexEmit.LoadArgument(2);
+            tryGetIndexEmit.LoadArgument(2);    // object[]
 
             var invalid = tryGetIndexEmit.DefineLabel("invalid");
             tryGetIndexEmit
-                .Duplicate()
-                .LoadLength()
-                .LoadConstant(1)
-                .UnsignedBranchIfNotEqual(invalid)
-                .LoadConstant(0)
-                .LoadElement()
-                .IsInstance<string>();
+                .Duplicate()                    // object[] object[]
+                .LoadLength<object>()           // int object[]
+                .LoadConstant(1);               // int int object[]
+            
+            tryGetIndexEmit.UnsignedBranchIfNotEqual(invalid);  // object[]
+                
+            tryGetIndexEmit
+                .LoadConstant(0)                // int object[]
+                .LoadElement<object>()          // object
+                .IsInstance<string>();          // int
 
             var valid = tryGetIndexEmit.DefineLabel("valid");
             tryGetIndexEmit
-                .BranchIfTrue(valid)
-                .LoadConstant(0);
+                .BranchIfTrue(valid)            // --empty--
+                .LoadArgument(2);               // object[]
+
+            tryGetIndexEmit.MarkLabel(invalid);
+            tryGetIndexEmit.Pop();              // --empty--
 
             tryGetIndexEmit
-                .MarkLabel(invalid)
-                .Pop();
+                .LoadArgument(3)                // object&
+                .LoadNull()                     // null object&
+                .StoreIndirect(typeof(object)); // --empty--
 
             tryGetIndexEmit
-                .LoadArgument(3)
-                .LoadNull()
-                .StoreIndirect(typeof(object));
-
-            tryGetIndexEmit
-                .LoadConstant(0)
-                .Return();
+                .LoadConstant(0)                // int
+                .Return();                      // --empty--
 
             tryGetIndexEmit.MarkLabel(valid);
 
-            tryGetIndexEmit.LoadArgument(3);
+            tryGetIndexEmit.LoadArgument(3);    // object&
 
             tryGetIndexEmit
-                .LoadArgument(2)
-                .LoadConstant(0)
-                .LoadElement();
+                .LoadArgument(2)                // object[] object&
+                .LoadConstant(0)                // int object[] object&
+                .LoadElement<object>();         // object object&
 
             Sigil.Label next;
             var done = tryGetIndexEmit.DefineLabel("done");
@@ -334,45 +335,45 @@ namespace PublicBroadcasting.Impl
                 var field = fields[memKey];
 
                 tryGetIndexEmit
-                    .Duplicate()
-                    .LoadConstant(memKey);
+                    .Duplicate()            // object object object&
+                    .LoadConstant(memKey);  // string object object object&
 
-                tryGetIndexEmit.CallVirtual(strEq);
+                tryGetIndexEmit.CallVirtual(strEq); // int object object7&
 
-                tryGetIndexEmit.BranchIfFalse(next);
+                tryGetIndexEmit.BranchIfFalse(next); // object object&
 
                 tryGetIndexEmit
-                    .Pop()
-                    .LoadArgument(0)
-                    .LoadField(field);
+                    .Pop()                           // object&
+                    .LoadArgument(0)                 // this object&
+                    .LoadField(field);               // fieldType object&
 
                 if (field.FieldType.IsValueType)
                 {
-                    tryGetIndexEmit.Box(field.FieldType);
+                    tryGetIndexEmit.Box(field.FieldType); // fieldType object&
                 }
 
-                tryGetIndexEmit.Branch(done);
+                tryGetIndexEmit.Branch(done);             // fieldType object&
 
-                tryGetIndexEmit.MarkLabel(next, new[] { typeof(object), typeof(object).MakeByRefType() });
+                tryGetIndexEmit.MarkLabel(next);        // object object&
             }
 
             tryGetIndexEmit
-                .Pop()
-                .LoadNull();
+                .Pop()                                  // object&
+                .LoadNull();                            // null object&
 
-            tryGetIndexEmit.MarkLabel(done);
+            tryGetIndexEmit.MarkLabel(done);            // *something* object&
 
             tryGetIndexEmit
-                .StoreIndirect(typeof(object))
-                .LoadConstant(1)
-                .Return();
+                .StoreIndirect(typeof(object))          // --empty--
+                .LoadConstant(1)                        // int
+                .Return();                              // --empty--
 
             var tryGetIndex = tryGetIndexEmit.CreateMethod();
 
             TypeBuilder.DefineMethodOverride(tryGetIndex, typeof(DynamicObject).GetMethod("TryGetIndex"));
 
             // Implement IEnumerable
-            var getEnumeratorEmit = Sigil.Emit<Func<IEnumerator>>.BuildMethod(TypeBuilder, "GetEnumerator", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.Standard | CallingConventions.HasThis);
+            var getEnumeratorEmit = Sigil.Emit<Func<IEnumerator>>.BuildMethod(TypeBuilder, "GetEnumerator", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.Standard | CallingConventions.HasThis, validationOptions: SigilConfig.ValidationOptions);
             var newStrList = typeof(List<string>).GetConstructor(new[] { typeof(int) });
             var newEnumerator = Enumerator.GetConstructor(new[] { typeof(List<string>), typeof(object) });
             var add = typeof(List<string>).GetMethod("Add");
@@ -396,7 +397,7 @@ namespace PublicBroadcasting.Impl
             TypeBuilder.DefineMethodOverride(getEnumerator, typeof(IEnumerable).GetMethod("GetEnumerator"));
 
             // Define ToString()
-            var toStringEmit = Sigil.Emit<Func<string>>.BuildMethod(TypeBuilder, "ToString", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.Standard | CallingConventions.HasThis);
+            var toStringEmit = Sigil.Emit<Func<string>>.BuildMethod(TypeBuilder, "ToString", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.Standard | CallingConventions.HasThis, validationOptions: SigilConfig.ValidationOptions);
             var objToString = typeof(object).GetMethod("ToString");
             var thunkField = TypeBuilder.DefineField("__ToStringThunk", typeof(Func<object, string>), FieldAttributes.Static | FieldAttributes.Private);
             var invoke = typeof(Func<object, string>).GetMethod("Invoke");
