@@ -4,12 +4,46 @@
         <name>Sigil</name>
     </assembly>
     <members>
+        <member name="T:Sigil.CatchBlock">
+            <summary>
+            Represents a catch block which appears in an ExceptionBlock.
+            
+            To create a CatchBlock, call BeginCatchBlock(Type) or BeginCatchAllBlock().
+            </summary>
+        </member>
+        <member name="P:Sigil.CatchBlock.ExceptionBlock">
+            <summary>
+            The ExceptionBlock this CatchBlock appears in.
+            </summary>
+        </member>
+        <member name="P:Sigil.CatchBlock.IsCatchAll">
+            <summary>
+            Returns true if this CatchBlock will catch all exceptions.
+            
+            This is equivalent to `catch(Exception e)` in C#.
+            </summary>
+        </member>
+        <member name="P:Sigil.CatchBlock.ExceptionType">
+            <summary>
+            The type of exception being caught by this CatchBlock.
+            
+            When the CatchBlock is entered, an exception of this type will
+            be pushed onto the stack.
+            </summary>
+        </member>
         <member name="T:Sigil.Emit`1">
             <summary>
             Helper for CIL generation that fails as soon as a sequence of instructions
             can be shown to be invalid.
             </summary>
             <typeparam name="DelegateType">The type of delegate being built</typeparam>
+        </member>
+        <member name="M:Sigil.Emit`1.ArgumentList">
+            <summary>
+            Pushes a pointer to the current argument list onto the stack.
+            
+            This instruction can only be used in VarArgs methods.
+            </summary>
         </member>
         <member name="M:Sigil.Emit`1.Add">
             <summary>
@@ -130,175 +164,6 @@
             Pops two arguments off the stack, shifts the second value right by the first value.
             
             Acts as if the value were unsigned, zeros always coming in from the left.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.Break">
-            <summary>
-            Emits a break instruction for use with a debugger.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.CallIndirect(System.Reflection.CallingConventions)">
-            <summary>
-            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
-            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
-            
-            This helper assumes a void return and no parameters.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.CallIndirect``1(System.Reflection.CallingConventions)">
-            <summary>
-            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
-            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
-            
-            This helper assumes ReturnType as a return and no parameters.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.CallIndirect``2(System.Reflection.CallingConventions)">
-            <summary>
-            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
-            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
-            
-            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.CallIndirect``3(System.Reflection.CallingConventions)">
-            <summary>
-            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
-            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
-            
-            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.CallIndirect``4(System.Reflection.CallingConventions)">
-            <summary>
-            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
-            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
-            
-            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.CallIndirect``5(System.Reflection.CallingConventions)">
-            <summary>
-            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
-            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
-            
-            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.CallIndirect``6(System.Reflection.CallingConventions)">
-            <summary>
-            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
-            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
-            
-            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.CallIndirect``7(System.Reflection.CallingConventions)">
-            <summary>
-            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
-            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
-            
-            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.CallIndirect``8(System.Reflection.CallingConventions)">
-            <summary>
-            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
-            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
-            
-            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.CallIndirect``9(System.Reflection.CallingConventions)">
-            <summary>
-            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
-            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
-            
-            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.CallIndirect``10(System.Reflection.CallingConventions)">
-            <summary>
-            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
-            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
-            
-            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.CallIndirect``11(System.Reflection.CallingConventions)">
-            <summary>
-            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
-            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
-            
-            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.CallIndirect``12(System.Reflection.CallingConventions)">
-            <summary>
-            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
-            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
-            
-            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.CallIndirect``13(System.Reflection.CallingConventions)">
-            <summary>
-            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
-            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
-            
-            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.CallIndirect``14(System.Reflection.CallingConventions)">
-            <summary>
-            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
-            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
-            
-            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.CallIndirect``15(System.Reflection.CallingConventions)">
-            <summary>
-            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
-            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
-            
-            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.CallIndirect``16(System.Reflection.CallingConventions)">
-            <summary>
-            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
-            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
-            
-            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.CallIndirect``17(System.Reflection.CallingConventions)">
-            <summary>
-            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
-            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
-            
-            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.CallIndirect(System.Reflection.CallingConventions,System.Type,System.Type[])">
-            <summary>
-            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
-            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.CastClass``1">
-            <summary>
-            Cast a reference on the stack to the given reference type.
-            
-            If the cast is not legal, a CastClassException will be thrown at runtime.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.CastClass(System.Type)">
-            <summary>
-            Cast a reference on the stack to the given reference type.
-            
-            If the cast is not legal, a CastClassException will be thrown at runtime.
             </summary>
         </member>
         <member name="M:Sigil.Emit`1.Box``1">
@@ -449,7 +314,12 @@
             A value is true if it is non-zero or non-null.
             </summary>
         </member>
-        <member name="M:Sigil.Emit`1.Call(System.Reflection.MethodInfo)">
+        <member name="M:Sigil.Emit`1.Break">
+            <summary>
+            Emits a break instruction for use with a debugger.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.Call(System.Reflection.MethodInfo,System.Type[])">
             <summary>
             Calls the given method.  Pops its arguments in reverse order (left-most deepest in the stack), and pushes the return value if it is non-void.
             
@@ -458,9 +328,169 @@
             Call does not respect overrides, the implementation defined by the given MethodInfo is what will be called at runtime.
             
             To call overrides of instance methods, use CallVirtual.
+            
+            When calling VarArgs methods, arglist should be set to the types of the extra parameters to be passed.
             </summary>
         </member>
-        <member name="M:Sigil.Emit`1.CallVirtual(System.Reflection.MethodInfo,System.Type)">
+        <member name="M:Sigil.Emit`1.CallIndirect(System.Reflection.CallingConventions)">
+            <summary>
+            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
+            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
+            
+            This helper assumes a void return and no parameters.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.CallIndirect``1(System.Reflection.CallingConventions)">
+            <summary>
+            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
+            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
+            
+            This helper assumes ReturnType as a return and no parameters.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.CallIndirect``2(System.Reflection.CallingConventions)">
+            <summary>
+            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
+            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
+            
+            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.CallIndirect``3(System.Reflection.CallingConventions)">
+            <summary>
+            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
+            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
+            
+            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.CallIndirect``4(System.Reflection.CallingConventions)">
+            <summary>
+            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
+            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
+            
+            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.CallIndirect``5(System.Reflection.CallingConventions)">
+            <summary>
+            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
+            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
+            
+            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.CallIndirect``6(System.Reflection.CallingConventions)">
+            <summary>
+            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
+            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
+            
+            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.CallIndirect``7(System.Reflection.CallingConventions)">
+            <summary>
+            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
+            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
+            
+            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.CallIndirect``8(System.Reflection.CallingConventions)">
+            <summary>
+            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
+            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
+            
+            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.CallIndirect``9(System.Reflection.CallingConventions)">
+            <summary>
+            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
+            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
+            
+            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.CallIndirect``10(System.Reflection.CallingConventions)">
+            <summary>
+            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
+            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
+            
+            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.CallIndirect``11(System.Reflection.CallingConventions)">
+            <summary>
+            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
+            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
+            
+            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.CallIndirect``12(System.Reflection.CallingConventions)">
+            <summary>
+            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
+            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
+            
+            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.CallIndirect``13(System.Reflection.CallingConventions)">
+            <summary>
+            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
+            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
+            
+            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.CallIndirect``14(System.Reflection.CallingConventions)">
+            <summary>
+            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
+            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
+            
+            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.CallIndirect``15(System.Reflection.CallingConventions)">
+            <summary>
+            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
+            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
+            
+            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.CallIndirect``16(System.Reflection.CallingConventions)">
+            <summary>
+            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
+            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
+            
+            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.CallIndirect``17(System.Reflection.CallingConventions)">
+            <summary>
+            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
+            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
+            
+            This helper assumes ReturnType as a return and parameters of the types given in ParameterType*.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.CallIndirect(System.Reflection.CallingConventions,System.Type,System.Type[],System.Type[])">
+            <summary>
+            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
+            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
+            
+            This override allows an arglist to be passed for calling VarArgs methods.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.CallIndirect(System.Reflection.CallingConventions,System.Type,System.Type[])">
+            <summary>
+            Pops a pointer to a method, and then all it's arguments (in reverse order, left-most parameter is deepest on the stack) and calls
+            invokes the method pointer.  If the method returns a non-void result, it is pushed onto the stack.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.CallVirtual(System.Reflection.MethodInfo,System.Type,System.Type[])">
             <summary>
             Calls the given method virtually.  Pops its arguments in reverse order (left-most deepest in the stack), and pushes the return value if it is non-void.
             
@@ -469,6 +499,27 @@
             The method invoked at runtime is determined by the type of the `this` reference.
             
             If the method invoked shouldn't vary (or if the method is static), use Call instead.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.CastClass``1">
+            <summary>
+            Cast a reference on the stack to the given reference type.
+            
+            If the cast is not legal, a CastClassException will be thrown at runtime.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.CastClass(System.Type)">
+            <summary>
+            Cast a reference on the stack to the given reference type.
+            
+            If the cast is not legal, a CastClassException will be thrown at runtime.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.CheckFinite">
+            <summary>
+            Throws an ArithmeticException on runtime if the value on the stack is not a finite number.
+            
+            This leaves the value checked on the stack, rather than popping it as might be expected.
             </summary>
         </member>
         <member name="M:Sigil.Emit`1.CompareEqual">
@@ -1004,6 +1055,18 @@
             Pops a reference to a rank 1 array off the stack, and pushes it's length onto the stack.
             </summary>
         </member>
+        <member name="M:Sigil.Emit`1.LoadLocal(Sigil.Local)">
+            <summary>
+            Loads the value in the given local onto the stack.
+            
+            To create a local, use DeclareLocal().
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.LoadLocal(System.String)">
+            <summary>
+            Loads the value in the local with the given name onto the stack.
+            </summary>
+        </member>
         <member name="M:Sigil.Emit`1.LoadLocalAddress(Sigil.Local)">
             <summary>
             Pushes a pointer to the given local onto the stack.
@@ -1088,6 +1151,20 @@
             
             Be aware that each local takes some space on the stack, inefficient use of locals
             could lead to StackOverflowExceptions at runtime.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.MakeReferenceAny``1">
+            <summary>
+            Converts a pointer or reference to a value on the stack into a TypedReference of the given type.
+            
+            TypedReferences can be used with ReferenceAnyType and ReferenceAnyValue to pass arbitrary types as parameters.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.MakeReferenceAny(System.Type)">
+            <summary>
+            Converts a pointer or reference to a value on the stack into a TypedReference of the given type.
+            
+            TypedReferences can be used with ReferenceAnyType and ReferenceAnyValue to pass arbitrary types as parameters.
             </summary>
         </member>
         <member name="M:Sigil.Emit`1.NewArray``1">
@@ -1203,6 +1280,27 @@
         <member name="M:Sigil.Emit`1.Pop">
             <summary>
             Removes the top value on the stack.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.ReferenceAnyType">
+            <summary>
+            Converts a TypedReference on the stack into a RuntimeTypeHandle for the type contained with it.
+            
+            __makeref(int) on the stack would become the RuntimeTypeHandle for typeof(int), for example.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.ReferenceAnyValue``1">
+            <summary>
+            Converts a TypedReference on the stack into a reference to the contained object, given the type contained in the TypedReference.
+            
+            __makeref(int) on the stack would become an int&amp;, for example.
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.ReferenceAnyValue(System.Type)">
+            <summary>
+            Converts a TypedReference on the stack into a reference to the contained object, given the type contained in the TypedReference.
+            
+            __makeref(int) on the stack would become an int&amp;, for example.
             </summary>
         </member>
         <member name="M:Sigil.Emit`1.ReThrow">
@@ -1399,14 +1497,6 @@
             Ends the given finally block.
             </summary>
         </member>
-        <member name="M:Sigil.Emit`1.WriteLine(System.String,Sigil.Local[])">
-            <summary>
-            Emits IL that calls Console.WriteLine(string) for the given string if no locals are passed.
-            
-            If any locals are passed, line is treated as a format string and local values are used in a call
-            to Console.WriteLine(string, object[]).
-            </summary>
-        </member>
         <member name="M:Sigil.Emit`1.Unbox``1">
             <summary>
             Pops a boxed value from the stack and pushes a pointer to it's unboxed value.
@@ -1442,23 +1532,12 @@
             Checks that the stack is empty, that all paths returns, that all labels are marked, etc. etc.
             </summary>
         </member>
-        <member name="M:Sigil.Emit`1.CheckFinite">
+        <member name="M:Sigil.Emit`1.WriteLine(System.String,Sigil.Local[])">
             <summary>
-            Throws an ArithmeticException on runtime if the value on the stack is not a finite number.
+            Emits IL that calls Console.WriteLine(string) for the given string if no locals are passed.
             
-            This leaves the value checked on the stack, rather than popping it as might be expected.
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.LoadLocal(Sigil.Local)">
-            <summary>
-            Loads the value in the given local onto the stack.
-            
-            To create a local, use DeclareLocal().
-            </summary>
-        </member>
-        <member name="M:Sigil.Emit`1.LoadLocal(System.String)">
-            <summary>
-            Loads the value in the local with the given name onto the stack.
+            If any locals are passed, line is treated as a format string and local values are used in a call
+            to Console.WriteLine(string, object[]).
             </summary>
         </member>
         <member name="P:Sigil.Emit`1.AllowsUnverifiableCIL">
@@ -1491,123 +1570,6 @@
         <member name="P:Sigil.Emit`1.Labels">
             <summary>
             Lookup for declared labels by name.
-            </summary>
-        </member>
-        <member name="T:Sigil.Impl.NullType">
-            <summary>
-            This type represents a provably null value on the stack.
-            
-            Nulls typically arrive on the stack via LoadNull.
-            
-            Null can be assigned to any reference type safely, without the need for a CastClass.
-            
-            This type is exposed to allow for stack assertions containing null via Emit.MarkLabel.
-            </summary>
-        </member>
-        <member name="T:Sigil.Impl.NativeIntType">
-            <summary>
-            This type represents a "native int" on the stack.
-            
-            The size of native int varies depending on the architecture an assembly is executed on.
-            Raw pointers are often of type native int.
-            
-            This type is exposed to allow for stack assertions containing native int via Emit.MarkLabel.
-            </summary>
-        </member>
-        <member name="T:Sigil.LabelLookup">
-            <summary>
-            Provides a way to lookup labels declared with an emit.
-            </summary>
-        </member>
-        <member name="P:Sigil.LabelLookup.Item(System.String)">
-            <summary>
-            Returns the label with the given name.
-            
-            Throws KeyNotFoundException if no label by that name is found".
-            </summary>
-        </member>
-        <member name="P:Sigil.LabelLookup.Count">
-            <summary>
-            Returns the number of labels declared
-            </summary>
-        </member>
-        <member name="P:Sigil.LabelLookup.Names">
-            <summary>
-            Returns the names of all the declared labels
-            </summary>
-        </member>
-        <member name="T:Sigil.LocalLookup">
-            <summary>
-            Provides a way to lookup locals in scope by name.
-            </summary>
-        </member>
-        <member name="P:Sigil.LocalLookup.Item(System.String)">
-            <summary>
-            Returns the local with the given name.
-            
-            Throws KeyNotFoundException if no local by that name is found".
-            </summary>
-        </member>
-        <member name="P:Sigil.LocalLookup.Count">
-            <summary>
-            Returns the number of locals in scope
-            </summary>
-        </member>
-        <member name="P:Sigil.LocalLookup.Names">
-            <summary>
-            Returns the names of all the locals in scope
-            </summary>
-        </member>
-        <member name="T:Sigil.OptimizationOptions">
-            <summary>
-            Sigil can perform optimizations to the emitted IL. This enum tells Sigil which optimizations to perform.
-            </summary>
-        </member>
-        <member name="F:Sigil.OptimizationOptions.None">
-            <summary>
-            Perform no optional optimizations.
-            </summary>
-        </member>
-        <member name="F:Sigil.OptimizationOptions.EnableBranchPatching">
-            <summary>
-            Choose optimal branch instructions.
-            </summary>
-        </member>
-        <member name="F:Sigil.OptimizationOptions.EnableTrivialCastEliding">
-            <summary>
-            Elide CastClass instructions which are no-ops, such as casting a System.String to a System.Object.
-            </summary>
-        </member>
-        <member name="F:Sigil.OptimizationOptions.All">
-            <summary>
-            Perform all optimizations.
-            </summary>
-        </member>
-        <member name="T:Sigil.CatchBlock">
-            <summary>
-            Represents a catch block which appears in an ExceptionBlock.
-            
-            To create a CatchBlock, call BeginCatchBlock(Type) or BeginCatchAllBlock().
-            </summary>
-        </member>
-        <member name="P:Sigil.CatchBlock.ExceptionBlock">
-            <summary>
-            The ExceptionBlock this CatchBlock appears in.
-            </summary>
-        </member>
-        <member name="P:Sigil.CatchBlock.IsCatchAll">
-            <summary>
-            Returns true if this CatchBlock will catch all exceptions.
-            
-            This is equivalent to `catch(Exception e)` in C#.
-            </summary>
-        </member>
-        <member name="P:Sigil.CatchBlock.ExceptionType">
-            <summary>
-            The type of exception being caught by this CatchBlock.
-            
-            When the CatchBlock is entered, an exception of this type will
-            be pushed onto the stack.
             </summary>
         </member>
         <member name="T:Sigil.EmitShorthand`1">
@@ -2172,6 +2134,44 @@
             The ExceptionBlock this FinallyBlock appears as part of.
             </summary>
         </member>
+        <member name="T:Sigil.Impl.NullType">
+            <summary>
+            This type represents a provably null value on the stack.
+            
+            Nulls typically arrive on the stack via LoadNull.
+            
+            Null can be assigned to any reference type safely, without the need for a CastClass.
+            
+            This type is exposed to allow for stack assertions containing null via Emit.MarkLabel.
+            </summary>
+        </member>
+        <member name="T:Sigil.Impl.NativeIntType">
+            <summary>
+            This type represents a "native int" on the stack.
+            
+            The size of native int varies depending on the architecture an assembly is executed on.
+            Raw pointers are often of type native int.
+            
+            This type is exposed to allow for stack assertions containing native int via Emit.MarkLabel.
+            </summary>
+        </member>
+        <member name="M:Sigil.Impl.TypeOnStack.Mark(System.Reflection.Emit.OpCode,System.Int32)">
+            <summary>
+            Call to indicate that something on the stack was used
+            as the #{index}'d (starting at 0) parameter to the {code} 
+            opcode.
+            </summary>
+        </member>
+        <member name="M:Sigil.Impl.TypeOnStack.CountMarks(System.Reflection.Emit.OpCode,System.Int32)">
+            <summary>
+            Returns the # of times this value was used as the given #{index}'d parameter to the {code} instruction.
+            </summary>
+        </member>
+        <member name="M:Sigil.Impl.TypeOnStack.CountMarks">
+            <summary>
+            Returns the total number of times this value was marked.
+            </summary>
+        </member>
         <member name="T:Sigil.Label">
             <summary>
             Represents a Label in a CIL stream, and thus a Leave and Branch target.
@@ -2193,6 +2193,28 @@
             If one is omitted during creation a random one is created instead.
             
             Names are purely for debugging aid, and will not appear in the generated delegate.
+            </summary>
+        </member>
+        <member name="T:Sigil.LabelLookup">
+            <summary>
+            Provides a way to lookup labels declared with an emit.
+            </summary>
+        </member>
+        <member name="P:Sigil.LabelLookup.Item(System.String)">
+            <summary>
+            Returns the label with the given name.
+            
+            Throws KeyNotFoundException if no label by that name is found".
+            </summary>
+        </member>
+        <member name="P:Sigil.LabelLookup.Count">
+            <summary>
+            Returns the number of labels declared
+            </summary>
+        </member>
+        <member name="P:Sigil.LabelLookup.Names">
+            <summary>
+            Returns the names of all the declared labels
             </summary>
         </member>
         <member name="T:Sigil.Local">
@@ -2230,21 +2252,51 @@
             The type stored in this local.
             </summary>
         </member>
-        <member name="M:Sigil.Impl.TypeOnStack.Mark(System.Reflection.Emit.OpCode,System.Int32)">
+        <member name="T:Sigil.LocalLookup">
             <summary>
-            Call to indicate that something on the stack was used
-            as the #{index}'d (starting at 0) parameter to the {code} 
-            opcode.
+            Provides a way to lookup locals in scope by name.
             </summary>
         </member>
-        <member name="M:Sigil.Impl.TypeOnStack.CountMarks(System.Reflection.Emit.OpCode,System.Int32)">
+        <member name="P:Sigil.LocalLookup.Item(System.String)">
             <summary>
-            Returns the # of times this value was used as the given #{index}'d parameter to the {code} instruction.
+            Returns the local with the given name.
+            
+            Throws KeyNotFoundException if no local by that name is found".
             </summary>
         </member>
-        <member name="M:Sigil.Impl.TypeOnStack.CountMarks">
+        <member name="P:Sigil.LocalLookup.Count">
             <summary>
-            Returns the total number of times this value was marked.
+            Returns the number of locals in scope
+            </summary>
+        </member>
+        <member name="P:Sigil.LocalLookup.Names">
+            <summary>
+            Returns the names of all the locals in scope
+            </summary>
+        </member>
+        <member name="T:Sigil.OptimizationOptions">
+            <summary>
+            Sigil can perform optimizations to the emitted IL. This enum tells Sigil which optimizations to perform.
+            </summary>
+        </member>
+        <member name="F:Sigil.OptimizationOptions.None">
+            <summary>
+            Perform no optional optimizations.
+            </summary>
+        </member>
+        <member name="F:Sigil.OptimizationOptions.EnableBranchPatching">
+            <summary>
+            Choose optimal branch instructions.
+            </summary>
+        </member>
+        <member name="F:Sigil.OptimizationOptions.EnableTrivialCastEliding">
+            <summary>
+            Elide CastClass and IsInstance instructions which are no-ops, such as casting a System.String to a System.Object.
+            </summary>
+        </member>
+        <member name="F:Sigil.OptimizationOptions.All">
+            <summary>
+            Perform all optimizations.
             </summary>
         </member>
         <member name="T:Sigil.SigilVerificationException">

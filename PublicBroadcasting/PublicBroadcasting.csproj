@@ -36,8 +36,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\protobuf-net.2.0.0.621\lib\net40\protobuf-net.dll</HintPath>
     </Reference>
-    <Reference Include="Sigil">
-      <HintPath>..\packages\Sigil.2.0.0\lib\net45\Sigil.dll</HintPath>
+    <Reference Include="Sigil, Version=2.1.0.0, Culture=neutral, PublicKeyToken=2d06c3494341c8ab, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Sigil.2.1.0\lib\net45\Sigil.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

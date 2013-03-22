@@ -2,21 +2,22 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>Sigil</id>
-    <version>2.0.0</version>
-    <title>Sigil</title>
+    <version>2.1.0</version>
+    <title />
     <authors>Kevin Montrose</authors>
     <owners>Kevin Montrose</owners>
     <licenseUrl>http://opensource.org/licenses/MS-PL</licenseUrl>
     <projectUrl>https://github.com/kevin-montrose/Sigil</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>A fail-fast validation helper for .NET CIL generation.</description>
-    <releaseNotes>Breaking interface changes, major version release.
-Stack type assertions no longer necessary, some method signatures changed, more config options, some methods removed.</releaseNotes>
+    <releaseNotes>Support for VarArgs calls, the Arglist, Mkrefany, Refanytype, Refanyval opcodes, .NET 4.0, .NET 3.0, and .NET 2.0.</releaseNotes>
     <copyright>2013 Kevin Montrose</copyright>
-    <language />
     <tags>cil msil il bytecode</tags>
     <references>
+      <reference file="Sigil NET20.dll" />
+      <reference file="Sigil NET30.dll" />
       <reference file="Sigil.dll" />
+      <reference file="Sigil NET40.dll" />
     </references>
   </metadata>
 </package>

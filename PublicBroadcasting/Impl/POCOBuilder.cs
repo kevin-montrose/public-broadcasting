@@ -294,12 +294,19 @@ namespace PublicBroadcasting.Impl
                     .LoadConstant(mem.Key)
                     .Call(lookup);
 
-                funcEmit.LoadArgument(0);
-
                 var fromMember = tFrom.GetMember(mem.Key, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).Where(m => m is FieldInfo || m is PropertyInfo).Single();
 
                 if (fromMember is PropertyInfo)
                 {
+                    if (typeof(From).IsValueType)
+                    {
+                        funcEmit.LoadArgumentAddress(0);
+                    }
+                    else
+                    {
+                        funcEmit.LoadArgument(0);
+                    }
+
                     var fromProp = (PropertyInfo)fromMember;
                     funcEmit.Call(fromProp.GetMethod);
 
@@ -312,6 +319,8 @@ namespace PublicBroadcasting.Impl
                 }
                 else
                 {
+                    funcEmit.LoadArgument(0);
+
                     var fromField = (FieldInfo)fromMember;
                     funcEmit.LoadField(fromField);
 
