@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>Sigil</id>
-    <version>2.1.0</version>
+    <version>2.2.0</version>
     <title />
     <authors>Kevin Montrose</authors>
     <owners>Kevin Montrose</owners>
@@ -10,7 +10,7 @@
     <projectUrl>https://github.com/kevin-montrose/Sigil</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>A fail-fast validation helper for .NET CIL generation.</description>
-    <releaseNotes>Support for VarArgs calls, the Arglist, Mkrefany, Refanytype, Refanyval opcodes, .NET 4.0, .NET 3.0, and .NET 2.0.</releaseNotes>
+    <releaseNotes>Faster branch validator, removes ValidationOptions.ControlFlowImmediately; making this release effectively ignore ValidationOptions.</releaseNotes>
     <copyright>2013 Kevin Montrose</copyright>
     <tags>cil msil il bytecode</tags>
     <references>

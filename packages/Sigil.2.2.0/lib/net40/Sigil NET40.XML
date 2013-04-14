@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <doc>
     <assembly>
-        <name>Sigil NET30</name>
+        <name>Sigil NET40</name>
     </assembly>
     <members>
         <member name="T:Sigil.CatchBlock">
@@ -2343,11 +2343,6 @@
         <member name="F:Sigil.ValidationOptions.None">
             <summary>
             Defers all validation that can be deferred
-            </summary>
-        </member>
-        <member name="F:Sigil.ValidationOptions.ControlFlowImmediately">
-            <summary>
-            Validates all control flow whenever a new control transfer or label is introduced
             </summary>
         </member>
         <member name="F:Sigil.ValidationOptions.All">
