@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <doc>
     <assembly>
-        <name>Sigil NET30</name>
+        <name>Sigil</name>
     </assembly>
     <members>
         <member name="T:Sigil.CatchBlock">
@@ -30,6 +30,83 @@
             When the CatchBlock is entered, an exception of this type will
             be pushed onto the stack.
             </summary>
+        </member>
+        <member name="T:Sigil.DisassembledOperations`1">
+            <summary>
+            Represents a decompiled delegate.
+            
+            The operations of the decompiled delegate can be inspected, and it can be replayed to a new Emit.
+            </summary>
+        </member>
+        <member name="M:Sigil.DisassembledOperations`1.EmitAll(System.String,System.Reflection.Emit.ModuleBuilder,Sigil.ValidationOptions)">
+            <summary>
+            Emits the disassembled instructions into a new Emit.
+            </summary>
+        </member>
+        <member name="M:Sigil.DisassembledOperations`1.GetEnumerator">
+            <summary>
+            Returns an enumerator which steps over the Operations that are in this DisassembledOperations.
+            </summary>
+        </member>
+        <member name="M:Sigil.DisassembledOperations`1.System#Collections#IEnumerable#GetEnumerator">
+            <summary>
+            Returns an enumerator which steps over the Operations that are in this DisassembledOperations.
+            </summary>
+        </member>
+        <member name="P:Sigil.DisassembledOperations`1.Count">
+            <summary>
+            The total number of operations that were decompiled.
+            </summary>
+        </member>
+        <member name="P:Sigil.DisassembledOperations`1.Parameters">
+            <summary>
+            The parameters the decompiled delegate takes.
+            </summary>
+        </member>
+        <member name="P:Sigil.DisassembledOperations`1.Locals">
+            <summary>
+            The locals the decompiled delegate declared and uses.
+            </summary>
+        </member>
+        <member name="P:Sigil.DisassembledOperations`1.Labels">
+            <summary>
+            The labels the decompile delegate uses.
+            </summary>
+        </member>
+        <member name="P:Sigil.DisassembledOperations`1.Usage">
+            <summary>
+            Traces where values produced by certain operations are used.
+            
+            This is roughly equivalent to having built the disassembled delegate via Sigil originally,
+            and saving the results of TraceOperationResultUsage().
+            </summary>
+        </member>
+        <member name="P:Sigil.DisassembledOperations`1.CanEmit">
+            <summary>
+            Returns true if a call to EmitAll will succeed.
+            
+            This property will be false if the delegate that was disassembled closed over it's environment,
+            thereby adding an implicit `this` that cannot be represented (and thus cannot be returned).
+            </summary>
+        </member>
+        <member name="P:Sigil.DisassembledOperations`1.Item(System.Int32)">
+            <summary>
+            Returns the operation that would be emitted at the given index.
+            </summary>
+        </member>
+        <member name="T:Sigil.Disassembler`1">
+            <summary>
+            Helper for disassembling delegates into a series of Emit operations.
+            
+            This can be used to inspect delegates, or combine them via Sigil.
+            </summary>
+            <typeparam name="DelegateType">The type of delegate being disassembled</typeparam>
+        </member>
+        <member name="M:Sigil.Disassembler`1.Disassemble(`0)">
+            <summary>
+            Disassembles a delegate into a DisassembledOperations object.
+            </summary>
+            <param name="del">The delegate to disassemble</param>
         </member>
         <member name="T:Sigil.Emit`1">
             <summary>
@@ -672,6 +749,22 @@
             debugging purposes only.  Consumers may find it useful to log the instruction stream in case
             the returned delegate fails validation (indicative of a bug in Sigil) or
             behaves unexpectedly (indicative of a logic bug in the consumer code).
+            </summary>
+        </member>
+        <member name="M:Sigil.Emit`1.TraceOperationResultUsage">
+            <summary>
+            Traces where the values produced by certain operations are used.
+            
+            For example:
+              ldc.i4 32
+              ldc.i4 64
+              add
+              ret
+              
+            Would be represented by a series of OperationResultUsage like so:
+              - (lcd.i4 32) -> add
+              - (ldc.i4 64) -> add
+              - (add) -> ret
             </summary>
         </member>
         <member name="M:Sigil.Emit`1.CreateDelegate(Sigil.OptimizationOptions)">
@@ -2080,6 +2173,9 @@
         <member name="M:Sigil.EmitShorthand`1.Xor">
             <summary cref="M:Sigil.Emit`1.Xor" />
         </member>
+        <member name="M:Sigil.EmitShorthand`1.TraceOperationResultUsage">
+            <summary cref="M:Sigil.Emit`1.TraceOperationResultUsage" />
+        </member>
         <member name="P:Sigil.EmitShorthand`1.AllowsUnverifiableCIL">
             <summary>
             Returns true if this Emit can make use of unverifiable instructions.
@@ -2155,7 +2251,7 @@
             This type is exposed to allow for stack assertions containing native int via Emit.MarkLabel.
             </summary>
         </member>
-        <member name="M:Sigil.Impl.TypeOnStack.Mark(System.Reflection.Emit.OpCode,System.Int32)">
+        <member name="M:Sigil.Impl.TypeOnStack.Mark(Sigil.Impl.InstructionAndTransitions,System.Int32)">
             <summary>
             Call to indicate that something on the stack was used
             as the #{index}'d (starting at 0) parameter to the {code} 
@@ -2274,6 +2370,99 @@
             Returns the names of all the locals in scope
             </summary>
         </member>
+        <member name="T:Sigil.Operation`1">
+            <summary>
+            Represents a call to an Emit, used when providing introspection details about the generated IL stream.
+            </summary>
+        </member>
+        <member name="M:Sigil.Operation`1.ToString">
+            <summary>
+            A string representation of this Operation.
+            </summary>
+        </member>
+        <member name="P:Sigil.Operation`1.OpCode">
+            <summary>
+            The OpCode that corresponds to an Emit call.
+            Note that the opcode may not correspond to the final short forms and other optimizations.
+            </summary>
+        </member>
+        <member name="P:Sigil.Operation`1.Parameters">
+            <summary>
+            The parameters passsed to a call to Emit.
+            </summary>
+        </member>
+        <member name="P:Sigil.Operation`1.IsExceptionBlockStart">
+            <summary>
+            This operation marks the beginning of an exception block,
+            which is analogous to a call to Emit.BeginExceptionBlock.
+            </summary>
+        </member>
+        <member name="P:Sigil.Operation`1.IsExceptionBlockEnd">
+            <summary>
+            This operation marks the end of an exception block,
+            which is analogous to a call to Emit.EndExceptionBlock.
+            </summary>
+        </member>
+        <member name="P:Sigil.Operation`1.IsCatchBlockStart">
+            <summary>
+            This operation marks the beginning of a catch block,
+            which is analogous to a call to Emit.BeginCatchBlock.
+            </summary>
+        </member>
+        <member name="P:Sigil.Operation`1.IsCatchBlockEnd">
+            <summary>
+            This operation marks the end of a catch block,
+            which is analogous to a call to Emit.EndCatchBlock.
+            </summary>
+        </member>
+        <member name="P:Sigil.Operation`1.IsFinallyBlockStart">
+            <summary>
+            This operation marks the beginning of a finally block,
+            which is analogous to a call to Emit.BeginFinallyBlock.
+            </summary>
+        </member>
+        <member name="P:Sigil.Operation`1.IsFinallyBlockEnd">
+            <summary>
+            This operation marks the end of a finally block,
+            which is analogous to a call to Emit.EndFinallyBlock.
+            </summary>
+        </member>
+        <member name="P:Sigil.Operation`1.IsMarkLabel">
+            <summary>
+            This operation marks a label, the name of the label is given in LabelName.
+            </summary>
+        </member>
+        <member name="P:Sigil.Operation`1.LabelName">
+            <summary>
+            If this operation marks a label, which is indicated by IsMarkLabel, then this property
+            returns the name of the label being marked.
+            </summary>
+        </member>
+        <member name="P:Sigil.Operation`1.IsOpCode">
+            <summary>
+            Returns true if this operation is emitted a CIL opcode.
+            </summary>
+        </member>
+        <member name="T:Sigil.OperationResultUsage`1">
+            <summary>
+            Represents an IL operation, and the subsequent operations that may use it's result.
+            </summary>
+        </member>
+        <member name="M:Sigil.OperationResultUsage`1.ToString">
+            <summary>
+            Returns a string representation of this OperationResultUsage.
+            </summary>
+        </member>
+        <member name="P:Sigil.OperationResultUsage`1.ProducesResult">
+            <summary>
+            The operation that is producing a result.
+            </summary>
+        </member>
+        <member name="P:Sigil.OperationResultUsage`1.ResultUsedBy">
+            <summary>
+            The operations that may use the result produced by the ProducesResult operation.
+            </summary>
+        </member>
         <member name="T:Sigil.OptimizationOptions">
             <summary>
             Sigil can perform optimizations to the emitted IL. This enum tells Sigil which optimizations to perform.
@@ -2297,6 +2486,26 @@
         <member name="F:Sigil.OptimizationOptions.All">
             <summary>
             Perform all optimizations.
+            </summary>
+        </member>
+        <member name="T:Sigil.Parameter">
+            <summary>
+            Represents a parameter to a decompiled delegate.
+            </summary>
+        </member>
+        <member name="M:Sigil.Parameter.ToString">
+            <summary>
+            Returns a string representation of this Parameter.
+            </summary>
+        </member>
+        <member name="P:Sigil.Parameter.Position">
+            <summary>
+            The index of the parameter.
+            </summary>
+        </member>
+        <member name="P:Sigil.Parameter.ParameterType">
+            <summary>
+            The type of the parameter.
             </summary>
         </member>
         <member name="T:Sigil.SigilVerificationException">

@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>Sigil</id>
-    <version>2.2.0</version>
+    <version>3.0.0</version>
     <title />
     <authors>Kevin Montrose</authors>
     <owners>Kevin Montrose</owners>
@@ -10,14 +10,8 @@
     <projectUrl>https://github.com/kevin-montrose/Sigil</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>A fail-fast validation helper for .NET CIL generation.</description>
-    <releaseNotes>Faster branch validator, removes ValidationOptions.ControlFlowImmediately; making this release effectively ignore ValidationOptions.</releaseNotes>
+    <releaseNotes>Adds a disassembler, and the ability to trace the flow of operation results in emitted code.</releaseNotes>
     <copyright>2013 Kevin Montrose</copyright>
     <tags>cil msil il bytecode</tags>
-    <references>
-      <reference file="Sigil NET20.dll" />
-      <reference file="Sigil NET30.dll" />
-      <reference file="Sigil.dll" />
-      <reference file="Sigil NET40.dll" />
-    </references>
   </metadata>
 </package>
