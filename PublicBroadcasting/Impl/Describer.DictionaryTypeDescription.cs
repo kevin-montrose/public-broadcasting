@@ -71,5 +71,25 @@ namespace PublicBroadcasting.Impl
 
             return ret;
         }
+
+        internal override bool ContainsRawObject(out string path)
+        {
+            string keyPath;
+            if (KeyType.ContainsRawObject(out keyPath))
+            {
+                path = ".<KeyType>" + keyPath;
+                return true;
+            }
+
+            string valuePath;
+            if (ValueType.ContainsRawObject(out valuePath))
+            {
+                path = ".<ValueType>" + valuePath;
+                return true;
+            }
+
+            path = null;
+            return false;
+        }
     }
 }

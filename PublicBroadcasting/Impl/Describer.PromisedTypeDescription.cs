@@ -50,6 +50,11 @@ namespace PublicBroadcasting.Impl
         {
             throw new NotImplementedException();
         }
+
+        internal override bool ContainsRawObject(out string path)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     internal class PromisedTypeDescription<ForType, ForDescriber>

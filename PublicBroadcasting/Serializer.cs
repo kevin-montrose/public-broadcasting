@@ -245,6 +245,13 @@ namespace PublicBroadcasting
             POCOBuilder builder;
             GetDescriptionAndBuilder<T>(members, visibility, out desc, out builder);
 
+            string pathToBadType;
+            if (desc.ContainsRawObject(out pathToBadType))
+            {
+                pathToBadType = "Root" + pathToBadType;
+                throw new ArgumentException("Type "+typeof(T).FullName+" contains a System.Object, which cannot be sensibly serialized.  Use a more specific type.  (path to System.Object reference: "+pathToBadType+")");
+            }
+
             var envelope = Envelope.Get(desc, builder, obj);
 
             ProtoBuf.Serializer.Serialize(stream, envelope);

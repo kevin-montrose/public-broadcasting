@@ -30,6 +30,8 @@ namespace PublicBroadcasting.Impl
         internal abstract TypeDescription DePromise(out Action afterPromise);
 
         internal abstract TypeDescription Clone(Dictionary<TypeDescription, TypeDescription> backRefLookup);
+
+        internal abstract bool ContainsRawObject(out string path);
     }
 
     [ProtoContract]
@@ -53,6 +55,11 @@ namespace PublicBroadcasting.Impl
         }
 
         internal override TypeDescription Clone(Dictionary<TypeDescription, TypeDescription> ignored)
+        {
+            throw new NotImplementedException();
+        }
+
+        internal override bool ContainsRawObject(out string path)
         {
             throw new NotImplementedException();
         }

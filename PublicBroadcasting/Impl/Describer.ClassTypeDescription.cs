@@ -501,6 +501,31 @@ namespace PublicBroadcasting.Impl
 
             return false;
         }
+
+        internal override bool ContainsRawObject(out string path)
+        {
+            if (ForType == typeof(object))
+            {
+                path = "";
+                return true;
+            }
+
+            foreach (var kv in this.Members)
+            {
+                var memName = kv.Key;
+                var memType = kv.Value;
+
+                string memPath;
+                if (memType.ContainsRawObject(out memPath))
+                {
+                    path = "."+memName + memPath;
+                    return true;
+                }
+            }
+
+            path = null;
+            return false;
+        }
     }
 
     internal class ClassTypeDescription<ForType, DescriberType>

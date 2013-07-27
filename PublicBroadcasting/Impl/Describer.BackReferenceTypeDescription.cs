@@ -118,5 +118,11 @@ namespace PublicBroadcasting.Impl
 
             return ret;
         }
+
+        internal override bool ContainsRawObject(out string path)
+        {
+            path = null;
+            return false;
+        }
     }
 }

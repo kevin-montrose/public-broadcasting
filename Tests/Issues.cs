@@ -65,14 +65,15 @@ namespace Tests
                     Values = new RouteValueDictionary { { "something", "lies here" } }
                 };
 
-            var bytes = Serializer.Serialize(original);
-
-            var obj = Serializer.Deserialize<FourTestObject>(bytes);
-
-            Assert.AreEqual(original.AProperty, obj.AProperty);
-            Assert.AreEqual(original.Values, obj.Values);
-            Assert.AreEqual(original.Values.Count, obj.Values.Count);
-            Assert.AreEqual(original.Values["something"], obj.Values["something"]);
+            try
+            {
+                var bytes = Serializer.Serialize(original);
+                Assert.Fail("Serializing *should* fail");
+            }
+            catch (ArgumentException e)
+            {
+                Assert.AreEqual("Type Tests.Issues+FourTestObject contains a System.Object, which cannot be sensibly serialized.  Use a more specific type.  (path to System.Object reference: Root.Values.<ValueType>)", e.Message);
+            }
         }
     }
 }

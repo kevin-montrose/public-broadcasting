@@ -108,6 +108,12 @@ namespace PublicBroadcasting.Impl
         {
             return this;
         }
+
+        internal override bool ContainsRawObject(out string path)
+        {
+            path = null;
+            return false;
+        }
     }
 
     internal class EnumTypeDescription<Enum> where Enum : struct
