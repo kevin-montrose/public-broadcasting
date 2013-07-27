@@ -80,7 +80,7 @@ namespace PublicBroadcasting.Impl
             string containsPath;
             if (Contains.ContainsRawObject(out containsPath))
             {
-                path = ".<ContainsType>" + containsPath;
+                path = ".<T>" + containsPath;
                 return true;
             }
 

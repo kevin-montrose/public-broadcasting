@@ -77,14 +77,14 @@ namespace PublicBroadcasting.Impl
             string keyPath;
             if (KeyType.ContainsRawObject(out keyPath))
             {
-                path = ".<KeyType>" + keyPath;
+                path = ".<TKey>" + keyPath;
                 return true;
             }
 
             string valuePath;
             if (ValueType.ContainsRawObject(out valuePath))
             {
-                path = ".<ValueType>" + valuePath;
+                path = ".<TValue>" + valuePath;
                 return true;
             }
 
