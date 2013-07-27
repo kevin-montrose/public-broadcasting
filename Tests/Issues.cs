@@ -74,5 +74,24 @@ namespace Tests
             Assert.AreEqual(original.Values.Count, obj.Values.Count);
             Assert.AreEqual(original.Values["something"], obj.Values["something"]);
         }
+
+        [TestMethod]
+        public void Five()
+        {
+            var original = new Dictionary<string, object>
+                {
+                    { "fooString", "bar" },
+                    { "fooObj", new TwoTestObject { Property1 = "bar" } }
+                };
+
+            var bytes = Serializer.Serialize(original);
+
+            var obj = Serializer.Deserialize<Dictionary<string, object>>(bytes);
+
+            Assert.AreEqual(original.Values, obj.Values);
+            Assert.AreEqual(original.Values.Count, obj.Values.Count);
+            Assert.AreEqual(original["fooString"], obj["fooString"]);
+            Assert.AreEqual(((TwoTestObject)original["fooObj"]).Property1, ((TwoTestObject)obj["fooObj"]).Property1);
+        }
     }
 }
