@@ -75,5 +75,24 @@ namespace Tests
                 Assert.AreEqual("Type Tests.Issues+FourTestObject contains a System.Object, which cannot be sensibly serialized.  Use a more specific type.  (path to System.Object reference: Root.Values.<ValueType>)", e.Message);
             }
         }
+
+        [TestMethod]
+        public void Five()
+        {
+            var original = new Dictionary<string, object>
+                {
+                    { "fooString", "bar" },
+                    { "fooObj", new TwoTestObject { Property1 = "bar" } }
+                };
+
+            var bytes = Serializer.Serialize(original);
+
+            var obj = Serializer.Deserialize<Dictionary<string, object>>(bytes);
+
+            Assert.AreEqual(original.Values, obj.Values);
+            Assert.AreEqual(original.Values.Count, obj.Values.Count);
+            Assert.AreEqual(original["fooString"], obj["fooString"]);
+            Assert.AreEqual(((TwoTestObject)original["fooObj"]).Property1, ((TwoTestObject)obj["fooObj"]).Property1);
+        }
     }
 }
