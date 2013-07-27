@@ -77,7 +77,7 @@ namespace Tests
         }
 
         [TestMethod]
-        public void Five()
+        public void Six()
         {
             var original = new Dictionary<string, object>
                 {
@@ -85,14 +85,15 @@ namespace Tests
                     { "fooObj", new TwoTestObject { Property1 = "bar" } }
                 };
 
-            var bytes = Serializer.Serialize(original);
-
-            var obj = Serializer.Deserialize<Dictionary<string, object>>(bytes);
-
-            Assert.AreEqual(original.Values, obj.Values);
-            Assert.AreEqual(original.Values.Count, obj.Values.Count);
-            Assert.AreEqual(original["fooString"], obj["fooString"]);
-            Assert.AreEqual(((TwoTestObject)original["fooObj"]).Property1, ((TwoTestObject)obj["fooObj"]).Property1);
+            try
+            {
+                var bytes = Serializer.Serialize(original);
+                Assert.Fail();
+            }
+            catch (ArgumentException e)
+            {
+                Assert.AreEqual("Type System.Collections.Generic.Dictionary`2[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.Object, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]] contains a System.Object, which cannot be sensibly serialized.  Use a more specific type.  (path to System.Object reference: Root.<ValueType>)", e.Message);
+            }
         }
     }
 }
