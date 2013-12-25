@@ -95,7 +95,7 @@ namespace PublicBroadcasting.Impl
 
             Func<IDictionary> newDictDyn;
 
-            var dynEmit = Sigil.Emit<Func<IDictionary>>.NewDynamicMethod("POCOMapper_NewDict_" + typeof(From).FullName + "_" + typeof(To).FullName, validationOptions: SigilConfig.ValidationOptions);
+            var dynEmit = Sigil.Emit<Func<IDictionary>>.NewDynamicMethod("POCOMapper_NewDict_" + typeof(From).FullName + "_" + typeof(To).FullName);
             dynEmit
                 .NewObject(newDictCons)
                 .Return();
@@ -186,7 +186,7 @@ namespace PublicBroadcasting.Impl
 
             Func<IList> newListDyn;
 
-            var dynEmit = Sigil.Emit<Func<IList>>.NewDynamicMethod("POCOMapper_NewList_" + typeof(From).FullName + "_" + typeof(To).FullName, validationOptions: SigilConfig.ValidationOptions);
+            var dynEmit = Sigil.Emit<Func<IList>>.NewDynamicMethod("POCOMapper_NewList_" + typeof(From).FullName + "_" + typeof(To).FullName);
             dynEmit
                 .NewObject(newListCons)
                 .Return();
@@ -244,7 +244,7 @@ namespace PublicBroadcasting.Impl
             var name = "POCOMapper_RefRef";
             name += "_" + typeof(From).FullName + "_" + typeof(To).FullName;
 
-            var funcEmit = Sigil.Emit<Func<From, Dictionary<string, POCOMapper>, To>>.NewDynamicMethod(name, validationOptions: SigilConfig.ValidationOptions);
+            var funcEmit = Sigil.Emit<Func<From, Dictionary<string, POCOMapper>, To>>.NewDynamicMethod(name);
             var retLoc = funcEmit.DeclareLocal(tTo, "retLoc");
 
             funcEmit
@@ -326,7 +326,7 @@ namespace PublicBroadcasting.Impl
             var name = "POCOMapper_RefValue";
             name += "_" + typeof(From).FullName + "_" + typeof(To).FullName;
 
-            var funcEmit = Sigil.Emit<Func<From, Dictionary<string, POCOMapper>, To>>.NewDynamicMethod(name, validationOptions: SigilConfig.ValidationOptions);
+            var funcEmit = Sigil.Emit<Func<From, Dictionary<string, POCOMapper>, To>>.NewDynamicMethod(name);
             var retLoc = funcEmit.DeclareLocal(tTo, "retLoc");
 
             funcEmit
@@ -492,7 +492,7 @@ namespace PublicBroadcasting.Impl
 
             var consParams = cons.GetParameters();
 
-            var funcEmit = Sigil.Emit<Func<From, Dictionary<string, POCOMapper>, To>>.NewDynamicMethod("POCOMapperAnon_" + typeof(From).FullName + "_" + typeof(To).FullName, validationOptions: SigilConfig.ValidationOptions);
+            var funcEmit = Sigil.Emit<Func<From, Dictionary<string, POCOMapper>, To>>.NewDynamicMethod("POCOMapperAnon_" + typeof(From).FullName + "_" + typeof(To).FullName);
             var createInstance = typeof(Activator).GetMethod("CreateInstance", Type.EmptyTypes);
             var lookup = typeof(POCOMapper<From, To>).GetMethod("Lookup", BindingFlags.Static | BindingFlags.NonPublic);
             var invoke = typeof(Func<object, object>).GetMethod("Invoke");
@@ -786,7 +786,7 @@ namespace PublicBroadcasting.Impl
             var dictCons = toDict.GetConstructor(Type.EmptyTypes);
             var dictAdd = toDict.GetMethod("Add");
 
-            var createDictDynEmit = Sigil.Emit<Func<object>>.NewDynamicMethod("POCOMapper_GetClassToDictMapper_" + fromClass.FullName + "_" + toDict.FullName + "_createDict", validationOptions: SigilConfig.ValidationOptions);
+            var createDictDynEmit = Sigil.Emit<Func<object>>.NewDynamicMethod("POCOMapper_GetClassToDictMapper_" + fromClass.FullName + "_" + toDict.FullName + "_createDict");
             createDictDynEmit
                 .NewObject(dictCons)
                 .Return();
@@ -816,7 +816,7 @@ namespace PublicBroadcasting.Impl
                     map = null;
                 }
 
-                var dynGetEmit = Sigil.Emit<Func<object, object>>.NewDynamicMethod("POCOMapper_GetClassToDictMapper_" + fromClass.FullName + "_" + toDict.FullName + "_" + mem.Name + "_get", validationOptions: SigilConfig.ValidationOptions);
+                var dynGetEmit = Sigil.Emit<Func<object, object>>.NewDynamicMethod("POCOMapper_GetClassToDictMapper_" + fromClass.FullName + "_" + toDict.FullName + "_" + mem.Name + "_get");
                 dynGetEmit
                     .LoadArgument(0)
                     .CastClass(fromClass)
@@ -879,7 +879,7 @@ namespace PublicBroadcasting.Impl
 
                 if (asField == null && asProp == null) continue;
 
-                var setterEmit = Sigil.Emit<Action<object, object>>.NewDynamicMethod("POCOMapper_DictToClass_" + mem.Name, validationOptions: SigilConfig.ValidationOptions);
+                var setterEmit = Sigil.Emit<Action<object, object>>.NewDynamicMethod("POCOMapper_DictToClass_" + mem.Name);
 
                 setterEmit
                     .LoadArgument(0)

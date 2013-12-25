@@ -24,7 +24,7 @@ namespace PublicBroadcasting.Impl
 
             var passThroughCons = passThroughType.GetConstructor(new[] { arrayType });
 
-            var passthrough = Emit<Func<object, object>>.NewDynamicMethod("PublicBroadcasting_ArrayThunk_CreatePassthrough_" + memberType.FullName, validationOptions: SigilConfig.ValidationOptions);
+            var passthrough = Emit<Func<object, object>>.NewDynamicMethod("PublicBroadcasting_ArrayThunk_CreatePassthrough_" + memberType.FullName);
             passthrough.LoadArgument(0);
             passthrough.CastClass(arrayType);
             passthrough.NewObject(passThroughCons);

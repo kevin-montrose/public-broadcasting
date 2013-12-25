@@ -67,7 +67,7 @@ namespace PublicBroadcasting.Impl
             var members = enumerator.DefineField("Members", typeof(List<string>), FieldAttributes.Private);
             var values = enumerator.DefineField("Values", typeof(object), FieldAttributes.Private);
 
-            var consEmit = Sigil.Emit<Action<List<string>, object>>.BuildConstructor(enumerator, MethodAttributes.Public, CallingConventions.Standard | CallingConventions.HasThis, validationOptions: SigilConfig.ValidationOptions);
+            var consEmit = Sigil.Emit<Action<List<string>, object>>.BuildConstructor(enumerator, MethodAttributes.Public, CallingConventions.Standard | CallingConventions.HasThis);
             consEmit
                 .LoadArgument(0)
                 .LoadArgument(1)
@@ -84,7 +84,7 @@ namespace PublicBroadcasting.Impl
 
             // void Reset()
 
-            var resetEmit = Sigil.Emit<Action>.BuildMethod(enumerator, "Reset", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.Standard | CallingConventions.HasThis, validationOptions: SigilConfig.ValidationOptions);
+            var resetEmit = Sigil.Emit<Action>.BuildMethod(enumerator, "Reset", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.Standard | CallingConventions.HasThis);
             resetEmit.LoadArgument(0);
             resetEmit.LoadConstant(-1);
             resetEmit.StoreField(index);
@@ -98,7 +98,7 @@ namespace PublicBroadcasting.Impl
             enumerator.DefineMethodOverride(reset, typeof(IEnumerator).GetMethod("Reset"));
 
             // bool MoveNext()
-            var moveNextEmit = Sigil.Emit<Func<bool>>.BuildMethod(enumerator, "MoveNext", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.Standard | CallingConventions.HasThis, validationOptions: SigilConfig.ValidationOptions).AsShorthand();
+            var moveNextEmit = Sigil.Emit<Func<bool>>.BuildMethod(enumerator, "MoveNext", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.Standard | CallingConventions.HasThis).AsShorthand();
             var getCount = typeof(List<string>).GetProperty("Count").GetGetMethod();
             var getItem = typeof(List<string>).GetProperty("Item").GetGetMethod();
             var entry = typeof(DictionaryEntry);
@@ -282,7 +282,7 @@ namespace PublicBroadcasting.Impl
             // Define indexer
             var strEq = typeof(object).GetMethod("Equals", new[] { typeof(object) });
 
-            var tryGetIndexEmit = Sigil.Emit<TryGetIndexerDelegate>.BuildMethod(TypeBuilder, "TryGetIndex", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.Standard | CallingConventions.HasThis, validationOptions: SigilConfig.ValidationOptions);
+            var tryGetIndexEmit = Sigil.Emit<TryGetIndexerDelegate>.BuildMethod(TypeBuilder, "TryGetIndex", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.Standard | CallingConventions.HasThis);
 
             tryGetIndexEmit.LoadArgument(2);    // object[]
 
@@ -373,7 +373,7 @@ namespace PublicBroadcasting.Impl
             TypeBuilder.DefineMethodOverride(tryGetIndex, typeof(DynamicObject).GetMethod("TryGetIndex"));
 
             // Implement IEnumerable
-            var getEnumeratorEmit = Sigil.Emit<Func<IEnumerator>>.BuildMethod(TypeBuilder, "GetEnumerator", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.Standard | CallingConventions.HasThis, validationOptions: SigilConfig.ValidationOptions);
+            var getEnumeratorEmit = Sigil.Emit<Func<IEnumerator>>.BuildMethod(TypeBuilder, "GetEnumerator", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.Standard | CallingConventions.HasThis);
             var newStrList = typeof(List<string>).GetConstructor(new[] { typeof(int) });
             var newEnumerator = Enumerator.GetConstructor(new[] { typeof(List<string>), typeof(object) });
             var add = typeof(List<string>).GetMethod("Add");
@@ -397,7 +397,7 @@ namespace PublicBroadcasting.Impl
             TypeBuilder.DefineMethodOverride(getEnumerator, typeof(IEnumerable).GetMethod("GetEnumerator"));
 
             // Define ToString()
-            var toStringEmit = Sigil.Emit<Func<string>>.BuildMethod(TypeBuilder, "ToString", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.Standard | CallingConventions.HasThis, validationOptions: SigilConfig.ValidationOptions);
+            var toStringEmit = Sigil.Emit<Func<string>>.BuildMethod(TypeBuilder, "ToString", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.Standard | CallingConventions.HasThis);
             var objToString = typeof(object).GetMethod("ToString");
             var thunkField = TypeBuilder.DefineField("__ToStringThunk", typeof(Func<object, string>), FieldAttributes.Static | FieldAttributes.Private);
             var invoke = typeof(Func<object, string>).GetMethod("Invoke");
